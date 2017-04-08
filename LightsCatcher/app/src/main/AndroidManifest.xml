@@ -36,7 +36,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.hs_augsburg_example.lightscatcher.HomeActivity" />
         </activity>
-        <activity android:name=".camera.TagLightsActivity"></activity>
+        <activity android:name=".camera.TagLightsActivity" android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

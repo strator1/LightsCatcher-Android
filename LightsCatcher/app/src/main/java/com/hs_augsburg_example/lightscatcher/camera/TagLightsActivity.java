@@ -13,17 +13,22 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
+import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TagLightsActivity extends AppCompatActivity {
+import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.GREEN;
+import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.RED;
+
+public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener {
 
     private ImageView imageView;
     private RelativeLayout rl;
 
-    private List<View> insertedViews = new ArrayList<View>();
-    private List<View> pickedUpViews = new ArrayList<View>();
+    private List<LightPosition> insertedViews = new ArrayList<LightPosition>();
+    private List<LightPosition> pickedUpViews = new ArrayList<LightPosition>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,52 +39,55 @@ public class TagLightsActivity extends AppCompatActivity {
         rl = (RelativeLayout) findViewById(R.id.tag_lights_rl);
 
 //        imageView.setOnTouchListener(new TouchListener());
-        rl.setOnTouchListener(new TouchListener());
+        imageView.setOnTouchListener(this);
     }
 
-    private final class TouchListener implements View.OnTouchListener {
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        int[] location = new int[2];
+        v.getLocationOnScreen(location);
 
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            int[] location = new int[2];
-            v.getLocationOnScreen(location);
+        int x = (int) event.getRawX();
+        int y = (int) event.getRawY() - location[1];
 
-            int x = (int) event.getRawX();
-            int y = (int) event.getRawY() - location[1];
-
-            switch (event.getAction() & MotionEvent.ACTION_MASK) {
-                case MotionEvent.ACTION_DOWN:
-                    // Check if location intersects with existing node
-                    // -> Yes - pick up node
-                    // -> No - create new node
-
-                    pickedUpViews = inViewInBounds(x, y);
-                    if (inViewInBounds(x, y).size() == 0) {
-                        addNewView(x, y);
-                    }
-                    break;
-                case MotionEvent.ACTION_UP:
-                    // Drop nodes
-                    pickedUpViews = new ArrayList<View>();
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    // Move nodes
-                    for (View pickedView : pickedUpViews) {
-                        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(60, 60);
-                        params.leftMargin = x;
-                        params.topMargin = y;
-
-                        pickedView.setLayoutParams(params);
-                    }
-
-                    break;
-                default:
-                    return v.onTouchEvent(event);
-            }
-
-            return true;
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN:
+                onActionDownTouch(x, y);
+                break;
+            case MotionEvent.ACTION_UP:
+                onActionUpTouch();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                onActionMoveTouch(x, y);
+                break;
+            default:
+                return v.onTouchEvent(event);
         }
 
+        return true;
+    }
+
+    private void onActionDownTouch(int x, int y) {
+        // Check if location intersects with existing node
+        // -> Yes - pick up node
+        // -> No - create new node
+
+        pickedUpViews = inViewInBounds(x, y);
+        if (pickedUpViews.size() == 0) {
+            addNewView(x, y);
+        }
+    }
+
+    private void onActionUpTouch() {
+        // Drop nodes
+        pickedUpViews = new ArrayList<LightPosition>();
+    }
+
+    private void onActionMoveTouch(int x, int y) {
+        // Move nodes
+        for (LightPosition pos : pickedUpViews) {
+            pos.setPos(x, y);
+        }
     }
 
     private void addNewView(int x, int y) {
@@ -87,55 +95,49 @@ public class TagLightsActivity extends AppCompatActivity {
             View v = new View(getApplicationContext());
             v.setBackgroundColor(Color.BLACK);
 
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(60, 60);
-            params.leftMargin = x;
-            params.topMargin = y;
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LightPosition.WIDTH, LightPosition.HEIGHT);
+
+            LightPosition pos = new LightPosition(v);
+            pos.setPos(x, y);
+            params.leftMargin = pos.getX();
+            params.topMargin = pos.getY();
 
             rl.addView(v, params);
-            insertedViews.add(v);
-            showLightPhaseAlertView(v);
+            insertedViews.add(pos);
+            showLightPhaseAlertView(pos);
         }
     }
 
-    private void showLightPhaseAlertView(final View v) {
+    private void showLightPhaseAlertView(final LightPosition pos) {
         AlertDialog alertDialog = new AlertDialog.Builder(TagLightsActivity.this).create();
         alertDialog.setTitle("Rot oder Grünphase?");
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Rot",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        v.setBackgroundColor(Color.RED);
+                        pos.setPhase(RED);
                         dialog.dismiss();
                     }
                 });
         alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Grün",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        v.setBackgroundColor(Color.GREEN);
+                        pos.setPhase(GREEN);
                         dialog.dismiss();
                     }
                 });
         alertDialog.show();
     }
 
-    private List<View> inViewInBounds(int x, int y) {
-        List<View> foundViews = new ArrayList<View>();
+    private List<LightPosition> inViewInBounds(int x, int y) {
+        List<LightPosition> foundViews = new ArrayList<LightPosition>();
 
-        for (View v : insertedViews) {
-            if (inViewBounds2(v, x, y)) {
-                System.out.println("you touched inside button");
-                foundViews.add(v);
-            } else {
-                System.out.println("you touched outside button");
+        for (LightPosition pos : insertedViews) {
+            if (pos.containsTouchPosition(x, y)) {
+                foundViews.add(pos);
             }
         }
 
         return foundViews;
     }
 
-    private boolean inViewBounds2 (View view, int x, int y) {
-        Rect outRect = new Rect();
-        view.getHitRect(outRect);
-
-        return outRect.contains(x, y);
-    }
 }

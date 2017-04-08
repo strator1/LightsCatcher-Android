@@ -1,6 +1,8 @@
-package com.hs_augsburg_example.lightscatcher.camera;
+package com.hs_augsburg_example.lightscatcher.dataModels;
 
 import android.media.Image;
+
+import java.util.List;
 
 /**
  * Created by patrickvalenta on 08.04.17.
@@ -23,6 +25,7 @@ public class PhotoInformation {
 
     public Image image;
     public int lightCount;
+    public List<LightPosition> lightPositionList;
     public double gyroPosition;
 
     public String longitude;
@@ -67,6 +70,14 @@ public class PhotoInformation {
 
     public void setLatitude(String latitude) {
         this.latitude = latitude;
+    }
+
+    public List<LightPosition> getLightPositionList() {
+        return lightPositionList;
+    }
+
+    public void setLightPositionList(List<LightPosition> lightPositionList) {
+        this.lightPositionList = lightPositionList;
     }
 
 }
