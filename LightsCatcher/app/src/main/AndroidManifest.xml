@@ -36,6 +36,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.hs_augsburg_example.lightscatcher.HomeActivity" />
         </activity>
+        <activity
+            android:name=".submit.SubmitActivity"
+            android:label="@string/title_activity_submit" />
+        <activity android:name=".FinishActivity"></activity>
     </application>
 
 </manifest>
