@@ -30,6 +30,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.hs_augsburg_example.lightscatcher.camera.TagLightsActivity;
+import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -195,7 +198,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     private void navigateToHome() {
-        Intent intent = new Intent(this, HomeActivity.class);
+        Intent intent = new Intent(this, TagLightsActivity.class);
         startActivity(intent);
     }
 
