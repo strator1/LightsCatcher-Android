@@ -1,6 +1,8 @@
 package com.hs_augsburg_example.lightscatcher.camera;
 
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.support.v7.app.AlertDialog;
@@ -40,6 +42,14 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
 //        imageView.setOnTouchListener(new TouchListener());
         imageView.setOnTouchListener(this);
+
+        byte[] byteArray = getIntent().getByteArrayExtra("image");
+
+        if (byteArray != null) {
+            Bitmap bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+            imageView.setImageBitmap(bmp);
+        }
+
     }
 
     @Override

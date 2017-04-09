@@ -198,7 +198,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     private void navigateToHome() {
-        Intent intent = new Intent(this, TagLightsActivity.class);
+        Intent intent = new Intent(this, HomeActivity.class);
         startActivity(intent);
     }
 
