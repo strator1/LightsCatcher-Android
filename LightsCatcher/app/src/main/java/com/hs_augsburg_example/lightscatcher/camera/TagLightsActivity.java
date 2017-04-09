@@ -43,11 +43,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 //        imageView.setOnTouchListener(new TouchListener());
         imageView.setOnTouchListener(this);
 
-        byte[] byteArray = getIntent().getByteArrayExtra("image");
-
-        if (byteArray != null) {
-            Bitmap bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
-            imageView.setImageBitmap(bmp);
+        if (PhotoInformation.shared.getImage() != null) {
+            imageView.setImageBitmap(PhotoInformation.shared.getImage());
         }
 
     }

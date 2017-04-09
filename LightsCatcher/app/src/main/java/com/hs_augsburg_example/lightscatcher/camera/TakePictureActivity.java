@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
@@ -15,6 +16,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.ExifInterface;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,29 +37,34 @@ import android.util.Size;
 import android.widget.FrameLayout;
 
 import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
 
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 
 public class TakePictureActivity extends AppCompatActivity{
 
-    private Camera cam;
+    private static Camera cam;
     private CameraPreview camPreview;
 
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
+            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+            Bitmap rotated = rotateImage(bmp, 90);
+            PhotoInformation.shared.setImage(rotated);
 
-//            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-
-            onAfterPictureTaken(data);
+            onAfterPictureTaken();
         }
     };
 
@@ -67,11 +74,33 @@ public class TakePictureActivity extends AppCompatActivity{
         setContentView(R.layout.activity_take_picture);
 
         if (checkCameraHardware(getApplicationContext())) {
-            if (cam != null) {
-                cam.release();
-            }
             cam = getCameraInstance();
-            cam.setDisplayOrientation(0);
+            Camera.Parameters params = cam.getParameters();
+
+            List<Camera.Size> sizes = params.getSupportedPictureSizes();
+
+            for (Camera.Size s: sizes) {
+//                System.out.println("Available resolutions: " + s.width + ", " + s.height);
+                if (s.width >= 600 && s.width <= 800) {
+                    params.setPictureSize(s.width, s.height);
+                    break;
+                }
+            }
+
+            List<Integer> formats = params.getSupportedPictureFormats();
+
+            for (Integer i : formats) {
+                System.out.println("Available formats: " + i.toString());
+            }
+
+            List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
+
+            for (int[] range : fpsRanges) {
+                System.out.println("Available fpsRange: " + range[0] + ", " + range[1]);
+            }
+
+            cam.setParameters(params);
+            cam.setDisplayOrientation(90);
 
             camPreview = new CameraPreview(this, cam);
             FrameLayout preview = (FrameLayout) findViewById(R.id.take_picture_cameraPreview);
@@ -84,9 +113,8 @@ public class TakePictureActivity extends AppCompatActivity{
         cam.takePicture(null, null, mPicture);
     }
 
-    private void onAfterPictureTaken(byte[] data) {
+    private void onAfterPictureTaken() {
         Intent intent = new Intent(this, TagLightsActivity.class);
-        intent.putExtra("image", data);
         startActivity(intent);
     }
 
@@ -102,18 +130,29 @@ public class TakePictureActivity extends AppCompatActivity{
 
     /** A safe way to get an instance of the Camera object. */
     private Camera getCameraInstance(){
-        Camera c = null;
+        if (cam != null) {
+            cam.release();
+            cam = null;
+        }
+
         try {
-            c = Camera.open(); // attempt to get a Camera instance
+            cam = Camera.open(); // attempt to get a Camera instance
         }
         catch (Exception e){
             // Camera is not available (in use or does not exist)
             e.printStackTrace();
         }
-        return c; // returns null if camera is unavailable
+        return cam; // returns null if camera is unavailable
     }
 
     public void navigateBack(View view) {
 
+    }
+
+    public static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
     }
 }
