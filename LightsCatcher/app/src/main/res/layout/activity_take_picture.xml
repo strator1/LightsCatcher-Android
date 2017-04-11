@@ -10,7 +10,6 @@
         <FrameLayout
             android:id="@+id/take_picture_cameraPreview"
             android:layout_alignParentTop="true"
-            android:layout_above="@+id/take_picture_bottom_area"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 

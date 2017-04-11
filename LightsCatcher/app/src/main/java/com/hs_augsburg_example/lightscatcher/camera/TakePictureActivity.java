@@ -47,6 +47,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
@@ -87,18 +90,6 @@ public class TakePictureActivity extends AppCompatActivity{
                 }
             }
 
-            List<Integer> formats = params.getSupportedPictureFormats();
-
-            for (Integer i : formats) {
-                System.out.println("Available formats: " + i.toString());
-            }
-
-            List<int[]> fpsRanges = params.getSupportedPreviewFpsRange();
-
-            for (int[] range : fpsRanges) {
-                System.out.println("Available fpsRange: " + range[0] + ", " + range[1]);
-            }
-
             cam.setParameters(params);
             cam.setDisplayOrientation(90);
 
@@ -107,6 +98,30 @@ public class TakePictureActivity extends AppCompatActivity{
 
             preview.addView(camPreview);
         };
+    }
+
+    private static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int width, int height) {
+        List<Camera.Size> bigEnough = new ArrayList<Camera.Size>();
+        for(Camera.Size option : choices) {
+            if(option.height == option.width * height / width &&
+                    option.width >= width && option.height >= height) {
+                bigEnough.add(option);
+            }
+        }
+        if(bigEnough.size() > 0) {
+            return Collections.min(bigEnough, new CompareSizeByArea());
+        } else {
+            return choices.get(0);
+        }
+    }
+
+    private static class CompareSizeByArea implements Comparator<Camera.Size> {
+
+        @Override
+        public int compare(Camera.Size lhs, Camera.Size rhs) {
+            return Long.signum( (long)(lhs.width * lhs.height) -
+                    (long)(rhs.width * rhs.height));
+        }
     }
 
     public void onCaptureButtonPressed(View view) {
