@@ -1,58 +1,25 @@
 package com.hs_augsburg_example.lightscatcher.camera;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.ExifInterface;
-import android.media.ImageReader;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.util.SparseIntArray;
-import android.view.Surface;
-import android.view.TextureView;
 import android.view.View;
-import android.util.Size;
 import android.widget.FrameLayout;
 
 import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
 import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
 
-import org.w3c.dom.Text;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 
 public class TakePictureActivity extends AppCompatActivity{
 
@@ -83,12 +50,15 @@ public class TakePictureActivity extends AppCompatActivity{
             List<Camera.Size> sizes = params.getSupportedPictureSizes();
 
             for (Camera.Size s: sizes) {
-//                System.out.println("Available resolutions: " + s.width + ", " + s.height);
+                System.out.println("Available resolutions: " + s.width + ", " + s.height);
+            }
+
+            /*for (Camera.Size s: sizes) {
                 if (s.width >= 600 && s.width <= 800) {
                     params.setPictureSize(s.width, s.height);
                     break;
                 }
-            }
+            }*/
 
             cam.setParameters(params);
             cam.setDisplayOrientation(90);
@@ -146,8 +116,9 @@ public class TakePictureActivity extends AppCompatActivity{
     /** A safe way to get an instance of the Camera object. */
     private Camera getCameraInstance(){
         if (cam != null) {
-            cam.release();
-            cam = null;
+            return cam;
+            /*cam.release();
+            cam = null;*/
         }
 
         try {
