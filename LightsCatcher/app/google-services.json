@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "849015534162",
+    "firebase_url": "https://hsaampelapp.firebaseio.com",
+    "project_id": "hsaampelapp",
+    "storage_bucket": "hsaampelapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:849015534162:android:71426e3828213b81",
+        "android_client_info": {
+          "package_name": "com.hs_augsburg_example.lightscatcher"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "849015534162-vrn4c1phlpig5cdr74ubq077giefjg64.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hs_augsburg_example.lightscatcher",
+            "certificate_hash": "a08f9786730c31bb122889c78df170cfbdf40e81"
+          }
+        },
+        {
+          "client_id": "849015534162-2gbon3ebh1ng5vodss3oco5pivsfsdj2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBg_FvDEM5UDFLSapZBKJHXPduk7mraJ20"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "849015534162-cnfc06fks66gf3ldsa39g3q8h5cqv06e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.hsa.sammelAmpel"
+              }
+            },
+            {
+              "client_id": "849015534162-2gbon3ebh1ng5vodss3oco5pivsfsdj2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
