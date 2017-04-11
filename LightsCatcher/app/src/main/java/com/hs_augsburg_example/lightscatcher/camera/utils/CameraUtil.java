@@ -100,8 +100,9 @@ public class CameraUtil {
             if (result == null) {
                 result=size;
             }
-            else if (result.width <= 2048){
-                return result;
+
+            if (size.width <= 2048) {
+                return size;
             }
         }
 

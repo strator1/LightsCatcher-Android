@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -31,8 +33,9 @@ public class TakePictureActivity extends AppCompatActivity{
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-            Bitmap rotated = rotateImage(bmp, 90);
-            PhotoInformation.shared.setImage(rotated);
+            bmp = rotateImage(bmp, 90);
+
+            PhotoInformation.shared.setImage(bmp);
 
             onAfterPictureTaken();
         }

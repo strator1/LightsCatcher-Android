@@ -96,6 +96,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
         parameters.setPictureSize(mPictureSize.width, mPictureSize.height);
 
+        System.out.println("PICTURE SIZE: " + mPictureSize.width + ", " + mPictureSize.height);
+
         mCamera.setParameters(parameters);
         mCamera.startPreview();
     }

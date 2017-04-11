@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
@@ -24,13 +25,16 @@ import java.util.List;
 import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.GREEN;
 import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.RED;
 
-public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener {
+public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
 
     private ImageView imageView;
+    private Bitmap image;
     private RelativeLayout rl;
 
     private List<LightPosition> insertedViews = new ArrayList<LightPosition>();
     private List<LightPosition> pickedUpViews = new ArrayList<LightPosition>();
+    private int ivHeight;
+    private int ivWidth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +47,22 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 //        imageView.setOnTouchListener(new TouchListener());
         imageView.setOnTouchListener(this);
 
+        ViewTreeObserver vto = imageView.getViewTreeObserver();
+        vto.addOnPreDrawListener(this);
+
         if (PhotoInformation.shared.getImage() != null) {
-            imageView.setImageBitmap(PhotoInformation.shared.getImage());
+            image = PhotoInformation.shared.getImage();
+            imageView.setImageBitmap(image);
         }
 
+    }
+
+    @Override
+    public boolean onPreDraw() {
+        imageView.getViewTreeObserver().removeOnPreDrawListener(this);
+        ivHeight = imageView.getMeasuredHeight();
+        ivWidth = imageView.getMeasuredWidth();
+        return true;
     }
 
     @Override
@@ -94,6 +110,12 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         // Move nodes
         for (LightPosition pos : pickedUpViews) {
             pos.setPos(x, y);
+        }
+    }
+
+    private void onUploadPressed() {
+        for(LightPosition pos : insertedViews) {
+            pos.convertToAbsoluteXY(imageView, image);
         }
     }
 
@@ -146,5 +168,4 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
         return foundViews;
     }
-
 }

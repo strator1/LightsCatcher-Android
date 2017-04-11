@@ -50,6 +50,10 @@ public class PhotoInformation {
     }
 
     public void setImage(Bitmap image) {
+        if (this.image != null) {
+            this.image.recycle();
+        }
+
         this.image = image;
     }
 

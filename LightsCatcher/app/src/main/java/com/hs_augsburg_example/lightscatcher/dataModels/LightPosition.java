@@ -1,8 +1,10 @@
 package com.hs_augsburg_example.lightscatcher.dataModels;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 /**
@@ -39,6 +41,14 @@ public class LightPosition {
         this.getView().getHitRect(outRect);
 
         return outRect.contains(x, y);
+    }
+
+    public void convertToAbsoluteXY(ImageView iv, Bitmap img) {
+        float percentX = this.x / iv.getWidth();
+        float percentY = this.y / iv.getHeight();
+
+        this.x = (int) (img.getWidth() * percentX);
+        this.y = (int) (img.getHeight() * percentY);
     }
 
     public View getView() {
