@@ -1,8 +1,10 @@
 package com.hs_augsburg_example.lightscatcher.dataModels;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -11,25 +13,27 @@ import android.widget.RelativeLayout;
  * Created by patrickvalenta on 08.04.17.
  */
 
-public class LightPosition {
+public class LightPosition extends AppCompatActivity {
 
-    public static final int WIDTH = 60;
-    public static final int HEIGHT = 60;
+    public static final int WIDTH = 40;
+    public static final int HEIGHT = 40;
 
+    public Context ctx;
     public View view;
     public PhotoInformation.LightPhase phase;
     public int x;
     public int y;
 
-    public LightPosition(View v) {
+    public LightPosition(View v, Context ctx) {
+        this.ctx = ctx;
         this.view = v;
     }
 
     public void setPos(int x, int y) {
-        this.x = x - WIDTH/2;
-        this.y = y - HEIGHT/2;
+        this.x = x - getWidth()/2;
+        this.y = y - getHeight()/2;
 
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(WIDTH, HEIGHT);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(getWidth(), getHeight());
         params.leftMargin = this.x;
         params.topMargin = this.y;
 
@@ -49,6 +53,14 @@ public class LightPosition {
 
         this.x = (int) (img.getWidth() * percentX);
         this.y = (int) (img.getHeight() * percentY);
+    }
+
+    public int getWidth() {
+        return (int) (WIDTH * ctx.getResources().getDisplayMetrics().density);
+    }
+
+    public int getHeight() {
+        return (int) (HEIGHT * ctx.getResources().getDisplayMetrics().density);
     }
 
     public View getView() {

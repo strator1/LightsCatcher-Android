@@ -30,6 +30,12 @@
         android:layout_marginBottom="18dp"
         android:text="Bild hochladen" />
 
+    <View
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerInParent="true"
+        android:background="@color/colorAccent"/>
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="40dp"

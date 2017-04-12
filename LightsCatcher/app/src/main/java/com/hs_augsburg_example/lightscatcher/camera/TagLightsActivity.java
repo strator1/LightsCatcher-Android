@@ -179,21 +179,26 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     }
 
     private void addNewView(int x, int y) {
-        if (insertedViews.size() < 3) {
-            View v = new View(getApplicationContext());
-            v.setBackgroundColor(Color.BLACK);
-
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LightPosition.WIDTH, LightPosition.HEIGHT);
-
-            LightPosition pos = new LightPosition(v);
-            pos.setPos(x, y);
-            params.leftMargin = pos.getX();
-            params.topMargin = pos.getY();
-
-            rl.addView(v, params);
-            insertedViews.add(pos);
-            showLightPhaseAlertView(pos);
+        if (insertedViews.size() >= 3) {
+            return;
         }
+
+        System.out.println("Density: " + getApplicationContext().getResources().getDisplayMetrics().density);
+        System.out.println("Density: " + getApplicationContext().getResources().getDisplayMetrics().densityDpi);
+
+        View v = new View(getApplicationContext());
+        v.setBackgroundColor(Color.BLACK);
+
+        LightPosition pos = new LightPosition(v, getApplicationContext());
+        pos.setPos(x, y);
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(pos.getWidth(), pos.getHeight());
+        params.leftMargin = pos.getX();
+        params.topMargin = pos.getY();
+
+        rl.addView(v, params);
+        insertedViews.add(pos);
+        showLightPhaseAlertView(pos);
     }
 
     private void showLightPhaseAlertView(final LightPosition pos) {
