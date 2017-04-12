@@ -1,33 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity">
-
-    <android.support.design.widget.AppBarLayout
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <RelativeLayout
+        android:id="@+id/take_picture_rl"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:layout_height="match_parent">
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
+        <FrameLayout
+            android:id="@+id/take_picture_cameraPreview"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            android:layout_height="match_parent" />
 
-    </android.support.design.widget.AppBarLayout>
+        <RelativeLayout
+            android:id="@+id/take_picture_bottom_area"
+            android:background="#000"
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="100dp">
 
-    <include layout="@layout/content_take_picture" />
+            <ImageView
+                android:id="@+id/take_picture_exit_btn"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:onClick="navigateBack"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_menu_camera" />
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/take_picture_btn"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:onClick="onCaptureButtonPressed"
+                android:layout_gravity="bottom|end"
+                android:layout_centerInParent="true"
+                app:srcCompat="@android:drawable/ic_menu_camera" />
 
-</android.support.design.widget.CoordinatorLayout>
+        </RelativeLayout>
+    </RelativeLayout>
+</FrameLayout>
