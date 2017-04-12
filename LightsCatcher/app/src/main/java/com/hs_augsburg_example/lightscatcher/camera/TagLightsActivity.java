@@ -10,10 +10,14 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.PopupMenu;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -54,6 +58,9 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private int ivHeight;
     private int ivWidth;
 
+    private long lastTouchDown;
+    private int CLICK_ACTION_THRESHHOLD = 200;
+
     private StorageReference mStorageRef;
 
     @Override
@@ -65,7 +72,6 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         imageView = (ImageView) findViewById(R.id.imageView);
         rl = (RelativeLayout) findViewById(R.id.tag_lights_rl);
 
-//        imageView.setOnTouchListener(new TouchListener());
         imageView.setOnTouchListener(this);
 
         ViewTreeObserver vto = imageView.getViewTreeObserver();
@@ -98,9 +104,17 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
+                lastTouchDown = System.currentTimeMillis();
                 onActionDownTouch(x, y);
                 break;
             case MotionEvent.ACTION_UP:
+                if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD)  {
+                    if (pickedUpViews.size() == 0) {
+                        addNewView(x, y);
+                    } else if (pickedUpViews.size() == 1) {
+                        showLightPhaseAlertView(pickedUpViews.get(0), false);
+                    }
+                }
                 onActionUpTouch();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -114,14 +128,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     }
 
     private void onActionDownTouch(int x, int y) {
-        // Check if location intersects with existing node
-        // -> Yes - pick up node
-        // -> No - create new node
-
         pickedUpViews = inViewInBounds(x, y);
-        if (pickedUpViews.size() == 0) {
-            addNewView(x, y);
-        }
     }
 
     private void onActionUpTouch() {
@@ -165,11 +172,12 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 progressBar.setVisibility(View.GONE);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload successful!!!!", Toast.LENGTH_LONG);
                 toast.show();
-                Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
-                startActivity(intent);
-                finish();
             }
         });
+
+        Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
+        startActivity(intent);
+        finish();
 
         try {
             baos.close();
@@ -183,9 +191,6 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             return;
         }
 
-        System.out.println("Density: " + getApplicationContext().getResources().getDisplayMetrics().density);
-        System.out.println("Density: " + getApplicationContext().getResources().getDisplayMetrics().densityDpi);
-
         View v = new View(getApplicationContext());
         v.setBackgroundColor(Color.BLACK);
 
@@ -198,26 +203,80 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
         rl.addView(v, params);
         insertedViews.add(pos);
-        showLightPhaseAlertView(pos);
+        showLightPhaseAlertView(pos, true);
     }
 
-    private void showLightPhaseAlertView(final LightPosition pos) {
-        AlertDialog alertDialog = new AlertDialog.Builder(TagLightsActivity.this).create();
-        alertDialog.setTitle("Rot oder Grünphase?");
-        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Rot",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        pos.setPhase(RED);
-                        dialog.dismiss();
-                    }
-                });
-        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Grün",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        pos.setPhase(GREEN);
-                        dialog.dismiss();
-                    }
-                });
+    private void showLightPhaseAlertView(final LightPosition pos, final boolean isNew) {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        View dialogView = inflater.inflate(R.layout.content_lightpos_dialog, null);
+        dialogBuilder.setView(dialogView);
+        dialogBuilder.setTitle("\uD83D\uDEA6 Rot oder Grünphase?");
+
+        dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (!isNew) {
+                    return;
+                }
+
+                LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+                rl.removeView(lastPos.getView());
+                insertedViews.remove(lastPos);
+            }
+        });
+
+        Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
+        Button redButton = (Button) dialogView.findViewById(R.id.redButton);
+        Button greenButton = (Button) dialogView.findViewById(R.id.greenButton);
+
+        if (!isNew) {
+            deleteButton.setVisibility(View.VISIBLE);
+        }
+
+        final AlertDialog alertDialog = dialogBuilder.create();
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("Delete pressed");
+                rl.removeView(pos.getView());
+                insertedViews.remove(pos);
+                alertDialog.dismiss();
+            }
+        });
+
+        redButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("red pressed");
+                pos.setPhase(RED);
+                alertDialog.dismiss();
+            }
+        });
+
+        greenButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("green pressed");
+                pos.setPhase(GREEN);
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                if (!isNew) {
+                    return;
+                }
+
+                LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+                rl.removeView(lastPos.getView());
+                insertedViews.remove(lastPos);
+            }
+        });
         alertDialog.show();
     }
 
@@ -232,4 +291,5 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
         return foundViews;
     }
+
 }
