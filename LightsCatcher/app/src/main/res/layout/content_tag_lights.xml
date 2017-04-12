@@ -17,6 +17,34 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/button_info"
+        android:layout_width="@dimen/floating_button"
+        android:layout_height="@dimen/floating_button"
+        android:layout_above="@+id/button_undo"
+        android:layout_alignParentRight="true"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:onClick="infoBtnPressed"
+        app:backgroundTint="@color/common_google_signin_btn_text_dark_default"
+        app:rippleColor="@color/common_google_signin_btn_text_light_default"
+        app:srcCompat="@android:drawable/ic_menu_info_details" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/button_undo"
+        android:layout_width="@dimen/floating_button"
+        android:layout_height="@dimen/floating_button"
+        android:layout_above="@+id/button"
+        android:layout_alignParentRight="true"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        app:backgroundTint="@color/common_google_signin_btn_text_dark_default"
+        app:rippleColor="@color/common_google_signin_btn_text_light_default"
+        android:onClick="undoBtnPressed"
+        app:srcCompat="@android:drawable/ic_menu_revert" />
+
     <Button
         android:id="@+id/button"
         android:layout_width="wrap_content"
@@ -27,7 +55,9 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="18dp"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:text="Bild hochladen" />
 
     <View

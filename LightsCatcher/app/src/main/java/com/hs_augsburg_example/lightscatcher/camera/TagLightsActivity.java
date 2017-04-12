@@ -272,12 +272,23 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                     return;
                 }
 
-                LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
-                rl.removeView(lastPos.getView());
-                insertedViews.remove(lastPos);
+                undoBtnPressed(null);
             }
         });
         alertDialog.show();
+    }
+
+    public void undoBtnPressed(View view) {
+        if (insertedViews.size() == 0) {
+            return;
+        }
+
+        LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+        rl.removeView(lastPos.getView());
+        insertedViews.remove(lastPos);
+    }
+
+    public void infoBtnPressed(View view) {
     }
 
     private List<LightPosition> inViewInBounds(int x, int y) {
