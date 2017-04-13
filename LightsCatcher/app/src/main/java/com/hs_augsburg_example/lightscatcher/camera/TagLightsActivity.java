@@ -81,6 +81,12 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         if (PhotoInformation.shared.getImage() != null) {
             image = PhotoInformation.shared.getImage();
             imageView.setImageBitmap(image);
+
+            LightPosition mostRel = PhotoInformation.shared.getMostRelevantPosition();
+
+            if (mostRel != null) {
+                addNewView(0, 0, mostRel);
+            }
         }
 
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -111,7 +117,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             case MotionEvent.ACTION_UP:
                 if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD)  {
                     if (pickedUpViews.size() == 0) {
-                        addNewView(x, y);
+                        addNewView(x, y, null);
                     } else if (pickedUpViews.size() == 1) {
                         showLightPhaseAlertView(pickedUpViews.get(0), false);
                     }
@@ -186,7 +192,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         }
     }
 
-    private void addNewView(int x, int y) {
+    private void addNewView(int x, int y, LightPosition existingPos) {
         if (insertedViews.size() >= 3) {
             return;
         }
@@ -194,8 +200,15 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         View v = new View(getApplicationContext());
         v.setBackgroundColor(Color.BLACK);
 
-        LightPosition pos = new LightPosition(v, getApplicationContext());
-        pos.setPos(x, y);
+        LightPosition pos;
+
+        if (existingPos == null) {
+            pos = new LightPosition(v, getApplicationContext());
+            pos.setPos(x, y);
+        } else {
+            pos = existingPos;
+            pos.setView(v);
+        }
 
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(pos.getWidth(), pos.getHeight());
         params.leftMargin = pos.getX();

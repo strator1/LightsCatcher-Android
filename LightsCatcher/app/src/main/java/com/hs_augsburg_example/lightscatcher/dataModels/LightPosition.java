@@ -21,12 +21,14 @@ public class LightPosition extends AppCompatActivity {
     public Context ctx;
     public View view;
     public PhotoInformation.LightPhase phase;
+    public boolean isMostRelevant;
     public int x;
     public int y;
 
     public LightPosition(View v, Context ctx) {
         this.ctx = ctx;
         this.view = v;
+        this.isMostRelevant = false;
     }
 
     public void setPos(int x, int y) {
@@ -95,5 +97,13 @@ public class LightPosition extends AppCompatActivity {
 
     public void setY(int y) {
         this.y = y;
+    }
+
+    public boolean isMostRelevant() {
+        return isMostRelevant;
+    }
+
+    public void setMostRelevant(boolean mostRelevant) {
+        isMostRelevant = mostRelevant;
     }
 }

@@ -19,6 +19,7 @@ import android.widget.RelativeLayout;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
 
 import java.util.ArrayList;
@@ -42,6 +43,14 @@ public class TakePictureActivity extends AppCompatActivity{
             Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
             bmp = rotateImage(bmp, 90);
 
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) crosshairView.getLayoutParams();
+            LightPosition pos = new LightPosition(new View(getApplicationContext()), getApplicationContext());
+            pos.setX(params.leftMargin + pos.getWidth()/2);
+            pos.setY(params.topMargin + pos.getHeight()/2);
+            pos.setMostRelevant(true);
+
+            PhotoInformation.shared.resetLightPositions();
+            PhotoInformation.shared.addToLightPosition(pos);
             PhotoInformation.shared.setImage(bmp);
 
             onAfterPictureTaken();
@@ -76,6 +85,18 @@ public class TakePictureActivity extends AppCompatActivity{
         addCrosshairView();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        camPreview.getCamera().startPreview();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        camPreview.getCamera().stopPreview();
+    }
+
     private void addCrosshairView() {
         float density = getApplicationContext().getResources().getDisplayMetrics().density;
         int viewHeight = (int) (90 * density);
@@ -92,7 +113,7 @@ public class TakePictureActivity extends AppCompatActivity{
         Random r = new Random();
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewHeight, viewWidth);
         params.leftMargin = r.nextInt(maxWidth - 0) + 0;
-        params.topMargin = r.nextInt(maxHeight - 40) + 40;
+        params.topMargin = r.nextInt(maxHeight - (int) (40 * density)) + (int) (40 * density);
 
         rl.addView(crosshairView, params);
     }

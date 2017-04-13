@@ -89,12 +89,30 @@ public class PhotoInformation {
         this.latitude = latitude;
     }
 
+    public void addToLightPosition(LightPosition pos) {
+        this.lightPositionList.add(pos);
+    }
+
     public List<LightPosition> getLightPositionList() {
         return lightPositionList;
     }
 
     public void setLightPositionList(List<LightPosition> lightPositionList) {
         this.lightPositionList = lightPositionList;
+    }
+
+    public void resetLightPositions() {
+        this.lightPositionList = new ArrayList<LightPosition>();
+    }
+
+    public LightPosition getMostRelevantPosition() {
+        for (LightPosition pos : lightPositionList) {
+            if (pos.isMostRelevant()) {
+                return pos;
+            }
+        }
+
+        return null;
     }
 
 }
