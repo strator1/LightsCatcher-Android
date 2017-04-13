@@ -11,8 +11,11 @@ import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
@@ -22,11 +25,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 
 public class TakePictureActivity extends AppCompatActivity{
 
     private static Camera cam;
     private CameraPreview camPreview;
+
+    private RelativeLayout rl;
+    private View crosshairView;
 
     private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
 
@@ -56,14 +63,6 @@ public class TakePictureActivity extends AppCompatActivity{
                 System.out.println("Available resolutions: " + s.width + ", " + s.height);
             }
 
-            /*for (Camera.Size s: sizes) {
-                if (s.width >= 600 && s.width <= 800) {
-                    params.setPictureSize(s.width, s.height);
-                    break;
-                }
-            }*/
-
-            cam.setParameters(params);
             cam.setDisplayOrientation(90);
 
             camPreview = new CameraPreview(this, cam);
@@ -71,30 +70,31 @@ public class TakePictureActivity extends AppCompatActivity{
 
             preview.addView(camPreview);
         };
+
+        rl = (RelativeLayout) findViewById(R.id.take_picture_rl);
+
+        addCrosshairView();
     }
 
-    private static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int width, int height) {
-        List<Camera.Size> bigEnough = new ArrayList<Camera.Size>();
-        for(Camera.Size option : choices) {
-            if(option.height == option.width * height / width &&
-                    option.width >= width && option.height >= height) {
-                bigEnough.add(option);
-            }
-        }
-        if(bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizeByArea());
-        } else {
-            return choices.get(0);
-        }
-    }
+    private void addCrosshairView() {
+        float density = getApplicationContext().getResources().getDisplayMetrics().density;
+        int viewHeight = (int) (90 * density);
+        int viewWidth = (int) (90 * density);
 
-    private static class CompareSizeByArea implements Comparator<Camera.Size> {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int maxHeight = (displayMetrics.heightPixels / 2) - viewHeight;
+        int maxWidth = displayMetrics.widthPixels - viewWidth;
 
-        @Override
-        public int compare(Camera.Size lhs, Camera.Size rhs) {
-            return Long.signum( (long)(lhs.width * lhs.height) -
-                    (long)(rhs.width * rhs.height));
-        }
+        LayoutInflater inflater = this.getLayoutInflater();
+        crosshairView = inflater.inflate(R.layout.view_camera_crosshair, null);
+
+        Random r = new Random();
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewHeight, viewWidth);
+        params.leftMargin = r.nextInt(maxWidth - 0) + 0;
+        params.topMargin = r.nextInt(maxHeight - 40) + 40;
+
+        rl.addView(crosshairView, params);
     }
 
     public void onCaptureButtonPressed(View view) {

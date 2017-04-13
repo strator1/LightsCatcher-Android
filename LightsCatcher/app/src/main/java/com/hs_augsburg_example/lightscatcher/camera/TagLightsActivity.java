@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.GREEN;
 import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.RED;
@@ -151,8 +152,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
 
-
-        StorageReference storageReference = mStorageRef.child("lights_images").child("firstAndroidPicture");
+        StorageReference storageReference = mStorageRef.child("lights_images").child(UUID.randomUUID().toString().toUpperCase());
 
         progressBar.setVisibility(View.VISIBLE);
         UploadTask uploadTask = storageReference.putBytes(baos.toByteArray());
