@@ -10,6 +10,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,6 +91,10 @@ public class TakePictureActivity extends AppCompatActivity{
     protected void onResume() {
         super.onResume();
         camPreview.getCamera().startPreview();
+
+        if (UserPreference.isFirstCapture(getApplicationContext())) {
+            onInfoButtonPressed(null);
+        }
     }
 
     @Override
@@ -159,10 +165,28 @@ public class TakePictureActivity extends AppCompatActivity{
 
     }
 
+    private AlertDialog pictureHelpDialog;
+
+    public void onInfoButtonPressed(View view) {
+        if (pictureHelpDialog == null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            dialogBuilder.setTitle("Erste Hilfe");
+            dialogBuilder.setMessage("Bringe die momentan relevante Ampel ins Fadenkreuz und drücke den Auslöser");
+
+            dialogBuilder.setPositiveButton("Verstanden", null);
+
+            pictureHelpDialog = dialogBuilder.create();
+        }
+
+        pictureHelpDialog.show();
+    }
+
     public static Bitmap rotateImage(Bitmap source, float angle) {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
     }
+
+
 }

@@ -41,6 +41,7 @@ import com.hs_augsburg_example.lightscatcher.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -306,6 +307,15 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 }
 
                 undoBtnPressed(null);
+            }
+        });
+
+        lightPhaseDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if (UserPreference.isFirstTagging(getApplicationContext())) {
+                    infoBtnPressed(null);
+                }
             }
         });
 
