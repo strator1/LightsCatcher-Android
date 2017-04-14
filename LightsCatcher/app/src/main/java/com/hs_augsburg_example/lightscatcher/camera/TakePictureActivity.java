@@ -1,15 +1,17 @@
 package com.hs_augsburg_example.lightscatcher.camera;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
@@ -17,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
@@ -24,13 +27,13 @@ import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
 public class TakePictureActivity extends AppCompatActivity{
+
+    private static final int REQUEST_CAMERA_PERMISSION = 1;
+    private static final String FRAGMENT_DIALOG = "dialog";
 
     private static Camera cam;
     private CameraPreview camPreview;
@@ -64,6 +67,69 @@ public class TakePictureActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_take_picture);
 
+        rl = (RelativeLayout) findViewById(R.id.take_picture_rl);
+
+        addCrosshairView();
+    }
+
+    private boolean permissionGranted = false;
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            permissionGranted = true;
+            if (camPreview == null) {
+                setupCamera();
+            }
+
+            System.out.println("granted");
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.CAMERA)) {
+            permissionGranted = false;
+            System.out.println("granted");
+        } else {
+            System.out.println("granted");
+            permissionGranted = false;
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
+                    REQUEST_CAMERA_PERMISSION);
+        }
+
+
+        if (UserPreference.isFirstCapture(getApplicationContext())) {
+            onInfoButtonPressed(null);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (camPreview != null && camPreview.getCamera() != null) {
+            camPreview.getCamera().stopPreview();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CAMERA_PERMISSION:
+                if (permissions.length != 1 || grantResults.length != 1) {
+                    throw new RuntimeException("Error on requesting camera permission.");
+                }
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "No permission!",
+                            Toast.LENGTH_SHORT).show();
+                }
+                // No need to start camera here; it is handled by onResume
+                break;
+        }
+    }
+
+    private void setupCamera() {
         if (checkCameraHardware(getApplicationContext())) {
             cam = getCameraInstance();
             Camera.Parameters params = cam.getParameters();
@@ -81,26 +147,6 @@ public class TakePictureActivity extends AppCompatActivity{
 
             preview.addView(camPreview);
         };
-
-        rl = (RelativeLayout) findViewById(R.id.take_picture_rl);
-
-        addCrosshairView();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        camPreview.getCamera().startPreview();
-
-        if (UserPreference.isFirstCapture(getApplicationContext())) {
-            onInfoButtonPressed(null);
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        camPreview.getCamera().stopPreview();
     }
 
     private void addCrosshairView() {
@@ -125,6 +171,10 @@ public class TakePictureActivity extends AppCompatActivity{
     }
 
     public void onCaptureButtonPressed(View view) {
+        if (!permissionGranted) {
+            return;
+        }
+        
         cam.takePicture(null, null, mPicture);
     }
 
