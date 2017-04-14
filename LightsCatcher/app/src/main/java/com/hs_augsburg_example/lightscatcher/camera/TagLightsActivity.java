@@ -2,10 +2,15 @@ package com.hs_augsburg_example.lightscatcher.camera;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -204,6 +209,16 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
         if (existingPos == null) {
             pos = new LightPosition(v, getApplicationContext());
+
+            boolean mostRelevantExists = false;
+            for (LightPosition p : insertedViews) {
+                if (p.isMostRelevant){
+                    mostRelevantExists = true;
+                    break;
+                }
+            }
+
+            pos.setMostRelevant(!mostRelevantExists);
             pos.setPos(x, y);
         } else {
             pos = existingPos;
@@ -219,36 +234,41 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         showLightPhaseAlertView(pos, true);
     }
 
+    private AlertDialog lightPhaseDialog;
+    private View lightPhaseDialogView;
+
     private void showLightPhaseAlertView(final LightPosition pos, final boolean isNew) {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
 
-        View dialogView = inflater.inflate(R.layout.content_lightpos_dialog, null);
-        dialogBuilder.setView(dialogView);
-        dialogBuilder.setTitle("\uD83D\uDEA6 Rot oder Grünphase?");
+        if (lightPhaseDialog == null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            LayoutInflater inflater = this.getLayoutInflater();
 
-        dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (!isNew) {
-                    return;
+            lightPhaseDialogView = inflater.inflate(R.layout.content_lightpos_dialog, null);
+            dialogBuilder.setView(lightPhaseDialogView);
+            dialogBuilder.setTitle("\uD83D\uDEA6 Rot oder Grünphase?");
+
+            dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (!isNew) {
+                        return;
+                    }
+
+                    LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+                    rl.removeView(lastPos.getView());
+                    insertedViews.remove(lastPos);
                 }
+            });
 
-                LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
-                rl.removeView(lastPos.getView());
-                insertedViews.remove(lastPos);
-            }
-        });
-
-        Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
-        Button redButton = (Button) dialogView.findViewById(R.id.redButton);
-        Button greenButton = (Button) dialogView.findViewById(R.id.greenButton);
-
-        if (!isNew) {
-            deleteButton.setVisibility(View.VISIBLE);
+            lightPhaseDialog = dialogBuilder.create();
         }
 
-        final AlertDialog alertDialog = dialogBuilder.create();
+
+        Button deleteButton = (Button) lightPhaseDialogView.findViewById(R.id.deleteButton);
+        Button redButton = (Button) lightPhaseDialogView.findViewById(R.id.redButton);
+        Button greenButton = (Button) lightPhaseDialogView.findViewById(R.id.greenButton);
+
+
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -256,7 +276,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 System.out.println("Delete pressed");
                 rl.removeView(pos.getView());
                 insertedViews.remove(pos);
-                alertDialog.dismiss();
+                lightPhaseDialog.dismiss();
             }
         });
 
@@ -265,7 +285,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             public void onClick(View v) {
                 System.out.println("red pressed");
                 pos.setPhase(RED);
-                alertDialog.dismiss();
+                lightPhaseDialog.dismiss();
             }
         });
 
@@ -274,11 +294,11 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             public void onClick(View v) {
                 System.out.println("green pressed");
                 pos.setPhase(GREEN);
-                alertDialog.dismiss();
+                lightPhaseDialog.dismiss();
             }
         });
 
-        alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+        lightPhaseDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
                 if (!isNew) {
@@ -288,7 +308,12 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 undoBtnPressed(null);
             }
         });
-        alertDialog.show();
+
+        if (!isNew) {
+            deleteButton.setVisibility(View.VISIBLE);
+        }
+
+        lightPhaseDialog.show();
     }
 
     public void undoBtnPressed(View view) {
@@ -301,7 +326,24 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         insertedViews.remove(lastPos);
     }
 
+    private AlertDialog lightPhaseHelpDialog;
+    private View lightPhaseHelpDialogView;
+
     public void infoBtnPressed(View view) {
+        if (lightPhaseHelpDialog == null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            LayoutInflater inflater = this.getLayoutInflater();
+
+            lightPhaseHelpDialogView = inflater.inflate(R.layout.content_lightpos_helpdialog, null);
+            dialogBuilder.setView(lightPhaseHelpDialogView);
+            dialogBuilder.setTitle("Erste Hilfe");
+
+            dialogBuilder.setPositiveButton("Verstanden", null);
+
+            lightPhaseHelpDialog = dialogBuilder.create();
+        }
+
+        lightPhaseHelpDialog.show();
     }
 
     private List<LightPosition> inViewInBounds(int x, int y) {

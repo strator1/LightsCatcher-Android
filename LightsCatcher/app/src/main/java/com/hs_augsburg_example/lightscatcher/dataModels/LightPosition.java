@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
@@ -79,8 +80,22 @@ public class LightPosition extends AppCompatActivity {
 
     public void setPhase(PhotoInformation.LightPhase phase) {
         this.phase = phase;
+        int c = this.phase == PhotoInformation.LightPhase.RED ? Color.RED : Color.GREEN;
 
-        this.getView().setBackgroundColor(this.phase == PhotoInformation.LightPhase.RED ? Color.RED : Color.GREEN);
+        this.getView().setBackgroundColor(c);
+
+        GradientDrawable gd = new GradientDrawable();
+        gd.setCornerRadius(5);
+        gd.setColor(c);
+
+        if (isMostRelevant) {
+            gd.setStroke(5, Color.YELLOW);
+        } else {
+            gd.setStroke(5, c);
+        }
+
+        this.getView().setBackgroundDrawable(gd);
+
     }
 
     public int getX() {
