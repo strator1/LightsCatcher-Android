@@ -8,6 +8,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -23,8 +25,10 @@ import android.widget.Toast;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
-import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
-import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
+import com.hs_augsburg_example.lightscatcher.services.LocationService;
+import com.hs_augsburg_example.lightscatcher.services.MotionService;
+import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.util.List;
@@ -38,6 +42,16 @@ public class TakePictureActivity extends AppCompatActivity{
     private static Camera cam;
     private CameraPreview camPreview;
 
+    SensorManager mSensorManager;
+    Sensor accelerometer;
+    Sensor magnetometer;
+    Sensor vectorSensor;
+    MotionService motionService;
+
+    private LocationService locationService;
+
+
+
     private RelativeLayout rl;
     private View crosshairView;
 
@@ -49,14 +63,19 @@ public class TakePictureActivity extends AppCompatActivity{
             bmp = rotateImage(bmp, 90);
 
             RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) crosshairView.getLayoutParams();
-            LightPosition pos = new LightPosition(new View(getApplicationContext()), getApplicationContext());
+            LightInformation pos = new LightInformation(new View(getApplicationContext()), getApplicationContext());
             pos.setX(params.leftMargin + pos.getWidth()/2);
             pos.setY(params.topMargin + pos.getHeight()/2);
             pos.setMostRelevant(true);
 
+            if (locationService.getLocation() != null) {
+                PhotoInformation.shared.setLocation(locationService.getLocation());
+            }
+
             PhotoInformation.shared.resetLightPositions();
             PhotoInformation.shared.addToLightPosition(pos);
             PhotoInformation.shared.setImage(bmp);
+            PhotoInformation.shared.setGyroPosition(motionService.getPitch());
 
             onAfterPictureTaken();
         }
@@ -68,6 +87,12 @@ public class TakePictureActivity extends AppCompatActivity{
         setContentView(R.layout.activity_take_picture);
 
         rl = (RelativeLayout) findViewById(R.id.take_picture_rl);
+
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        motionService = new MotionService();
+        locationService = new LocationService(getApplicationContext());
 
         addCrosshairView();
     }
@@ -85,22 +110,25 @@ public class TakePictureActivity extends AppCompatActivity{
                 setupCamera();
             }
 
-            System.out.println("granted");
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.CAMERA)) {
             permissionGranted = false;
-            System.out.println("granted");
         } else {
-            System.out.println("granted");
             permissionGranted = false;
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
                     REQUEST_CAMERA_PERMISSION);
         }
 
+        if (locationService.hasPermission()) {
+            locationService.startListening();
+        }
 
         if (UserPreference.isFirstCapture(getApplicationContext())) {
             onInfoButtonPressed(null);
         }
+
+        mSensorManager.registerListener(motionService.getEventListener(), accelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(motionService.getEventListener(), magnetometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
@@ -110,6 +138,16 @@ public class TakePictureActivity extends AppCompatActivity{
         if (camPreview != null && camPreview.getCamera() != null) {
             camPreview.getCamera().stopPreview();
         }
+
+        locationService.stopListening();
+        mSensorManager.unregisterListener(motionService.getEventListener());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationService.stopListening();
+        mSensorManager.unregisterListener(motionService.getEventListener());
     }
 
     @Override
@@ -123,6 +161,11 @@ public class TakePictureActivity extends AppCompatActivity{
                 if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "No permission!",
                             Toast.LENGTH_SHORT).show();
+                } else {
+                    if (!locationService.hasPermission()) {
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                2);
+                    }
                 }
                 // No need to start camera here; it is handled by onResume
                 break;
@@ -174,7 +217,7 @@ public class TakePictureActivity extends AppCompatActivity{
         if (!permissionGranted) {
             return;
         }
-        
+
         cam.takePicture(null, null, mPicture);
     }
 

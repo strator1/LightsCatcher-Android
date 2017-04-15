@@ -2,25 +2,15 @@ package com.hs_augsburg_example.lightscatcher.camera;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.RectShape;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -28,30 +18,26 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.FinishActivity;
-import com.hs_augsburg_example.lightscatcher.HomeActivity;
-import com.hs_augsburg_example.lightscatcher.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
-import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
-import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.dataModels.Light;
+import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.GREEN;
-import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.RED;
+import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.GREEN;
+import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.RED;
 
 public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
 
@@ -60,8 +46,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private Bitmap image;
     private RelativeLayout rl;
 
-    private List<LightPosition> insertedViews = new ArrayList<LightPosition>();
-    private List<LightPosition> pickedUpViews = new ArrayList<LightPosition>();
+    private List<LightInformation> insertedViews = new ArrayList<LightInformation>();
+    private List<LightInformation> pickedUpViews = new ArrayList<LightInformation>();
     private int ivHeight;
     private int ivWidth;
 
@@ -88,7 +74,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             image = PhotoInformation.shared.getImage();
             imageView.setImageBitmap(image);
 
-            LightPosition mostRel = PhotoInformation.shared.getMostRelevantPosition();
+            LightInformation mostRel = PhotoInformation.shared.getMostRelevantPosition();
 
             if (mostRel != null) {
                 addNewView(0, 0, mostRel);
@@ -146,23 +132,27 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
     private void onActionUpTouch() {
         // Drop nodes
-        pickedUpViews = new ArrayList<LightPosition>();
+        pickedUpViews = new ArrayList<LightInformation>();
     }
 
     private void onActionMoveTouch(int x, int y) {
         // Move nodes
-        for (LightPosition pos : pickedUpViews) {
+        for (LightInformation pos : pickedUpViews) {
             pos.setPos(x, y);
         }
     }
 
     public void onUploadPressed(View v) {
-        for(LightPosition pos : insertedViews) {
+        for(LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
 
+        PhotoInformation.shared.resetLightPositions();
+        PhotoInformation.shared.setLightInformationList(insertedViews);
+        final Light light = PhotoInformation.shared.getLight();
+
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
 
         StorageReference storageReference = mStorageRef.child("lights_images").child(UUID.randomUUID().toString().toUpperCase());
 
@@ -182,6 +172,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressBar.setVisibility(View.GONE);
+                light.imageUrl = taskSnapshot.getDownloadUrl().toString();
+                PhotoInformation.shared.createLight(light);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload successful!!!!", Toast.LENGTH_LONG);
                 toast.show();
             }
@@ -198,7 +190,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         }
     }
 
-    private void addNewView(int x, int y, LightPosition existingPos) {
+    private void addNewView(int x, int y, LightInformation existingPos) {
         if (insertedViews.size() >= 3) {
             return;
         }
@@ -206,13 +198,13 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         View v = new View(getApplicationContext());
         v.setBackgroundColor(Color.BLACK);
 
-        LightPosition pos;
+        LightInformation pos;
 
         if (existingPos == null) {
-            pos = new LightPosition(v, getApplicationContext());
+            pos = new LightInformation(v, getApplicationContext());
 
             boolean mostRelevantExists = false;
-            for (LightPosition p : insertedViews) {
+            for (LightInformation p : insertedViews) {
                 if (p.isMostRelevant){
                     mostRelevantExists = true;
                     break;
@@ -238,7 +230,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private AlertDialog lightPhaseDialog;
     private View lightPhaseDialogView;
 
-    private void showLightPhaseAlertView(final LightPosition pos, final boolean isNew) {
+    private void showLightPhaseAlertView(final LightInformation pos, final boolean isNew) {
 
         if (lightPhaseDialog == null) {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
@@ -255,7 +247,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                         return;
                     }
 
-                    LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+                    LightInformation lastPos = insertedViews.get(insertedViews.size() - 1);
                     rl.removeView(lastPos.getView());
                     insertedViews.remove(lastPos);
                 }
@@ -331,7 +323,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             return;
         }
 
-        LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+        LightInformation lastPos = insertedViews.get(insertedViews.size() - 1);
         rl.removeView(lastPos.getView());
         insertedViews.remove(lastPos);
     }
@@ -356,10 +348,10 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         lightPhaseHelpDialog.show();
     }
 
-    private List<LightPosition> inViewInBounds(int x, int y) {
-        List<LightPosition> foundViews = new ArrayList<LightPosition>();
+    private List<LightInformation> inViewInBounds(int x, int y) {
+        List<LightInformation> foundViews = new ArrayList<LightInformation>();
 
-        for (LightPosition pos : insertedViews) {
+        for (LightInformation pos : insertedViews) {
             if (pos.containsTouchPosition(x, y)) {
                 foundViews.add(pos);
             }
