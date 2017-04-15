@@ -3,6 +3,7 @@ package com.hs_augsburg_example.lightscatcher.dataModels;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class Light {
     }
 
     public Light(PhotoInformation information) {
+        this.user = UserInformation.shared.getUid();
         this.gyroPosition = Float.toString(information.getGyroPosition());
         this.lightsCount = information.getLightInformationList().size();
 

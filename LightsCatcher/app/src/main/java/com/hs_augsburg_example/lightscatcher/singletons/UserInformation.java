@@ -5,6 +5,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -28,6 +30,13 @@ public class UserInformation {
     public void createNewUser(String name, String email) {
         this.current = new User(name, email, 0);
         mDatabase.child("users").child(UUID.randomUUID().toString().toUpperCase()).setValue(this.current);
+    }
+
+    public void updateUserPoints(int points) {
+        this.current.addToPoints(points);
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put("/users/" + getUid(), this.current.toMap());
+        mDatabase.updateChildren(childUpdates);
     }
 
     public String getUid() {

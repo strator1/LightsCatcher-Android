@@ -28,6 +28,7 @@ import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.ByteArrayOutputStream;
@@ -174,6 +175,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 progressBar.setVisibility(View.GONE);
                 light.imageUrl = taskSnapshot.getDownloadUrl().toString();
                 PhotoInformation.shared.createLight(light);
+               // UserInformation.shared.updateUserPoints(1);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload successful!!!!", Toast.LENGTH_LONG);
                 toast.show();
             }
