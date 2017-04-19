@@ -17,15 +17,20 @@ import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
+
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 
 import java.util.List;
 
-public class SettingsActivity extends AppCompatPreferenceActivity {
+public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
         setupActionBar();
     }
 
@@ -38,5 +43,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // Show the Up button in the action bar.
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+    }
+
+    public void onLogout(View view) {
+        UserInformation.shared.logout();
+        Intent intent = new Intent(SettingsActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    public void onInfo(View view) {
+        System.out.println("Info");
     }
 }

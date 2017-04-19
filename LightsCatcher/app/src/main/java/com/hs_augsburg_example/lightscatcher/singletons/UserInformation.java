@@ -48,7 +48,8 @@ public class UserInformation {
     }
 
     public void logout() {
-
+        this.mAuth.signOut();
+        current = null;
     }
 
     public User getCurrent() {

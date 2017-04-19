@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent">
- <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    <RelativeLayout
+        android:id="@+id/info_contain"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/datenschutz_contain"
+        android:background="@color/colorAccent">
+    </RelativeLayout>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:id="@+id/account_contain"
         android:layout_alignParentTop="true"
@@ -44,6 +55,7 @@
             android:layout_marginTop="16dp"
             android:onClick="onLogout"
             android:text="@string/settings_button_logout" />
+
     </RelativeLayout>
 
 
@@ -71,7 +83,7 @@
             android:textSize="26dp"
             android:textStyle="bold" />
 
-        <Button
+      <!-- <Button
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_alignParentRight="true"
@@ -79,6 +91,7 @@
             android:layout_marginTop="26dp"
             android:background="@drawable/ic_info_black_24dp"
             android:gravity="right|center_vertical"
-            android:onClick="onInfo" />
+            android:onClick="onInfo" />-->
     </RelativeLayout>
-    </RelativeLayout>
+
+</RelativeLayout>
