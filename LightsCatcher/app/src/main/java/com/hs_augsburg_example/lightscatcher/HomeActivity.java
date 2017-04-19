@@ -31,7 +31,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void navigateToCamera() {
-        Intent intent = new Intent(this, TakePictureActivity.class);
+        Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
     }
 
