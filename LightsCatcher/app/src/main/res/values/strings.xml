@@ -36,7 +36,11 @@
     <string name="title_activity_submit">Submit</string>
 
     <!-- Strings related to Settings -->
-
+    <string name="settings_username_label">Username</string>
+    <string name="settings_button_logout">Logout</string>
+    <string name="settings_rechtliches">Rechtliches</string>
+    <string name="settings_datenschutz_label">Datenschutz</string>
+    <string name="settings_button_datenschutz">Datenschutz</string>
     <!--Tag Lights Activity-->
     <string name="tag_lights_activity_help">Markiere per Tap auf den Bildschirm neben der fotografierten alle anderen Ampeln, die auf dem Bild zu sehen sind.</string>
     <!-- Example General settings -->
@@ -108,4 +112,5 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="title_activity_settings">Settings</string>
 </resources>

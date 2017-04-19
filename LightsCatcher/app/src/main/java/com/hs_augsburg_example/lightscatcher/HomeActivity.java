@@ -42,6 +42,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+/*
         // Get ListView object from xml
         final ListView listView = (ListView) findViewById(R.id.view_userRanking);
 
@@ -89,6 +90,7 @@ public class HomeActivity extends AppCompatActivity {
         };
 
         top10.addChildEventListener(listener);
+*/
     }
 
     private void refreshUserItems(){

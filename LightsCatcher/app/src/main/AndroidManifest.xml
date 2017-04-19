@@ -52,7 +52,7 @@
         <activity
             android:name=".camera.TagLightsActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar" >
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity" />
@@ -67,7 +67,9 @@
                 android:value="com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity" />
         </activity>
         <activity android:name=".FinishActivity" />
-
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"></activity>
     </application>
 
 </manifest>
