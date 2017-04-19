@@ -34,14 +34,27 @@
             android:layout_width="match_parent"
             android:layout_height="100dp">
 
-            <ImageView
-                android:id="@+id/take_picture_exit_btn"
+            <Button
+                android:id="@+id/take_picture_info_btn"
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:onClick="navigateBack"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="5dp"
+                android:background="@android:drawable/ic_menu_info_details"
+                android:onClick="onInfoButtonPressed" />
+
+            <Button
+                android:id="@+id/take_picture_exit_btn"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
+                android:layout_marginRight="5dp"
+                android:background="@android:drawable/ic_menu_close_clear_cancel"
+                android:onClick="navigateBack" />
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/take_picture_btn"

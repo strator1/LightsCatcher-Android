@@ -37,6 +37,8 @@
 
     <!-- Strings related to Settings -->
 
+    <!--Tag Lights Activity-->
+    <string name="tag_lights_activity_help">Markiere per Tap auf den Bildschirm neben der fotografierten alle anderen Ampeln, die auf dem Bild zu sehen sind.</string>
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
 

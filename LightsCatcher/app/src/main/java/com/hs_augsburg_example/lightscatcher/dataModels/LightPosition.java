@@ -1,99 +1,28 @@
 package com.hs_augsburg_example.lightscatcher.dataModels;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import com.google.firebase.database.IgnoreExtraProperties;
 
 /**
- * Created by patrickvalenta on 08.04.17.
+ * Created by patrickvalenta on 15.04.17.
  */
 
-public class LightPosition extends AppCompatActivity {
+@IgnoreExtraProperties
+public class LightPosition {
 
-    public static final int WIDTH = 40;
-    public static final int HEIGHT = 40;
-
-    public Context ctx;
-    public View view;
-    public PhotoInformation.LightPhase phase;
+    public int isMostRelevant;
+    public int phase;
     public int x;
     public int y;
 
-    public LightPosition(View v, Context ctx) {
-        this.ctx = ctx;
-        this.view = v;
+    public LightPosition() {
+        // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public void setPos(int x, int y) {
-        this.x = x - getWidth()/2;
-        this.y = y - getHeight()/2;
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(getWidth(), getHeight());
-        params.leftMargin = this.x;
-        params.topMargin = this.y;
-
-        this.getView().setLayoutParams(params);
-    }
-
-    public boolean containsTouchPosition(int x, int y) {
-        Rect outRect = new Rect();
-        this.getView().getHitRect(outRect);
-
-        return outRect.contains(x, y);
-    }
-
-    public void convertToAbsoluteXY(ImageView iv, Bitmap img) {
-        float percentX = this.x / iv.getWidth();
-        float percentY = this.y / iv.getHeight();
-
-        this.x = (int) (img.getWidth() * percentX);
-        this.y = (int) (img.getHeight() * percentY);
-    }
-
-    public int getWidth() {
-        return (int) (WIDTH * ctx.getResources().getDisplayMetrics().density);
-    }
-
-    public int getHeight() {
-        return (int) (HEIGHT * ctx.getResources().getDisplayMetrics().density);
-    }
-
-    public View getView() {
-        return view;
-    }
-
-    public void setView(View view) {
-        this.view = view;
-    }
-
-    public PhotoInformation.LightPhase getPhase() {
-        return phase;
-    }
-
-    public void setPhase(PhotoInformation.LightPhase phase) {
-        this.phase = phase;
-
-        this.getView().setBackgroundColor(this.phase == PhotoInformation.LightPhase.RED ? Color.RED : Color.GREEN);
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public void setX(int x) {
+    public LightPosition(int x, int y, int phase, boolean isMostRelevant) {
         this.x = x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
         this.y = y;
+        this.phase = phase;
+        this.isMostRelevant = isMostRelevant ? 0 : 1;
     }
+
 }

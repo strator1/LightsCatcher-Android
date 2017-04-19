@@ -3,19 +3,14 @@ package com.hs_augsburg_example.lightscatcher.camera;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.PopupMenu;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -23,29 +18,27 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.FinishActivity;
-import com.hs_augsburg_example.lightscatcher.HomeActivity;
-import com.hs_augsburg_example.lightscatcher.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
-import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
-import com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.dataModels.Light;
+import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.GREEN;
-import static com.hs_augsburg_example.lightscatcher.dataModels.PhotoInformation.LightPhase.RED;
+import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.GREEN;
+import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.RED;
 
 public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
 
@@ -54,8 +47,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private Bitmap image;
     private RelativeLayout rl;
 
-    private List<LightPosition> insertedViews = new ArrayList<LightPosition>();
-    private List<LightPosition> pickedUpViews = new ArrayList<LightPosition>();
+    private List<LightInformation> insertedViews = new ArrayList<LightInformation>();
+    private List<LightInformation> pickedUpViews = new ArrayList<LightInformation>();
     private int ivHeight;
     private int ivWidth;
 
@@ -81,6 +74,12 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         if (PhotoInformation.shared.getImage() != null) {
             image = PhotoInformation.shared.getImage();
             imageView.setImageBitmap(image);
+
+            LightInformation mostRel = PhotoInformation.shared.getMostRelevantPosition();
+
+            if (mostRel != null) {
+                addNewView(0, 0, mostRel);
+            }
         }
 
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -111,7 +110,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             case MotionEvent.ACTION_UP:
                 if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD)  {
                     if (pickedUpViews.size() == 0) {
-                        addNewView(x, y);
+                        addNewView(x, y, null);
                     } else if (pickedUpViews.size() == 1) {
                         showLightPhaseAlertView(pickedUpViews.get(0), false);
                     }
@@ -134,23 +133,27 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
     private void onActionUpTouch() {
         // Drop nodes
-        pickedUpViews = new ArrayList<LightPosition>();
+        pickedUpViews = new ArrayList<LightInformation>();
     }
 
     private void onActionMoveTouch(int x, int y) {
         // Move nodes
-        for (LightPosition pos : pickedUpViews) {
+        for (LightInformation pos : pickedUpViews) {
             pos.setPos(x, y);
         }
     }
 
     public void onUploadPressed(View v) {
-        for(LightPosition pos : insertedViews) {
+        for(LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
 
+        PhotoInformation.shared.resetLightPositions();
+        PhotoInformation.shared.setLightInformationList(insertedViews);
+        final Light light = PhotoInformation.shared.getLight();
+
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
 
         StorageReference storageReference = mStorageRef.child("lights_images").child(UUID.randomUUID().toString().toUpperCase());
 
@@ -170,6 +173,9 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressBar.setVisibility(View.GONE);
+                light.imageUrl = taskSnapshot.getDownloadUrl().toString();
+                PhotoInformation.shared.createLight(light);
+               // UserInformation.shared.updateUserPoints(1);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload successful!!!!", Toast.LENGTH_LONG);
                 toast.show();
             }
@@ -186,7 +192,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         }
     }
 
-    private void addNewView(int x, int y) {
+    private void addNewView(int x, int y, LightInformation existingPos) {
         if (insertedViews.size() >= 3) {
             return;
         }
@@ -194,8 +200,25 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         View v = new View(getApplicationContext());
         v.setBackgroundColor(Color.BLACK);
 
-        LightPosition pos = new LightPosition(v, getApplicationContext());
-        pos.setPos(x, y);
+        LightInformation pos;
+
+        if (existingPos == null) {
+            pos = new LightInformation(v, getApplicationContext());
+
+            boolean mostRelevantExists = false;
+            for (LightInformation p : insertedViews) {
+                if (p.isMostRelevant){
+                    mostRelevantExists = true;
+                    break;
+                }
+            }
+
+            pos.setMostRelevant(!mostRelevantExists);
+            pos.setPos(x, y);
+        } else {
+            pos = existingPos;
+            pos.setView(v);
+        }
 
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(pos.getWidth(), pos.getHeight());
         params.leftMargin = pos.getX();
@@ -206,36 +229,41 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         showLightPhaseAlertView(pos, true);
     }
 
-    private void showLightPhaseAlertView(final LightPosition pos, final boolean isNew) {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
+    private AlertDialog lightPhaseDialog;
+    private View lightPhaseDialogView;
 
-        View dialogView = inflater.inflate(R.layout.content_lightpos_dialog, null);
-        dialogBuilder.setView(dialogView);
-        dialogBuilder.setTitle("\uD83D\uDEA6 Rot oder Grünphase?");
+    private void showLightPhaseAlertView(final LightInformation pos, final boolean isNew) {
 
-        dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (!isNew) {
-                    return;
+        if (lightPhaseDialog == null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            LayoutInflater inflater = this.getLayoutInflater();
+
+            lightPhaseDialogView = inflater.inflate(R.layout.content_lightpos_dialog, null);
+            dialogBuilder.setView(lightPhaseDialogView);
+            dialogBuilder.setTitle("\uD83D\uDEA6 Rot oder Grünphase?");
+
+            dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (!isNew) {
+                        return;
+                    }
+
+                    LightInformation lastPos = insertedViews.get(insertedViews.size() - 1);
+                    rl.removeView(lastPos.getView());
+                    insertedViews.remove(lastPos);
                 }
+            });
 
-                LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
-                rl.removeView(lastPos.getView());
-                insertedViews.remove(lastPos);
-            }
-        });
-
-        Button deleteButton = (Button) dialogView.findViewById(R.id.deleteButton);
-        Button redButton = (Button) dialogView.findViewById(R.id.redButton);
-        Button greenButton = (Button) dialogView.findViewById(R.id.greenButton);
-
-        if (!isNew) {
-            deleteButton.setVisibility(View.VISIBLE);
+            lightPhaseDialog = dialogBuilder.create();
         }
 
-        final AlertDialog alertDialog = dialogBuilder.create();
+
+        Button deleteButton = (Button) lightPhaseDialogView.findViewById(R.id.deleteButton);
+        Button redButton = (Button) lightPhaseDialogView.findViewById(R.id.redButton);
+        Button greenButton = (Button) lightPhaseDialogView.findViewById(R.id.greenButton);
+
+
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -243,7 +271,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 System.out.println("Delete pressed");
                 rl.removeView(pos.getView());
                 insertedViews.remove(pos);
-                alertDialog.dismiss();
+                lightPhaseDialog.dismiss();
             }
         });
 
@@ -252,7 +280,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             public void onClick(View v) {
                 System.out.println("red pressed");
                 pos.setPhase(RED);
-                alertDialog.dismiss();
+                lightPhaseDialog.dismiss();
             }
         });
 
@@ -261,11 +289,11 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             public void onClick(View v) {
                 System.out.println("green pressed");
                 pos.setPhase(GREEN);
-                alertDialog.dismiss();
+                lightPhaseDialog.dismiss();
             }
         });
 
-        alertDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+        lightPhaseDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
                 if (!isNew) {
@@ -275,7 +303,21 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 undoBtnPressed(null);
             }
         });
-        alertDialog.show();
+
+        lightPhaseDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if (UserPreference.isFirstTagging(getApplicationContext())) {
+                    infoBtnPressed(null);
+                }
+            }
+        });
+
+        if (!isNew) {
+            deleteButton.setVisibility(View.VISIBLE);
+        }
+
+        lightPhaseDialog.show();
     }
 
     public void undoBtnPressed(View view) {
@@ -283,18 +325,35 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             return;
         }
 
-        LightPosition lastPos = insertedViews.get(insertedViews.size() - 1);
+        LightInformation lastPos = insertedViews.get(insertedViews.size() - 1);
         rl.removeView(lastPos.getView());
         insertedViews.remove(lastPos);
     }
 
+    private AlertDialog lightPhaseHelpDialog;
+    private View lightPhaseHelpDialogView;
+
     public void infoBtnPressed(View view) {
+        if (lightPhaseHelpDialog == null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            LayoutInflater inflater = this.getLayoutInflater();
+
+            lightPhaseHelpDialogView = inflater.inflate(R.layout.content_lightpos_helpdialog, null);
+            dialogBuilder.setView(lightPhaseHelpDialogView);
+            dialogBuilder.setTitle("Erste Hilfe");
+
+            dialogBuilder.setPositiveButton("Verstanden", null);
+
+            lightPhaseHelpDialog = dialogBuilder.create();
+        }
+
+        lightPhaseHelpDialog.show();
     }
 
-    private List<LightPosition> inViewInBounds(int x, int y) {
-        List<LightPosition> foundViews = new ArrayList<LightPosition>();
+    private List<LightInformation> inViewInBounds(int x, int y) {
+        List<LightInformation> foundViews = new ArrayList<LightInformation>();
 
-        for (LightPosition pos : insertedViews) {
+        for (LightInformation pos : insertedViews) {
             if (pos.containsTouchPosition(x, y)) {
                 foundViews.add(pos);
             }
