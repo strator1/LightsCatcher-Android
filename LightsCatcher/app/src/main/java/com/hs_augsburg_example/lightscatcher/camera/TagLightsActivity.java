@@ -240,7 +240,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
             lightPhaseDialogView = inflater.inflate(R.layout.content_lightpos_dialog, null);
             dialogBuilder.setView(lightPhaseDialogView);
-            dialogBuilder.setTitle("\uD83D\uDEA6 Rot oder Grünphase?");
+            dialogBuilder.setTitle("Rot oder Grünphase?");
 
             dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
                 @Override

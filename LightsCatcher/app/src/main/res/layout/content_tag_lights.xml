@@ -26,7 +26,7 @@
         android:shadowDx="1.5"
         android:shadowDy="1.3"
         android:shadowRadius="1.6"
-        android:text="🚦 markieren"
+        android:text="markieren"
         android:textSize="20dp"
         android:textAllCaps="true"
         android:textColor="@android:color/white"/>
