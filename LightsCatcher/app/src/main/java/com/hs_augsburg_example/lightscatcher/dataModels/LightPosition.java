@@ -84,4 +84,5 @@ public class LightPosition {
     public void setY(int y) {
         this.y = y;
     }
+
 }
