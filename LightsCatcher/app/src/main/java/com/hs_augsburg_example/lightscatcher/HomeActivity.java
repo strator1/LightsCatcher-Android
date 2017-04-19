@@ -37,29 +37,37 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+
         // Connect to the Firebase database and query top10 users
         usersDatabase = FirebaseDatabase.getInstance().getReference("users");
-        top10 = usersDatabase.orderByChild("points").limitToFirst(10);
+        top10 = usersDatabase.orderByChild("points").limitToLast(10);
 
-        // Get ListView object from xml
-        final ListView listView = (ListView) findViewById(R.id.view_userRanking);
         // Create a new Adapter
-        adapter = new FirebaseListAdapter<User>(this,User.class, R.layout.list_item_user,top10){
+        adapter = new FirebaseListAdapter<User>(this, User.class, R.layout.item_user, usersDatabase) {
             @Override
             protected void populateView(View v, User model, int position) {
-                ((TextView)v.findViewById(R.id.item_user_name)).setText(model.name);
-                ((TextView)v.findViewById(R.id.item_user_score)).setText(model.points);
+                try {
+                    ((TextView) v.findViewById(R.id.item_user_name)).setText(model.name);
+                    ((TextView) v.findViewById(R.id.item_user_score)).setText(model.points);
+                }catch(Exception ex){
+                    ex.printStackTrace();
+                }
             }
         };
 
+        System.out.println("Items: " + adapter.getCount());
+
+
         // Assign adapter to ListView
+        final ListView listView = (ListView) findViewById(R.id.view_userRanking);
         listView.setAdapter(adapter);
 
     }
 
-    private void refreshUserItems(){
+    private void refreshUserItems() {
 
     }
+
     private void navigateToCamera() {
         Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
