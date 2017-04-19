@@ -46,7 +46,7 @@ public class HomeActivity extends AppCompatActivity {
         final ListView listView = (ListView) findViewById(R.id.view_userRanking);
 
         // Create a new Adapter
-        adapter = new FirebaseAdapter(this, R.layout.list_item_user,);
+        adapter = new FirebaseAdapter(this, R.layout.list_item_user,null);
 
         // Assign adapter to ListView
         listView.setAdapter(adapter);
@@ -95,7 +95,7 @@ public class HomeActivity extends AppCompatActivity {
 
     }
     private void navigateToCamera() {
-        Intent intent = new Intent(this, TakePictureActivity.class);
+        Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
     }
 
