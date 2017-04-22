@@ -52,8 +52,6 @@ public class TakePictureActivity extends AppCompatActivity{
 
     private LocationService locationService;
 
-
-
     private RelativeLayout rl;
     private View crosshairView;
 

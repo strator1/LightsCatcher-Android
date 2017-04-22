@@ -3,6 +3,7 @@ package com.hs_augsburg_example.lightscatcher;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -25,19 +26,29 @@ import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseListAdapter;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
     private FirebaseListAdapter<User> adapter = null;
     private DatabaseReference usersDatabase = null;
     private FirebaseAuth mAuth;
     private Query top10 = null;
+    private TextView txtUserName;
+    private TextView txtUserRank;
+    private TextView txtUserScore;
+    private SwipeRefreshLayout swipeLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        this.txtUserName = (TextView) findViewById(R.id.home_txt_username);
+        this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
+        this.txtUserScore = (TextView)findViewById(R.id.home_txt_score);
+
         setSupportActionBar(toolbar);
 
         mAuth = FirebaseAuth.getInstance();
@@ -62,12 +73,17 @@ public class HomeActivity extends AppCompatActivity {
 
         ActivityRegistry.register(this);
 
-        // Connect to the Firebase database and query top10 users
+
+
+        this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
+        swipeLayout.setOnRefreshListener(this);
+
+        // query ordered list of users from firebase
         usersDatabase = FirebaseDatabase.getInstance().getReference("users");
         top10 = usersDatabase.orderByChild("points");
 
         // Create a new Adapter
-        adapter = new FirebaseListAdapter<User>(this, User.class, R.layout.item_user, top10) {
+        adapter = new ReverseFirebaseListAdapter<User>(this, User.class, R.layout.item_user, top10) {
             @Override
             protected void populateView(View v, User model, int position) {
                 try {
@@ -79,13 +95,9 @@ public class HomeActivity extends AppCompatActivity {
             }
         };
 
-
-
         // Assign adapter to ListView
-        final ListView listView = (ListView) findViewById(R.id.view_userRanking);
+        final ListView listView = (ListView) findViewById(R.id.list_userRanking);
         listView.setAdapter(adapter);
-
-           
     }
 
     @Override
@@ -107,14 +119,37 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void refreshUserItems() {
+    private void refreshUserData(){
+        User usr = UserInformation.shared.current;
+        if(usr != null)
+        {
+            txtUserName.setText(usr.name);
+            txtUserRank.setText("-");
+            txtUserScore.setText(usr.points);
+        }
+        else
+        {
+            txtUserName.setText("-");
+            txtUserRank.setText("-");
+            txtUserScore.setText("-");
+        }
+    }
+    private void refreshListItems() {
+        //show loading animation during loading
+        swipeLayout.setRefreshing(true);
 
+        // notify the view
+        this.adapter.notifyDataSetChanged();
+
+        //stop loading animation during loading
+        swipeLayout.setRefreshing(false);
     }
 
     private void navigateToCamera() {
         Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
     }
+
 
     private void fetchUser(String uid) {
 
@@ -123,6 +158,7 @@ public class HomeActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
                 UserInformation.shared.setCurrent(user);
+                HomeActivity.this.refreshUserData();
             }
 
             @Override
@@ -132,4 +168,12 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+
+    /**
+     * Called when swiping the ranking-list
+     */
+    @Override
+    public void onRefresh() {
+        refreshListItems();
+    }
 }

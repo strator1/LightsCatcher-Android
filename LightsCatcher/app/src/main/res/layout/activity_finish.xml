@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:gravity="center"
-            android:text="Danke Schön! :)"
+            android:text="Dankeschön! :)"
             android:textSize="24sp"
             tools:layout_editor_absoluteX="151dp"
             tools:layout_editor_absoluteY="-8dp" />
