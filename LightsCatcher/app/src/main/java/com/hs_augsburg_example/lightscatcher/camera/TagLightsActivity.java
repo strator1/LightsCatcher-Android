@@ -245,19 +245,6 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             dialogBuilder.setView(lightPhaseDialogView);
             dialogBuilder.setTitle("Rot oder Grünphase?");
 
-            dialogBuilder.setPositiveButton("Abbrechen", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    if (!isNew) {
-                        return;
-                    }
-
-                    LightInformation lastPos = insertedViews.get(insertedViews.size() - 1);
-                    rl.removeView(lastPos.getView());
-                    insertedViews.remove(lastPos);
-                }
-            });
-
             lightPhaseDialog = dialogBuilder.create();
         }
 
@@ -292,6 +279,18 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             public void onClick(View v) {
                 System.out.println("green pressed");
                 pos.setPhase(GREEN);
+                lightPhaseDialog.dismiss();
+            }
+        });
+
+        lightPhaseDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Abbrechen", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (!isNew) {
+                    return;
+                }
+
+                undoBtnPressed(null);
                 lightPhaseDialog.dismiss();
             }
         });
