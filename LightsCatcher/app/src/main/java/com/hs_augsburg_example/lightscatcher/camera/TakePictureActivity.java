@@ -256,6 +256,7 @@ public class TakePictureActivity extends AppCompatActivity{
 
     public void navigateBack(View view) {
 
+
     }
 
     private AlertDialog pictureHelpDialog;
