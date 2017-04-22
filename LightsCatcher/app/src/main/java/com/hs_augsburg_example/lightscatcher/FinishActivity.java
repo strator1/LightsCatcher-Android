@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 public class FinishActivity extends AppCompatActivity {
 
@@ -14,6 +15,8 @@ public class FinishActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_finish);
+
+        ActivityRegistry.register(this);
 
         Button nextPicture = (Button) findViewById(R.id.button_nextPicture);
         nextPicture.setOnClickListener(new View.OnClickListener() {

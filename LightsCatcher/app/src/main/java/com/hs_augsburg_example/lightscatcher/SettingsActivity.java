@@ -23,15 +23,19 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 import java.util.List;
 
 public class SettingsActivity extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         setupActionBar();
+
+        ActivityRegistry.register(this);
     }
 
     /**
@@ -67,4 +71,5 @@ public boolean onOptionsItemSelected(MenuItem item) {
     }
     return true;
 }
+
 }
