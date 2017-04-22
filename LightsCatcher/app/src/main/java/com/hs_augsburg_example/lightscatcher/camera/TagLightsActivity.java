@@ -167,7 +167,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             @Override
             public void onFailure(@NonNull Exception e) {
                 progressBar.setVisibility(View.GONE);
-                Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich", Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(getApplicationContext(), "Upload nicht erfolgreich!!!", Toast.LENGTH_LONG);
                 toast.show();
             }
         });
@@ -179,7 +179,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 light.imageUrl = taskSnapshot.getDownloadUrl().toString();
                 PhotoInformation.shared.createLight(light);
                 UserInformation.shared.updateUserPoints(1);
-                Toast toast = Toast.makeText(getApplicationContext(), "Upload nicht erfolgreich!!!!", Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich :)", Toast.LENGTH_LONG);
                 toast.show();
             }
         });
