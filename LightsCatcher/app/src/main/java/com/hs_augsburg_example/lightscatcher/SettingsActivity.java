@@ -28,7 +28,6 @@ import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import java.util.List;
 
 public class SettingsActivity extends AppCompatActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,18 +57,19 @@ public class SettingsActivity extends AppCompatActivity {
 
     public void onInfo(View view) {
         System.out.println("Info");
+        // TODO: eigentliche Implementierung
     }
 
-@Override
-public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()){
-        case android.R.id.home:
-        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-            break;
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case android.R.id.home:
+            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+                break;
+        }
+        return true;
     }
-    return true;
-}
 
 }
