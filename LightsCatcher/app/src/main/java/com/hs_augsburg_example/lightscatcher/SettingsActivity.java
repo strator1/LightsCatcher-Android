@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
@@ -22,6 +23,11 @@ public class SettingsActivity extends AppCompatActivity {
         setupActionBar();
 
         this.tvUsername = (TextView) findViewById(R.id.settings_username);
+        User user = UserInformation.shared.current;
+        if(user != null)
+        {
+            tvUsername.setText(user.name);
+        }
 
         ActivityRegistry.register(this);
     }
