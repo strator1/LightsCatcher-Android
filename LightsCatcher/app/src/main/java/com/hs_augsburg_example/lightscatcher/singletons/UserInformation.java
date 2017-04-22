@@ -33,7 +33,7 @@ public class UserInformation {
     }
 
     public void updateUserPoints(int points) {
-        if (!isLoggedIn()) {
+        if (this.current == null) {
             return;
         }
 

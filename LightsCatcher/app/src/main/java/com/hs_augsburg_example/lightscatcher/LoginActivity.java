@@ -71,10 +71,6 @@ public class LoginActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         mDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
-        if (auth.getCurrentUser() != null) {
-            fetchUserAndNavHome(UserInformation.shared.getUid());
-        }
-
         // set the view now
         setContentView(R.layout.activity_login);
 
@@ -132,8 +128,12 @@ public class LoginActivity extends AppCompatActivity {
                                         Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
                                     }
                                 } else {
-                                    String uid = task.getResult().getUser().getUid();
-                                    fetchUserAndNavHome(uid);
+                                    /*String uid = task.getResult().getUser().getUid();
+                                    fetchUserAndNavHome(uid);*/
+
+                                    Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                                    startActivity(intent);
+                                    finish();
                                 }
                             }
                         });
@@ -148,10 +148,6 @@ public class LoginActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
                 UserInformation.shared.setCurrent(user);
-
-                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                startActivity(intent);
-                finish();
             }
 
             @Override

@@ -11,18 +11,25 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseListAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 
 public class HomeActivity extends AppCompatActivity {
 
     private FirebaseListAdapter<User> adapter = null;
     private DatabaseReference usersDatabase = null;
+    private FirebaseAuth mAuth;
     private Query top10 = null;
 
     @Override
@@ -31,6 +38,18 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mAuth = FirebaseAuth.getInstance();
+
+        if (mAuth.getCurrentUser() == null) {
+            Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+
+            return;
+        }
+
+        fetchUser(UserInformation.shared.getUid());
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -93,6 +112,22 @@ public class HomeActivity extends AppCompatActivity {
     private void navigateToCamera() {
         Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
+    }
+
+    private void fetchUser(String uid) {
+
+        FirebaseDatabase.getInstance().getReference().child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                UserInformation.shared.setCurrent(user);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(HomeActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
 }
