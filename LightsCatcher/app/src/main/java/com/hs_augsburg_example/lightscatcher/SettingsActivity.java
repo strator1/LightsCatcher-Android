@@ -55,4 +55,16 @@ public class SettingsActivity extends AppCompatActivity {
     public void onInfo(View view) {
         System.out.println("Info");
     }
+
+@Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()){
+        case android.R.id.home:
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+            break;
+    }
+    return true;
+}
 }
