@@ -23,6 +23,7 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.hs_augsburg_example.lightscatcher.HomeActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
@@ -255,9 +256,11 @@ public class TakePictureActivity extends AppCompatActivity{
     }
 
     public void navigateBack(View view) {
-
-
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
     }
+
 
     private AlertDialog pictureHelpDialog;
 
