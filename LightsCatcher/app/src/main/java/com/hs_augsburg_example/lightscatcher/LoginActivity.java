@@ -149,7 +149,7 @@ public class LoginActivity extends AppCompatActivity {
         ActivityRegistry.finishAll();
         super.onBackPressed();
     }
-    
+
     private void fetchUserAndNavHome(String uid) {
 
         mDatabaseRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {

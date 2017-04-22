@@ -24,6 +24,7 @@ public class FinishActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(FinishActivity.this, TakePictureActivity.class);
                 startActivity(intent);
+                finish();
             }
         });
         Button home = (Button) findViewById(R.id.button_home);
@@ -32,6 +33,7 @@ public class FinishActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(FinishActivity.this, HomeActivity.class);
                 startActivity(intent);
+                finish();
             }
         });
 
