@@ -27,9 +27,9 @@ public class UserInformation {
         this.mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
-    public void createNewUser(String name, String email) {
+    public void createNewUser(String uid, String name, String email) {
         this.current = new User(name, email, 0);
-        mDatabase.child("users").child(UUID.randomUUID().toString().toUpperCase()).setValue(this.current);
+        mDatabase.child("users").child(uid).setValue(this.current);
     }
 
     public void updateUserPoints(int points) {

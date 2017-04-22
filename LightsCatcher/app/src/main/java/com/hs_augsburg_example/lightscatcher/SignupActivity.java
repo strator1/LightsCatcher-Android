@@ -93,7 +93,7 @@ public class SignupActivity extends AppCompatActivity {
                                     Toast.makeText(SignupActivity.this, "Authentication failed." + task.getException(),
                                             Toast.LENGTH_SHORT).show();
                                 } else {
-                                    UserInformation.shared.createNewUser(name, email);
+                                    UserInformation.shared.createNewUser(task.getResult().getUser().getUid(),name, email);
                                     startActivity(new Intent(SignupActivity.this, HomeActivity.class));
                                     finish();
                                 }

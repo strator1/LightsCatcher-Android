@@ -125,7 +125,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         {
             txtUserName.setText(usr.name);
             txtUserRank.setText("-");
-            txtUserScore.setText(usr.points);
+            txtUserScore.setText(Integer.toString(usr.points));
+
         }
         else
         {

@@ -57,7 +57,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void onInfo(View view) {
-        System.out.println("Info");
+        Intent intent = new Intent(SettingsActivity.this, DatenschutzActivity.class);
+        startActivity(intent);
     }
 
 @Override
