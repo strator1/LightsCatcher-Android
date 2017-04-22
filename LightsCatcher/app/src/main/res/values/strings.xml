@@ -35,6 +35,11 @@
     <string name="title_activity_take_picture">TakePictureActivity</string>
     <string name="title_activity_submit">Submit</string>
 
+    <!-- Strings related to Home-Activity-->
+    <string name="home_txt_loggedInAs">Angemeldet als:</string>
+    <string name="home_txt_rank">Platzierung:</string>
+    <string name="home_txt_score">Punkte:</string>
+    <string name="home_txt_globalRanking">Rangliste:</string>
     <!-- Strings related to Settings -->
     <string name="settings_username_label">Username</string>
     <string name="settings_button_logout">Logout</string>
