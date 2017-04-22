@@ -72,8 +72,7 @@ public class LoginActivity extends AppCompatActivity {
         mDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
         if (auth.getCurrentUser() != null) {
-            startActivity(new Intent(LoginActivity.this, HomeActivity.class));
-            finish();
+            fetchUserAndNavHome(UserInformation.shared.getUid());
         }
 
         // set the view now
@@ -134,26 +133,30 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                 } else {
                                     String uid = task.getResult().getUser().getUid();
-
-                                    mDatabaseRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            User user = dataSnapshot.getValue(User.class);
-                                            UserInformation.shared.setCurrent(user);
-
-                                            Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                                            startActivity(intent);
-                                            finish();
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-                                            Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                                    fetchUserAndNavHome(uid);
                                 }
                             }
                         });
+            }
+        });
+    }
+
+    private void fetchUserAndNavHome(String uid) {
+
+        mDatabaseRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                UserInformation.shared.setCurrent(user);
+
+                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                startActivity(intent);
+                finish();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
             }
         });
     }
