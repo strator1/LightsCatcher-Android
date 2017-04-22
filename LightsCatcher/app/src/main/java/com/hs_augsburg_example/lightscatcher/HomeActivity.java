@@ -18,6 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseListAdapter;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -46,7 +47,7 @@ public class HomeActivity extends AppCompatActivity {
         top10 = usersDatabase.orderByChild("points");
 
         // Create a new Adapter
-        adapter = new FirebaseListAdapter<User>(this, User.class, R.layout.item_user, top10) {
+        adapter = new ReverseFirebaseListAdapter<User>(this, User.class, R.layout.item_user, top10) {
             @Override
             protected void populateView(View v, User model, int position) {
                 try {
