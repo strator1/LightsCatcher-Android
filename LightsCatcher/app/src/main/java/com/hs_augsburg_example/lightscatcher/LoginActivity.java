@@ -37,8 +37,15 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.camera.TagLightsActivity;
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
+import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText inputEmail, inputPassword;
     private FirebaseAuth auth;
+    private DatabaseReference mDatabaseRef;
     private ProgressBar progressBar;
     private Button btnSignup, btnLogin;
 
@@ -61,6 +69,7 @@ public class LoginActivity extends AppCompatActivity {
 
         //Get Firebase auth instance
         auth = FirebaseAuth.getInstance();
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
         if (auth.getCurrentUser() != null) {
             startActivity(new Intent(LoginActivity.this, HomeActivity.class));
@@ -124,9 +133,24 @@ public class LoginActivity extends AppCompatActivity {
                                         Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
                                     }
                                 } else {
-                                    Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                                    startActivity(intent);
-                                    finish();
+                                    String uid = task.getResult().getUser().getUid();
+
+                                    mDatabaseRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            User user = dataSnapshot.getValue(User.class);
+                                            UserInformation.shared.setCurrent(user);
+
+                                            Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                                            startActivity(intent);
+                                            finish();
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+                                            Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
+                                        }
+                                    });
                                 }
                             }
                         });
