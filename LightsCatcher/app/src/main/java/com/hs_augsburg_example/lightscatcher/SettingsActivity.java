@@ -13,12 +13,15 @@ import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 public class SettingsActivity extends AppCompatActivity {
+    private TextView tvUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         setupActionBar();
+
+        this.tvUsername = (TextView) findViewById(R.id.settings_username);
 
         ActivityRegistry.register(this);
     }

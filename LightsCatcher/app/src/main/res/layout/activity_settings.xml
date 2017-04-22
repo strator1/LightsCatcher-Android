@@ -33,17 +33,17 @@
             android:textSize="20dp"
             android:textStyle="bold" />
 
-     <TextView
-         android:id="@+id/settings_username"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:layout_alignParentRight="true"
-         android:layout_alignParentTop="true"
-         android:layout_marginRight="26dp"
-         android:layout_marginTop="26dp"
-         android:text="Dein Name"
-         android:textColor="@color/colorPrimaryDark"
-         android:textSize="20dp" />
+        <TextView
+            android:id="@+id/settings_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="26dp"
+            android:layout_marginTop="26dp"
+            android:text="Dein Name"
+            android:textColor="@color/colorPrimary"
+            android:textSize="20dp" />
 
         <Button
             android:id="@+id/settings_button_logout"
