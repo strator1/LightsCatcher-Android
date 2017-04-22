@@ -2,7 +2,7 @@
     <string name="app_name">LightsCatcher</string>
 
     <!-- Strings related to login -->
-    <string name="action_sign_in_short">Register</string>
+    <string name="action_sign_in_short">Registrieren</string>
     <string name="email">Email</string>
     <string name="minimum_password">Passwort zu kurz, bitte geben Sie mindestens 6 Zeichen ein!</string>
     <string name="auth_failed">Authentifizierung fehlgeschlagen, bitte prüfen Sie ihre E-mail Adresse und Ihr Passwort oder registrieren Sie sich.</string>
@@ -18,7 +18,7 @@
     <string name="hint_name">Vollständiger Name</string>
     <string name="btn_login">LOGIN</string>
     <string name="btn_link_to_register">Noch nicht registriert? Dann melde dich bei Firebase an und habe Spaß mit Ampeln!</string>
-    <string name="btn_link_to_login">Bereits Registriert. Einloggen!</string>
+    <string name="btn_link_to_login">Bereits Registriert? Dann hier Einloggen!</string>
     <string name="title_activity_reset_password">ResetPasswordActivity</string>
     <string name="btn_forgot_password">Passwort vergessen?</string>
     <string name="btn_reset_password">Passwort zurücksetzten</string>
