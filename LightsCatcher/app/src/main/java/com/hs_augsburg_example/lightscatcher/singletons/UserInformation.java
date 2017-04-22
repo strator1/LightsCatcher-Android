@@ -33,6 +33,10 @@ public class UserInformation {
     }
 
     public void updateUserPoints(int points) {
+        if (!isLoggedIn()) {
+            return;
+        }
+
         this.current.addToPoints(points);
         Map<String, Object> childUpdates = new HashMap<>();
         childUpdates.put("/users/" + getUid(), this.current.toMap());

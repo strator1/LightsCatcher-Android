@@ -7,36 +7,36 @@
     <string name="minimum_password">Passwort zu kurz, bitte geben Sie mindestens 6 Zeichen ein!</string>
     <string name="auth_failed">Authentifizierung fehlgeschlagen, bitte prüfen Sie ihre E-mail Adresse und Ihr Passwort oder registrieren Sie sich.</string>
     <string name="change_email">E-Mail Adresse änderen</string>
-    <string name="change_password">Change Password</string>
-    <string name="send_password_reset_email">Send Password reset email</string>
-    <string name="remove_user">Remove user</string>
-    <string name="new_pass">New Password</string>
+    <string name="change_password">Passwort ändern</string>
+    <string name="send_password_reset_email">Zum Zurücksetzten des Passwortes eine E-Mail senden</string>
+    <string name="remove_user">Benutzer entfernen</string>
+    <string name="new_pass">Neues Passwort</string>
     <string name="title_activity_profile">Firebase</string>
-    <string name="title_activity_login">Sign in</string>
-    <string name="hint_email">Email</string>
-    <string name="hint_password">Password</string>
-    <string name="hint_name">Fullname</string>
+    <string name="title_activity_login">Registrieren</string>
+    <string name="hint_email">E-Mail</string>
+    <string name="hint_password">Passwort</string>
+    <string name="hint_name">Vollständiger Name</string>
     <string name="btn_login">LOGIN</string>
     <string name="btn_link_to_register">Noch nicht registriert? Dann melde dich bei Firebase an und habe Spaß mit Ampeln!</string>
-    <string name="btn_link_to_login">Already registered. Login Me!</string>
+    <string name="btn_link_to_login">Bereits Registriert. Einloggen!</string>
     <string name="title_activity_reset_password">ResetPasswordActivity</string>
-    <string name="btn_forgot_password">Forgot your password?</string>
-    <string name="btn_reset_password">Reset Password</string>
+    <string name="btn_forgot_password">Passwort vergessen?</string>
+    <string name="btn_reset_password">Passwort zurücksetzten</string>
     <string name="btn_back"><![CDATA[<< Back]]></string>
-    <string name="hint_new_email">New Email</string>
-    <string name="btn_change">Change</string>
-    <string name="btn_send">Send</string>
-    <string name="btn_remove">Remove</string>
-    <string name="btn_sign_out">Sign Out</string>
-    <string name="lbl_forgot_password">Forgot password?</string>
-    <string name="forgot_password_msg">We just need your registered Email Id to sent you password reset instructions.</string>
+    <string name="hint_new_email">Neue E-Mail Adresse</string>
+    <string name="btn_change">Ändern</string>
+    <string name="btn_send">Senden</string>
+    <string name="btn_remove">Entfernen</string>
+    <string name="btn_sign_out">Abmelden</string>
+    <string name="lbl_forgot_password">Passwort vergessen?</string>
+    <string name="forgot_password_msg">Wir brauchen Ihre registrierte E-Mail Adresse um Ihnen die Anweisungen zum Zurücksetzten Ihres Passwortes zu senden.</string>
 
     <string name="title_activity_home">HomeActivity</string>
     <string name="title_activity_take_picture">TakePictureActivity</string>
-    <string name="title_activity_submit">Submit</string>
+    <string name="title_activity_submit">Zusenden</string>
 
     <!-- Strings related to Settings -->
-    <string name="settings_username_label">Username</string>
+    <string name="settings_username_label">Benutzername</string>
     <string name="settings_button_logout">Logout</string>
     <string name="settings_rechtliches">Rechtliches</string>
     <string name="settings_datenschutz_label">Datenschutz</string>
@@ -112,5 +112,6 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
-    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_settings">Einstellungen</string>
+    <string name="title_settings_menu">Einstellungen</string>
 </resources>
