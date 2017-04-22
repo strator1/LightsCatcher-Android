@@ -18,6 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -40,6 +41,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        ActivityRegistry.register(this);
 
         // Connect to the Firebase database and query top10 users
         usersDatabase = FirebaseDatabase.getInstance().getReference("users");

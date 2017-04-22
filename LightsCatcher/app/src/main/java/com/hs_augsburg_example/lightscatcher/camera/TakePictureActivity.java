@@ -29,6 +29,7 @@ import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
 import com.hs_augsburg_example.lightscatcher.services.LocationService;
 import com.hs_augsburg_example.lightscatcher.services.MotionService;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.util.List;
@@ -85,6 +86,8 @@ public class TakePictureActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_take_picture);
+
+        ActivityRegistry.register(this);
 
         rl = (RelativeLayout) findViewById(R.id.take_picture_rl);
 

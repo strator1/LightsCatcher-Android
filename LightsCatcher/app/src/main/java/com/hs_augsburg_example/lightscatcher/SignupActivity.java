@@ -16,6 +16,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -28,6 +29,8 @@ public class SignupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
+
+        ActivityRegistry.register(this);
 
         //Get Firebase auth instance
         auth = FirebaseAuth.getInstance();

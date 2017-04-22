@@ -46,6 +46,7 @@ import com.hs_augsburg_example.lightscatcher.camera.TagLightsActivity;
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +82,8 @@ public class LoginActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        ActivityRegistry.register(this);
 
         inputEmail = (EditText) findViewById(R.id.email);
         inputPassword = (EditText) findViewById(R.id.password);
@@ -156,6 +159,12 @@ public class LoginActivity extends AppCompatActivity {
                         });
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        ActivityRegistry.finishAll();
+        super.onBackPressed();
     }
 }
 
