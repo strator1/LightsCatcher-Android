@@ -45,6 +45,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
+        this.txtUserName = (TextView) findViewById(R.id.home_txt_username);
+        this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
+        this.txtUserScore = (TextView)findViewById(R.id.home_txt_score);
+
         setSupportActionBar(toolbar);
 
         mAuth = FirebaseAuth.getInstance();
@@ -69,12 +73,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         ActivityRegistry.register(this);
 
-        this.txtUserName = (TextView) findViewById(R.id.home_txt_username);
-        this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
-        this.txtUserScore = (TextView)findViewById(R.id.home_txt_score);
 
-        // display information about current user:
-        this.refreshUserData();
 
         this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
         swipeLayout.setOnRefreshListener(this);
@@ -124,9 +123,9 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         User usr = UserInformation.shared.current;
         if(usr != null)
         {
-            txtUserName.setText(UserInformation.shared.current.name);
+            txtUserName.setText(usr.name);
             txtUserRank.setText("-");
-            txtUserScore.setText(UserInformation.shared.current.points);
+            txtUserScore.setText(usr.points);
         }
         else
         {
@@ -159,6 +158,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             public void onDataChange(DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
                 UserInformation.shared.setCurrent(user);
+                HomeActivity.this.refreshUserData();
             }
 
             @Override
