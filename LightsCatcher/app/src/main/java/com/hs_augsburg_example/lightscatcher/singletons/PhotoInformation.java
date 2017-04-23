@@ -69,8 +69,8 @@ public class PhotoInformation {
         return light;
     }
 
-    public void createLight(Light light) {
-        mDatabase.child("lights").child(UUID.randomUUID().toString().toUpperCase()).setValue(light);
+    public void createLight(String uid, Light light) {
+        mDatabase.child("lights").child(uid).setValue(light);
     }
 
     public int getLightCount() {
