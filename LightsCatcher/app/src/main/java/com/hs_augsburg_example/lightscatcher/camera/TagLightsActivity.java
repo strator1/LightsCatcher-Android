@@ -158,7 +158,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
 
-        StorageReference storageReference = mStorageRef.child("lights_images").child(UUID.randomUUID().toString().toUpperCase());
+        final String imageId = UUID.randomUUID().toString().toUpperCase();
+        StorageReference storageReference = mStorageRef.child("lights_images").child(imageId);
 
         progressBar.setVisibility(View.VISIBLE);
         UploadTask uploadTask = storageReference.putBytes(baos.toByteArray());
@@ -177,7 +178,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressBar.setVisibility(View.GONE);
                 light.imageUrl = taskSnapshot.getDownloadUrl().toString();
-                PhotoInformation.shared.createLight(light);
+                PhotoInformation.shared.createLight(imageId, light);
                 UserInformation.shared.updateUserPoints(1);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich :)", Toast.LENGTH_LONG);
                 toast.show();
