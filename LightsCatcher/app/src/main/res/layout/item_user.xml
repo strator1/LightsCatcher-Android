@@ -2,8 +2,21 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:padding="5dp">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#808080"/>
+
+    <TextView
+        android:id="@+id/item_user_rank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:textSize="15sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/item_user_name"
@@ -11,7 +24,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:textSize="15sp"
-        android:textStyle="bold|italic" />
+        android:textStyle="bold|italic"
+        android:layout_marginLeft="20dp"/>
 
     <TextView
         android:id="@+id/item_user_score"

@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,11 +28,11 @@ import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
-import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseListAdapter;
+import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseRecyclerAdapter;
 
 public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
-    private FirebaseListAdapter<User> adapter = null;
+    private ReverseFirebaseRecyclerAdapter<User, UserHolder> adapter = null;
     private DatabaseReference usersDatabase = null;
     private FirebaseAuth mAuth;
     private Query top10 = null;
@@ -57,12 +59,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
-
             return;
         }
 
         fetchUser(UserInformation.shared.getUid());
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,20 +83,19 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         top10 = usersDatabase.orderByChild("points");
 
         // Create a new Adapter
-        adapter = new ReverseFirebaseListAdapter<User>(this, User.class, R.layout.item_user, top10) {
+        adapter = new ReverseFirebaseRecyclerAdapter<User,UserHolder>(User.class, R.layout.item_user,UserHolder.class, top10) {
             @Override
-            protected void populateView(View v, User model, int position) {
-                try {
-                    ((TextView) v.findViewById(R.id.item_user_name)).setText(model.name);
-                    ((TextView) v.findViewById(R.id.item_user_score)).setText(Integer.toString(model.points));
-                }catch(Exception ex){
-                    ex.printStackTrace();
-                }
+            protected void populateViewHolder(UserHolder viewHolder, User model, int position) {
+                viewHolder.applyUser(model,position);
             }
         };
 
         // Assign adapter to ListView
-        final ListView listView = (ListView) findViewById(R.id.list_userRanking);
+        final RecyclerView listView = (RecyclerView) findViewById(R.id.list_userRanking);
+        final LinearLayoutManager lm = new LinearLayoutManager(this);
+      //  lm.setReverseLayout(true);
+       // lm.setStackFromEnd(true);
+        listView.setLayoutManager(lm);
         listView.setAdapter(adapter);
     }
 
@@ -124,7 +123,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         if(usr != null)
         {
             txtUserName.setText(usr.name);
-            txtUserRank.setText("N.A.");
+            txtUserRank.setText("Rang: " + calculateRankOfUser(usr));
             txtUserScore.setText("(Punkte: " + usr.points + ")");
         }
         else
@@ -133,6 +132,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             txtUserRank.setText("-");
             txtUserScore.setText("-");
         }
+    }
+
+    private static int calculateRankOfUser(User usr){
+        return -1;
     }
     private void refreshListItems() {
         //show loading animation during loading
@@ -175,5 +178,28 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public void onRefresh() {
         refreshListItems();
+    }
+
+    public static class UserHolder extends RecyclerView.ViewHolder{
+
+        final TextView txtRank;
+        final TextView txtName;
+        final TextView txtPoints;
+
+        public UserHolder(View v) {
+            super(v);
+            txtRank = (TextView) v.findViewById(R.id.item_user_rank);
+            txtName = ((TextView) v.findViewById(R.id.item_user_name));
+            txtPoints = ((TextView) v.findViewById(R.id.item_user_score));
+        }
+
+        public void applyUser(User model,int position){
+
+            //rank of the user:
+
+            txtRank.setText(position+ ":");
+            txtName.setText(model.name );
+            txtPoints.setText(Integer.toString(model.points));
+        }
     }
 }
