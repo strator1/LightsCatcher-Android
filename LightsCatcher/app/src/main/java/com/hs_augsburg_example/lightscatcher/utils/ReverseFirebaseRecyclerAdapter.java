@@ -33,7 +33,6 @@ public abstract class ReverseFirebaseRecyclerAdapter<T,TH extends ViewHolder> ex
     @Override
     public T getItem(int pos) {
         // most simple workaround
-        // for other solutions see http://stackoverflow.com/questions/37396246/android-firebaselistadapter-in-reverse-order
         return super.getItem(super.getItemCount() - 1 - pos);
     }
 

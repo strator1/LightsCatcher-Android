@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -25,7 +26,7 @@ import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
-import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseRecyclerAdapter;
+
 
 import java.util.Observable;
 import java.util.Observer;
@@ -35,7 +36,7 @@ import java.util.Observer;
  */
 public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String TAG = "HomeActivity";
-    private ReverseFirebaseRecyclerAdapter<User, UserHolder> adapter = null;
+    private FirebaseRecyclerAdapter<User, UserHolder> adapter = null;
     private Query sortedUsers = null;
     private Query top10 = null;
     private TextView txtUserName;
@@ -90,18 +91,27 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // query ordered list of users from firebase
         sortedUsers = FirebaseDatabase.getInstance().getReference("users").orderByChild("points");
+        // top 50 users:
         top10 = sortedUsers.limitToLast(50);
 
         // Create a new Adapter
-        adapter = new ReverseFirebaseRecyclerAdapter<User, UserHolder>(User.class, R.layout.item_user, UserHolder.class, top10) {
+        adapter = new FirebaseRecyclerAdapter<User, UserHolder>(User.class, R.layout.item_user, UserHolder.class, top10) {
             @Override
             protected void populateViewHolder(UserHolder viewHolder, User model, int position) {
+                // @{link position} is used for the rank of each user in the listview
+                // invert position because we use a reverse layout manager.
+                // as a consequence position 0 is the first item from the bottom
+                position = adapter.getItemCount() - position;
+
                 viewHolder.applyUser(model, position);
             }
         };
 
-        // Assign adapter to ListView
+        // use reverse layout to sort users in descending order
+        // firebase-queries currently do not support descending order
         final LinearLayoutManager lm = new LinearLayoutManager(this);
+        lm.setReverseLayout(true);
+        lm.setStackFromEnd(true);
         listView.setLayoutManager(lm);
         listView.setAdapter(adapter);
 
@@ -217,9 +227,9 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             txtPoints = ((TextView) v.findViewById(R.id.item_user_score));
         }
 
-        public void applyUser(User model, int position) {
+        public void applyUser(User model, int rank) {
 
-            txtRank.setText((position + 1) + ":");
+            txtRank.setText(rank + ":");
             txtName.setText(model.name);
             txtPoints.setText(Integer.toString(model.points));
         }

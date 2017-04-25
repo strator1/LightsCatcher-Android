@@ -25,7 +25,7 @@
         android:layout_alignParentLeft="true"
         android:textSize="15sp"
         android:textStyle="bold|italic"
-        android:layout_marginLeft="20dp"/>
+        android:layout_marginLeft="25dp"/>
 
     <TextView
         android:id="@+id/item_user_score"
