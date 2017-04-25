@@ -16,8 +16,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -29,42 +27,53 @@ import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseRecyclerAdapter;
 
-public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+import java.util.Observable;
+import java.util.Observer;
 
+public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+    private static final String TAG = "HomeActivity";
     private ReverseFirebaseRecyclerAdapter<User, UserHolder> adapter = null;
     private Query sortedUsers = null;
     private Query top10 = null;
-    private FirebaseAuth mAuth;
     private TextView txtUserName;
     private TextView txtUserRank;
     private TextView txtUserScore;
     private SwipeRefreshLayout swipeLayout;
     private ValueEventListener listenerForCurrentRanking;
+    private Observer loginObserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG,"onCreate;");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
         this.txtUserName = (TextView) findViewById(R.id.home_txt_username);
         this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
-        this.txtUserScore = (TextView)findViewById(R.id.home_txt_score);
+        this.txtUserScore = (TextView) findViewById(R.id.home_txt_score);
+        this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
 
+        final RecyclerView listView = (RecyclerView) findViewById(R.id.list_userRanking);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mAuth = FirebaseAuth.getInstance();
-        FirebaseUser firebaseUsr = mAuth.getCurrentUser();
+        // listen to login-changes:
 
-        if (firebaseUsr == null) {
-            // Not logged in yet.
+        loginObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                Log.d(TAG,"update from loginObserver");
+                HomeActivity.this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
+            }
+        };
+        UserInformation.shared.addObserver(loginObserver);
+
+        boolean loggedIn = UserInformation.shared.tryAuthenticate();
+        if (!loggedIn) {
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
             return;
         }
-
-        fetchUser(firebaseUsr.getUid());
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -75,10 +84,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         });
 
         ActivityRegistry.register(this);
-
-
-
-        this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
         swipeLayout.setOnRefreshListener(this);
 
         // query ordered list of users from firebase
@@ -88,15 +93,14 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         top10.keepSynced(true);*/
 
         // Create a new Adapter
-        adapter = new ReverseFirebaseRecyclerAdapter<User,UserHolder>(User.class, R.layout.item_user,UserHolder.class, top10) {
+        adapter = new ReverseFirebaseRecyclerAdapter<User, UserHolder>(User.class, R.layout.item_user, UserHolder.class, top10) {
             @Override
             protected void populateViewHolder(UserHolder viewHolder, User model, int position) {
-                viewHolder.applyUser(model,position);
+                viewHolder.applyUser(model, position);
             }
         };
 
         // Assign adapter to ListView
-        final RecyclerView listView = (RecyclerView) findViewById(R.id.list_userRanking);
         final LinearLayoutManager lm = new LinearLayoutManager(this);
         //  lm.setReverseLayout(true);
         // lm.setStackFromEnd(true);
@@ -109,26 +113,24 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         listenerForCurrentRanking = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.d("CALL","listenerForCurrentRanking.onDataChange");
                 int usersRank = -1;
                 int i = 0;
-                int n = (int)dataSnapshot.getChildrenCount();
-                for (DataSnapshot child: dataSnapshot.getChildren()){
+                int n = (int) dataSnapshot.getChildrenCount();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
                     String key = child.getKey();
-                    if (key.equals(UserInformation.shared.getUid()))
-                    {
+                    if (key.equals(UserInformation.shared.getUid())) {
                         usersRank = n - i;
 
                     }
                     i++;
-                    HomeActivity.this.updateCurrentUserRank(usersRank);
+                    HomeActivity.this.updateUI_UserRank(usersRank);
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(HomeActivity.this.getApplicationContext(),databaseError.getMessage(),Toast.LENGTH_SHORT);
-                HomeActivity.this.updateCurrentUserRank(-1);
+                Toast.makeText(HomeActivity.this.getApplicationContext(), databaseError.getMessage(), Toast.LENGTH_SHORT);
+                HomeActivity.this.updateUI_UserRank(-1);
             }
         };
         sortedUsers.addValueEventListener(listenerForCurrentRanking);
@@ -136,9 +138,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     @Override
     protected void onStop() {
-        sortedUsers.removeEventListener(listenerForCurrentRanking);
-        adapter.cleanup();
         super.onStop();
+        // detach all listeners from FireBase
+        if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
+        if (adapter != null) adapter.cleanup();
     }
 
     @Override
@@ -160,47 +163,25 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
     }
 
-    private void refreshUserData(){
-        User usr = UserInformation.shared.getCurrent();
-        if(usr != null)
-        {
-            txtUserName.setText(usr.name);
-            txtUserScore.setText("(Punkte: " + usr.points + ")");
-        }
-        else
-        {
-            txtUserName.setText("-");
-            txtUserScore.setText("(Punkte: N.A.)" );
-        }
+    private void updateUI_UserRank(int rank) {
+        txtUserRank.setText("Rang: " + rank);
     }
 
-    private void updateCurrentUserRank(int rank){
-        txtUserRank.setText("Rang: "+ rank);
+    private void updateUI_UserData(User usr) {
+        if (usr != null) {
+            txtUserName.setText(usr.name);
+            txtUserScore.setText("(Punkte: " + usr.points + ")");
+            // NOTE: user rank is updated by {@link listenerForCurrentRanking}
+        } else {
+            txtUserName.setText("-");
+            txtUserScore.setText("(Punkte: N.A.)");
+        }
     }
 
     private void navigateToCamera() {
         Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
     }
-
-
-    private void fetchUser(String uid) {
-
-        FirebaseDatabase.getInstance().getReference().child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                UserInformation.shared.setCurrent(user);
-                HomeActivity.this.refreshUserData();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(HomeActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
 
     /**
      * Called when swiping the ranking-list
@@ -212,7 +193,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // notify the view
         this.adapter.notifyDataSetChanged();
-        refreshUserData();
+        this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
         //stop loading animation during loading
         swipeLayout.setRefreshing(false);
     }
@@ -220,7 +201,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     /**
      * A  Wrapper for a {@link User}. It's used by the RecyclerView
      */
-    public static class UserHolder extends RecyclerView.ViewHolder{
+    public static class UserHolder extends RecyclerView.ViewHolder {
 
         final TextView txtRank;
         final TextView txtName;
@@ -233,10 +214,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             txtPoints = ((TextView) v.findViewById(R.id.item_user_score));
         }
 
-        public void applyUser(User model,int position){
+        public void applyUser(User model, int position) {
 
-            txtRank.setText((position +1)+ ":");
-            txtName.setText(model.name );
+            txtRank.setText((position + 1) + ":");
+            txtName.setText(model.name);
             txtPoints.setText(Integer.toString(model.points));
         }
     }

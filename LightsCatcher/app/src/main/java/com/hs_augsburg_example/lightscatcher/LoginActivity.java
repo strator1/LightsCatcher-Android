@@ -151,21 +151,5 @@ public class LoginActivity extends AppCompatActivity {
         ActivityRegistry.finishAll();
         super.onBackPressed();
     }
-
-    private void fetchUserAndNavHome(String uid) {
-
-        mDatabaseRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                User user = dataSnapshot.getValue(User.class);
-                UserInformation.shared.setCurrent(user);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(LoginActivity.this, getString(R.string.auth_failed), Toast.LENGTH_LONG).show();
-            }
-        });
-    }
 }
 
