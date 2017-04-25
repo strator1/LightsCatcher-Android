@@ -23,7 +23,7 @@ public class SettingsActivity extends AppCompatActivity {
         setupActionBar();
 
         this.tvUsername = (TextView) findViewById(R.id.settings_username);
-        User user = UserInformation.shared.current;
+        User user = UserInformation.shared.getCurrent();
         if(user != null)
         {
             tvUsername.setText(user.name);

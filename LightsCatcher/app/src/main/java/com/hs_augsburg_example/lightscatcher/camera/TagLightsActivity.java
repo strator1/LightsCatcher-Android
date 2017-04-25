@@ -179,7 +179,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 progressBar.setVisibility(View.GONE);
                 light.imageUrl = taskSnapshot.getDownloadUrl().toString();
                 PhotoInformation.shared.createLight(imageId, light);
-                UserInformation.shared.updateUserPoints(1);
+                UserInformation.shared.increaseUserPoints(1);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich :)", Toast.LENGTH_LONG);
                 toast.show();
             }

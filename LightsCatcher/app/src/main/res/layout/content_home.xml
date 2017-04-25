@@ -61,7 +61,7 @@
         android:id="@+id/home_txt_score"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="N.A."
+        android:text=""
         android:textSize="20sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/home_txt_rank"
         app:layout_constraintLeft_toRightOf="@+id/home_txt_rank"
