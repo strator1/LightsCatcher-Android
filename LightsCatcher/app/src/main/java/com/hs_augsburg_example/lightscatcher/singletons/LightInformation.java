@@ -82,7 +82,7 @@ public class LightInformation extends AppCompatActivity {
 
     public void setPhase(PhotoInformation.LightPhase phase) {
         this.phase = phase;
-        int c = this.phase == PhotoInformation.LightPhase.RED ? Color.argb(0x50,0xFF,0x00,0x00) : Color.argb(0x50,0x00,0xFF,0x00);
+        int c = this.phase == PhotoInformation.LightPhase.RED ? Color.argb(0x60,0xFF,0x00,0x00) : Color.argb(0x60,0x00,0xFF,0x00);
 
         this.getView().setBackgroundColor(c);
 

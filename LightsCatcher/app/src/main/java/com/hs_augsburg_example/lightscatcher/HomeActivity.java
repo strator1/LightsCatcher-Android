@@ -56,7 +56,16 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         this.txtUserScore = (TextView) findViewById(R.id.home_txt_score);
         this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
 
-        final RecyclerView listView = (RecyclerView) findViewById(R.id.list_userRanking);
+        // show loading animation:
+        // it will be stopped by the {@link adapter} in onDataChanged
+        swipeLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeLayout.setRefreshing(true);
+            }
+        });
+
+        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -64,7 +73,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         loginObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                Log.d(TAG,"update from loginObserver");
+                //Log.d(TAG,"update from loginObserver");
                 HomeActivity.this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
             }
         };
@@ -94,7 +103,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         // top 50 users:
         top10 = sortedUsers.limitToLast(50);
 
-        // Create a new Adapter
+        // Create a new Adaptero
         adapter = new FirebaseRecyclerAdapter<User, UserHolder>(User.class, R.layout.item_user, UserHolder.class, top10) {
             @Override
             protected void populateViewHolder(UserHolder viewHolder, User model, int position) {
@@ -105,15 +114,30 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
                 viewHolder.applyUser(model, position);
             }
+
+            @Override
+            protected void onDataChanged() {
+                super.onDataChanged();
+
+                // if the loading-animation is still running stop it
+                if (swipeLayout.isRefreshing())
+                    swipeLayout.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            swipeLayout.setRefreshing(false);
+                        }
+                    });
+            }
         };
+
 
         // use reverse layout to sort users in descending order
         // firebase-queries currently do not support descending order
         final LinearLayoutManager lm = new LinearLayoutManager(this);
         lm.setReverseLayout(true);
         lm.setStackFromEnd(true);
-        listView.setLayoutManager(lm);
-        listView.setAdapter(adapter);
+        recyclerView.setLayoutManager(lm);
+        recyclerView.setAdapter(adapter);
 
         // Listen to the whole userslist to calculate the rank of the current user
         // this might cause a lot of network-traffic when there are many users.
@@ -142,6 +166,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         };
         sortedUsers.addValueEventListener(listenerForCurrentRanking);
+        // show loading animation:
+
     }
 
     @Override
@@ -175,17 +201,17 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void updateUI_UserRank(int rank) {
-        txtUserRank.setText("Rang: " + rank);
+        txtUserRank.setText(getString(R.string.home_txt_rank, Integer.toString(rank)));
     }
 
     private void updateUI_UserData(User usr) {
         if (usr != null) {
             txtUserName.setText(usr.name);
-            txtUserScore.setText("(Punkte: " + usr.points + ")");
+            txtUserScore.setText(getString(R.string.home_txt_score, Integer.toString(usr.points)));
             // NOTE: the user's rank is updated by {@link listenerForCurrentRanking}
         } else {
             txtUserName.setText("-");
-            txtUserScore.setText("(Punkte: N.A.)");
+            txtUserScore.setText(getString(R.string.home_txt_score, "N.A."));
         }
     }
 
@@ -227,11 +253,11 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             txtPoints = ((TextView) v.findViewById(R.id.item_user_score));
         }
 
-        public void applyUser(User model, int rank) {
+        public void applyUser(User usr, int rank) {
 
             txtRank.setText(rank + ":");
-            txtName.setText(model.name);
-            txtPoints.setText(Integer.toString(model.points));
+            txtName.setText(usr.name);
+            txtPoints.setText(Integer.toString(usr.points));
         }
     }
 }

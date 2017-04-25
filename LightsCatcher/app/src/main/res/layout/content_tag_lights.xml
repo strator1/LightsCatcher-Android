@@ -26,7 +26,7 @@
         android:shadowDx="1.5"
         android:shadowDy="1.3"
         android:shadowRadius="1.6"
-        android:text="markieren"
+        android:text="@string/submit_txt_mark"
         android:textSize="20dp"
         android:textAllCaps="true"
         android:textColor="@android:color/white"/>
@@ -71,7 +71,7 @@
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:layout_marginRight="@dimen/activity_horizontal_margin"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:text="Bild hochladen" />
+        android:text="@string/submit_btn_upload" />
 
     <ProgressBar
         android:id="@+id/progressBar"

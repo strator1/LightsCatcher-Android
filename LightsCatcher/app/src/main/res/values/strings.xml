@@ -37,8 +37,9 @@
 
     <!-- Strings related to Home-Activity-->
     <string name="home_txt_loggedInAs">Angemeldet als:</string>
-    <string name="home_txt_rank">Platzierung:</string>
-    <string name="home_txt_score">Punkte:</string>
+    <string name="home_txt_rankCaption">Platzierung:</string>
+    <string name="home_txt_rank">Rang: %1$s</string>
+    <string name="home_txt_score">(Punkte: %1$s)</string>
     <string name="home_txt_globalRanking">Rangliste:</string>
     <!-- Strings related to Settings -->
     <string name="settings_username_label">Benutzername</string>
@@ -120,4 +121,6 @@
     <string name="title_activity_settings">Einstellungen</string>
     <string name="title_activity_datenschutz">Datenschutz</string>
     <string name="title_settings_menu">Einstellungen</string>
+    <string name="submit_btn_upload">Bild hochladen</string>
+    <string name="submit_txt_mark">markieren</string>
 </resources>
