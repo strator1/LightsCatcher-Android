@@ -1,7 +1,5 @@
 package com.hs_augsburg_example.lightscatcher.utils;
 
-import android.app.Activity;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -12,8 +10,8 @@ import com.google.firebase.database.Query;
  */
 
 /**
- * A modification of  @see com.firebase.ui.database.FirebaseListAdapter.
- * The only difference ist that the items are provided in reverse order.
+ * A modification of  {@link FirebaseRecyclerAdapter}.
+ * Provides items in reverse order.
  */
 public abstract class ReverseFirebaseRecyclerAdapter<T,TH extends ViewHolder> extends FirebaseRecyclerAdapter<T, TH > {
 

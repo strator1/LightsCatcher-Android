@@ -20,6 +20,9 @@ import java.util.Observable;
  * Changed by quirin on 25.04.17.
  */
 
+/**
+ * Holds state of the current user.
+ */
 public class UserInformation extends Observable {
     public static UserInformation shared = new UserInformation();
     private static  final  String TAG = "UserInformation";
@@ -77,6 +80,11 @@ public class UserInformation extends Observable {
     public User getUserSnapshot() {
         return usrSnapshot;
     }
+
+    /**
+     * Updates and {@field usrSnapshot} and notifies all Observers
+     * @param usr
+     */
     private void setUserSnapshot(User usr){
         this.usrSnapshot = usr;
         this.setChanged();
@@ -84,11 +92,11 @@ public class UserInformation extends Observable {
     }
 
     /**
-     * Tries to authenticate with Firebase. Also tries to fetch the userData from Firebase
+     * Tries to authenticate with Firebase and fetches the user's meta-data from Firebase.
      * @return true if authentication succeeded.
      */
     public boolean tryAuthenticate() {
-        Log.d(TAG,"tryAuthenticate;" );
+        //Log.d(TAG,"tryAuthenticate;" );
         FirebaseUser fbuser = mAuth.getCurrentUser();
         if (fbuser == null ) return false; // not logged in yet.
 
@@ -108,7 +116,7 @@ public class UserInformation extends Observable {
     }
 
     private void startListenToUser(String uid){
-        Log.d(TAG,"startListenToUser; uid=" + uid);
+        //Log.d(TAG,"startListenToUser; uid=" + uid);
 
         // detach listener from previos user
         if (this.currentUserRef != null && this.currentUserListener != null)

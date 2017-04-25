@@ -30,6 +30,9 @@ import com.hs_augsburg_example.lightscatcher.utils.ReverseFirebaseRecyclerAdapte
 import java.util.Observable;
 import java.util.Observer;
 
+/**
+ * Main screen of the App. Offers Info about current user and a high-score-list.
+ */
 public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String TAG = "HomeActivity";
     private ReverseFirebaseRecyclerAdapter<User, UserHolder> adapter = null;
@@ -57,7 +60,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         setSupportActionBar(toolbar);
 
         // listen to login-changes:
-
         loginObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
@@ -89,8 +91,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         // query ordered list of users from firebase
         sortedUsers = FirebaseDatabase.getInstance().getReference("users").orderByChild("points");
         top10 = sortedUsers.limitToLast(50);
-        /*sortedUsers.keepSynced(true);
-        top10.keepSynced(true);*/
 
         // Create a new Adapter
         adapter = new ReverseFirebaseRecyclerAdapter<User, UserHolder>(User.class, R.layout.item_user, UserHolder.class, top10) {
@@ -102,13 +102,11 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // Assign adapter to ListView
         final LinearLayoutManager lm = new LinearLayoutManager(this);
-        //  lm.setReverseLayout(true);
-        // lm.setStackFromEnd(true);
         listView.setLayoutManager(lm);
         listView.setAdapter(adapter);
 
         // Listen to the whole userslist to calculate the rank of the current user
-        // this might cause a lot of traffic when there are many users
+        // this might cause a lot of network-traffic when there are many users.
         // maybe there's a better solution, but for now it does the job
         listenerForCurrentRanking = new ValueEventListener() {
             @Override
@@ -142,6 +140,9 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         // detach all listeners from FireBase
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
         if (adapter != null) adapter.cleanup();
+
+        // and other services:
+        if (loginObserver != null) UserInformation.shared.deleteObserver(loginObserver);
     }
 
     @Override
@@ -171,7 +172,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (usr != null) {
             txtUserName.setText(usr.name);
             txtUserScore.setText("(Punkte: " + usr.points + ")");
-            // NOTE: user rank is updated by {@link listenerForCurrentRanking}
+            // NOTE: the user's rank is updated by {@link listenerForCurrentRanking}
         } else {
             txtUserName.setText("-");
             txtUserScore.setText("(Punkte: N.A.)");
@@ -191,10 +192,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         //show loading animation during loading
         swipeLayout.setRefreshing(true);
 
-        // notify the view
+        // update the view
         this.adapter.notifyDataSetChanged();
         this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
-        //stop loading animation during loading
+        // this does not update the current user's rank. let's hope that {@link listenerForCurrentRanking} works properly
+
+        //stop loading animation
         swipeLayout.setRefreshing(false);
     }
 
