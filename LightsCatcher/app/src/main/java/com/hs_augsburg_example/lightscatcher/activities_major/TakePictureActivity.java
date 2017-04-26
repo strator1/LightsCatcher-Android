@@ -28,11 +28,13 @@ import android.widget.Toast;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.utils.CameraPreview;
-import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
+import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.services.LocationService;
 import com.hs_augsburg_example.lightscatcher.services.MotionService;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.util.List;
@@ -46,8 +48,8 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
     static final int PHASE_INIT = -1;
-    static final int PHASE_RED = 0;
-    static final int PHASE_GREEN = 1;
+    public static final int PHASE_RED = 0;
+    public static final int PHASE_GREEN = 1;
 
     private static Camera cam;
     private CameraPreview camPreview;
@@ -61,16 +63,17 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
 
     private RelativeLayout rl;
     private View crosshairView;
+    private double crossHairX;
+    private double crossHairY;
     private View[] cross = new View[2];
 
     // use PHASE_GREEN or PHASE_RED as index to access the corresponding snapshot
     // so index 0 is for red-snapshot, index 1 for green
-    private final PhotoInformation[] snapshots = new PhotoInformation[2];
+    private final Photo[] snapshots = new Photo[2];
     private final TakePictureStateMachine stateMachine = new TakePictureStateMachine(this);
 
     private RadioButton[] redGreenSelect = new RadioButton[2];
     private View[] snapshotStatus = new View[2];
-
     private Button exitButton;
 
     @Override
@@ -94,7 +97,14 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         motionService = new MotionService();
         locationService = new LocationService(getApplicationContext());
 
-        addCrosshairView();
+
+        // generate crosshair position
+        // koordinates are relative to parent_view
+        final double x = randomDouble(CROSSHAIR_MARGIN_HOR, CROSSHAIR_MARGIN_HOR);
+        final double y = randomDouble(CROSSHAIR_MARGIN_TOP, CROSSHAIR_MARGIN_BOT);
+
+        addCrosshairView(x,y);
+
         this.stateMachine.switchPhase(PHASE_RED);
     }
 
@@ -102,13 +112,14 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     private static int togglePhase(int in) {
         return in == PHASE_RED ? PHASE_GREEN : PHASE_RED;
     }
+
     /**
-     * This class manages the workflow in this activity.
+     * This class manages the workflow of the {@link TakePictureActivity}.
      */
     private class TakePictureStateMachine {
 
         private final TakePictureActivity owner;
-        private final PhotoInformation[] snapshots;
+        private final Photo[] snapshots;
         private int phase = PHASE_INIT;
 
 
@@ -116,7 +127,6 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
             this.owner = owner;
             this.snapshots = owner.snapshots;
         }
-
 
 
         void switchPhase(int newPhase) {
@@ -133,7 +143,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
             }
         }
 
-        public void takeSnapshot(PhotoInformation snapshot) {
+        public void takeSnapshot(Photo snapshot) {
             TakePictureActivity.this.snapshots[this.phase] = snapshot;
 
             owner.notifySnapshotTaken(this.phase);
@@ -162,23 +172,28 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         }
     }
 
+    /**
+     * Configures the UI so that the user can navigate to next activity
+     *
+     * @param allow
+     */
     private void allowSubmit(boolean allow) {
         this.exitButton.setEnabled(allow);
     }
 
     /**
-     * @param redOrGreen use {@field PHASE_RED} or {@field PHASE_GREEN}
+     * @param phase use {@link #PHASE_RED} or {@link #PHASE_GREEN}
      */
-    private void enterNextPhase(int redOrGreen) {
-        RadioButton modeSelect = this.redGreenSelect[redOrGreen];
+    private void enterNextPhase(int phase) {
+        RadioButton modeSelect = this.redGreenSelect[phase];
         modeSelect.setChecked(true);
-        cross[redOrGreen].setWillNotDraw(false);
-        cross[togglePhase(redOrGreen)].setWillNotDraw(true);
+        cross[phase].setVisibility(View.INVISIBLE);
+        cross[togglePhase(phase)].setVisibility(View.INVISIBLE);
 
     }
 
     /**
-     * @param redOrGreen use {@field PHASE_RED} or {@field PHASE_GREEN}
+     * @param redOrGreen use {@link #PHASE_RED} or {@link #PHASE_GREEN}
      */
     private void notifySnapshotTaken(int redOrGreen) {
         CheckBox box = (CheckBox) this.snapshotStatus[redOrGreen];
@@ -199,27 +214,28 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         bmp = rotateImage(bmp, 90);
 
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) crosshairView.getLayoutParams();
-        LightInformation pos = new LightInformation(new View(getApplicationContext()), getApplicationContext());
-        pos.setX(params.leftMargin + pos.getWidth() / 2);
-        pos.setY(params.topMargin + pos.getHeight() / 2);
-        pos.setMostRelevant(true);
-        pos.setPhase(stateMachine.phase == PHASE_RED ? PhotoInformation.LightPhase.RED:PhotoInformation.LightPhase.GREEN);
+
+        final LightPhase phase =stateMachine.phase == PHASE_RED ? LightPhase.RED : LightPhase.GREEN;
+
+
 
         if (locationService.getLocation() != null) {
             PhotoInformation.shared.setLocation(locationService.getLocation());
         }
 
-        PhotoInformation.shared.resetLightPositions();
-        PhotoInformation.shared.addToLightPosition(pos);
-        PhotoInformation.shared.setImage(bmp);
-        PhotoInformation.shared.setGyroPosition(motionService.getPitch());
-
-        PhotoInformation snapshot = PhotoInformation.shared;
-
-        camera.stopPreview();
-        camera.startPreview();
+        Photo snapshot = Photo.build()
+                .setBitmap(bmp)
+                .setGyro(motionService.getPitch())
+                .setLocation(locationService.getLocation())
+                .setLightPos(new LightPosition(crossHairX,crossHairY,phase,true))
+                .setCreatedAt(System.currentTimeMillis())
+                .commit();
 
         TakePictureActivity.this.stateMachine.takeSnapshot(snapshot);
+
+        // prepare camera for next picture
+        camera.stopPreview();
+        camera.startPreview();
     }
 
     private boolean permissionGranted = false;
@@ -319,28 +335,41 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         ;
     }
 
-    private void addCrosshairView() {
-        float density = getApplicationContext().getResources().getDisplayMetrics().density;
-        int viewHeight = (int) (50 * density)*2;
-        int viewWidth = (int) (50 * density);
 
+    private static final double CROSSHAIR_MARGIN_HOR = 0.25;
+    private static final double CROSSHAIR_MARGIN_TOP = 0.2;
+    private static final double CROSSHAIR_MARGIN_BOT = 0.5;
+    private static final Random random = new Random();
+
+    private static double randomDouble(double min, double max) {
+        final double d = 1.0 - max - min;
+        return min + d * random.nextDouble();
+    }
+
+    private void addCrosshairView(double x,double y) {
+        // actually should use dimensions of the container-view instead of screen
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        int maxHeight = (displayMetrics.heightPixels / 2) - viewHeight;
-        int maxWidth = displayMetrics.widthPixels - viewWidth;
+        final int screen_h = displayMetrics.heightPixels;
+        final int screen_w = displayMetrics.widthPixels;
+
+        float density = getApplicationContext().getResources().getDisplayMetrics().density;
+        int viewHeight = (int) (50 * density) * 2;
+        int viewWidth = (int) (50 * density);
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewWidth, viewHeight);
+        params.leftMargin = (int) (screen_w * x - viewWidth / 2);
+        params.topMargin = (int) (screen_h * y - viewHeight / 2);
 
         LayoutInflater inflater = this.getLayoutInflater();
         crosshairView = inflater.inflate(R.layout.view_camera_crosshair, null);
+        rl.addView(crosshairView, params);
 
         this.cross[PHASE_RED] = crosshairView.findViewById(R.id.takePicture_redCross);
         this.cross[PHASE_GREEN] = crosshairView.findViewById(R.id.takePicture_greenCross);
 
-        Random r = new Random();
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewWidth,viewHeight);
-        params.leftMargin = r.nextInt(maxWidth - 0) + 0;
-        params.topMargin = r.nextInt(maxHeight - (int) (40 * density)) + (int) (40 * density);
-
-        rl.addView(crosshairView, params);
+        this.crossHairX = x;
+        this.crossHairY = y;
     }
 
     public void onCaptureButtonPressed(View view) {

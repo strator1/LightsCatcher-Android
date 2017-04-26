@@ -13,6 +13,10 @@ import java.util.Map;
 @IgnoreExtraProperties
 public class User {
 
+
+    @Exclude
+    public String uid;
+
     public String name;
     public String email;
     public int points;

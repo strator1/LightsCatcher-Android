@@ -10,7 +10,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 
 /**
  * Created by patrickvalenta on 08.04.17.
@@ -22,7 +22,7 @@ public class LightInformation extends AppCompatActivity {
 
     public Context ctx;
     public View view;
-    public PhotoInformation.LightPhase phase;
+    public LightPhase phase;
     public boolean isMostRelevant;
     public int x;
     public int y;
@@ -75,13 +75,13 @@ public class LightInformation extends AppCompatActivity {
         this.view = view;
     }
 
-    public PhotoInformation.LightPhase getPhase() {
+    public LightPhase getPhase() {
         return phase;
     }
 
-    public void setPhase(PhotoInformation.LightPhase phase) {
+    public void setPhase(LightPhase phase) {
         this.phase = phase;
-        int c = this.phase == PhotoInformation.LightPhase.RED ? Color.argb(0x60,0xFF,0x00,0x00) : Color.argb(0x60,0x00,0xFF,0x00);
+        int c = this.phase == LightPhase.RED ? Color.argb(0x60,0xFF,0x00,0x00) : Color.argb(0x60,0x00,0xFF,0x00);
 
         this.getView().setBackgroundColor(c);
 

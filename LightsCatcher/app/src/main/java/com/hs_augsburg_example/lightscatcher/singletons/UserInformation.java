@@ -10,6 +10,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.utils.PersistenceManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,9 +54,9 @@ public class UserInformation extends Observable {
         }
 
         this.usrSnapshot.addToPoints(points);
-        Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("/users/" + getUid(), this.usrSnapshot.toMap());
-        mDatabase.updateChildren(childUpdates);
+        PersistenceManager.shared.persist(usrSnapshot);
+
+
     }
 
     public String getUid() {
@@ -128,6 +129,7 @@ public class UserInformation extends Observable {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     User user = dataSnapshot.getValue(User.class);
+                    user.uid = dataSnapshot.getKey();
                     UserInformation.shared.setUserSnapshot(user);
                 }
 

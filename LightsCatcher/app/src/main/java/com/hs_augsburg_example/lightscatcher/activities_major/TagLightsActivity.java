@@ -24,11 +24,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.R;
-import com.hs_augsburg_example.lightscatcher.dataModels.Light;
+import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.ByteArrayOutputStream;
@@ -37,8 +38,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.GREEN;
-import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.RED;
+import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.GREEN;
+import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.RED;
+
 
 public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
 
@@ -152,15 +154,17 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
         PhotoInformation.shared.resetLightPositions();
         PhotoInformation.shared.setLightInformationList(insertedViews);
-        final Light light = PhotoInformation.shared.getLight();
-
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
+        final Photo light = PhotoInformation.shared.getLight();
 
         final String imageId = UUID.randomUUID().toString().toUpperCase();
         StorageReference storageReference = mStorageRef.child("lights_images").child(imageId);
 
         progressBar.setVisibility(View.VISIBLE);
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
+        storageReference.putBytes(baos.toByteArray());
+
         UploadTask uploadTask = storageReference.putBytes(baos.toByteArray());
 
         uploadTask.addOnFailureListener(new OnFailureListener() {
@@ -171,13 +175,12 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 toast.show();
             }
         });
-
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressBar.setVisibility(View.GONE);
                 light.imageUrl = taskSnapshot.getDownloadUrl().toString();
-                PhotoInformation.shared.createLight(imageId, light);
+
                 UserInformation.shared.increaseUserPoints(1);
                 Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich :)", Toast.LENGTH_LONG);
                 toast.show();
