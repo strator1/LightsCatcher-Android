@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher.camera;
+package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,7 +23,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.hs_augsburg_example.lightscatcher.FinishActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
@@ -249,12 +248,9 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             lightPhaseDialog = dialogBuilder.create();
         }
 
-
         Button deleteButton = (Button) lightPhaseDialogView.findViewById(R.id.deleteButton);
         Button redButton = (Button) lightPhaseDialogView.findViewById(R.id.redButton);
         Button greenButton = (Button) lightPhaseDialogView.findViewById(R.id.greenButton);
-
-
 
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override

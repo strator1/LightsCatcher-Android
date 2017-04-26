@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
     <RelativeLayout
         android:id="@+id/take_picture_rl"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
 
         <FrameLayout
             android:id="@+id/take_picture_cameraPreview"
@@ -23,46 +24,79 @@
             android:shadowDy="1.3"
             android:shadowRadius="1.6"
             android:text="fotografieren"
-            android:textSize="20dp"
             android:textAllCaps="true"
-            android:textColor="@android:color/white"/>
+            android:textColor="@android:color/white"
+            android:textSize="20dp" />
 
         <RelativeLayout
             android:id="@+id/take_picture_bottom_area"
-            android:background="#000"
-            android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
-            android:layout_height="100dp">
+            android:layout_height="100dp"
+            android:layout_alignParentBottom="true"
+            android:background="#555">
 
-            <Button
-                android:id="@+id/take_picture_info_btn"
-                style="@style/Widget.AppCompat.Button.Borderless"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+            <GridLayout
+
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="2"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="5dp"
-                android:background="@android:drawable/ic_menu_info_details"
-                android:onClick="onInfoButtonPressed" />
+                android:layout_marginLeft="10dp">
+
+                <RadioGroup
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_columnSpan="2">
+                    <RadioButton
+                        android:id="@+id/takePicture_modeRedSelect"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginLeft="6dp"
+                        android:layout_marginRight="6dp"
+                        android:background="#f00"
+                        android:onClick="onRedSelect"/>
+                    <RadioButton
+                        android:id="@+id/takePicture_modeGreenSelect"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginLeft="6dp"
+                        android:layout_marginRight="6dp"
+                        android:background="#0f0"
+                        android:onClick="onGreenSelect"/>
+                </RadioGroup>
+                <CheckBox
+                    android:layout_gravity="center"
+                    android:id="@+id/takePicture_modeRedStatus"
+                    android:enabled="false" />
+                <CheckBox
+                    android:layout_gravity="center"
+                    android:id="@+id/takePicture_modeGreenStatus"
+                    android:enabled="false"/>
+            </GridLayout>
 
             <Button
-                android:id="@+id/take_picture_exit_btn"
+                android:id="@+id/takePicture_exitBtn"
                 style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:layout_marginRight="5dp"
-                android:background="@android:drawable/ic_menu_close_clear_cancel"
-                android:onClick="navigateBack" />
+                android:background="@android:drawable/stat_sys_upload_done"
+                android:onClick="onExitButtonClick"
+                android:enabled="false"/>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/take_picture_btn"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                android:onClick="onCaptureButtonPressed"
-                android:layout_gravity="bottom|end"
                 android:layout_centerInParent="true"
+                android:layout_gravity="bottom|end"
+                android:onClick="onCaptureButtonPressed"
                 app:srcCompat="@android:drawable/ic_menu_camera" />
 
         </RelativeLayout>

@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher;
+package com.hs_augsburg_example.lightscatcher.activities_minor;
 
 
 import android.content.Intent;
@@ -9,6 +9,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;

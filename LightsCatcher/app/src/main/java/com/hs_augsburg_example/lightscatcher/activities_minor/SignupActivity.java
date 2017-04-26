@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher;
+package com.hs_augsburg_example.lightscatcher.activities_minor;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -15,6 +15,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 

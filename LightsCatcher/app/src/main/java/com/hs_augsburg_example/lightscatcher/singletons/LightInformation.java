@@ -15,7 +15,6 @@ import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 /**
  * Created by patrickvalenta on 08.04.17.
  */
-
 public class LightInformation extends AppCompatActivity {
 
     public static final int WIDTH = 40;

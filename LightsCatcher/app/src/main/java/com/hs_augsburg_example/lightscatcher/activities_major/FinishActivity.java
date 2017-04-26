@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher;
+package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
+import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 public class FinishActivity extends AppCompatActivity {

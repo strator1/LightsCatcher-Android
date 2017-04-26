@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher;
+package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -22,7 +22,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
+import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
+import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.activities_minor.SettingsActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;

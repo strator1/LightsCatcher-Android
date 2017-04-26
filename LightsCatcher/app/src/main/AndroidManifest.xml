@@ -20,7 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".HomeActivity"
+            android:name=".activities_major.HomeActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
@@ -31,38 +31,38 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
+            android:name=".activities_minor.LoginActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".SignupActivity"
+            android:name=".activities_minor.SignupActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".camera.TakePictureActivity"
+            android:name=".activities_major.TakePictureActivity"
             android:label="@string/title_activity_take_picture"
-            android:parentActivityName=".HomeActivity"
+            android:parentActivityName=".activities_major.HomeActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.hs_augsburg_example.lightscatcher.HomeActivity" />
+                android:value="com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity" />
         </activity>
         <activity
-            android:name=".camera.TagLightsActivity"
+            android:name=".activities_major.TagLightsActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity" />
+                android:value="com.hs_augsburg_example.lightscatcher.activities_major.TakePictureActivity" />
         </activity>
-        <activity android:name=".FinishActivity" />
+        <activity android:name=".activities_major.FinishActivity" />
         <activity
-            android:name=".SettingsActivity"
+            android:name=".activities_minor.SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity
-            android:name=".DatenschutzActivity"
+            android:name=".activities_minor.DatenschutzActivity"
             android:label="@string/title_activity_datenschutz"></activity>
     </application>
 

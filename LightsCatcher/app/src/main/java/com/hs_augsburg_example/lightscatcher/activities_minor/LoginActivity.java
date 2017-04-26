@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher;
+package com.hs_augsburg_example.lightscatcher.activities_minor;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,6 +18,8 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
 /**
