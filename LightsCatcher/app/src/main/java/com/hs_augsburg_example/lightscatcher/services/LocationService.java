@@ -69,7 +69,7 @@ public class LocationService extends Service implements LocationListener {
             try {
                 if (isGPSEnabled) {
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
-                    location = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+                    location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 } else if (isNetworkEnabled) {
                     locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BW_UPDATES, MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
                     location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
