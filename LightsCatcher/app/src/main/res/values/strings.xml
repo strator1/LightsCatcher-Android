@@ -126,4 +126,5 @@
     <string name="title_settings_menu">Einstellungen</string>
     <string name="submit_btn_upload">Bild hochladen</string>
     <string name="submit_txt_mark">markieren</string>
+    <string name="fotografieren">%1$s fotografieren</string>
 </resources>

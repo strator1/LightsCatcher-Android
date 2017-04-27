@@ -1,0 +1,5 @@
+<resources>
+    <declare-styleable name="Crosshair">
+        <attr name="crossColor" format="color" />
+    </declare-styleable>
+</resources>

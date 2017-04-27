@@ -25,6 +25,7 @@ import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hs_augsburg_example.lightscatcher.R;
@@ -34,13 +35,11 @@ import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.services.LocationService;
 import com.hs_augsburg_example.lightscatcher.services.MotionService;
-import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -79,6 +78,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     private View[] snapshotStatus = new View[2];
     private Button exitButton;
     private double crossHairWidth;
+    private TextView txtCaption;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +90,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         rl = (RelativeLayout) findViewById(R.id.take_picture_rl);
 
         exitButton = (Button) findViewById(R.id.takePicture_exitBtn);
+        txtCaption = (TextView) findViewById(R.id.takePicture_caption);
         this.snapshotStatus[PHASE_RED] = findViewById(R.id.takePicture_modeRedStatus);
         this.snapshotStatus[PHASE_GREEN] = findViewById(R.id.takePicture_modeGreenStatus);
         this.redGreenSelect[PHASE_RED] = (RadioButton) findViewById(R.id.takePicture_modeRedSelect);
@@ -187,7 +188,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
                 score);
 
         Record.latestRecord = r;
-        Intent intent = new Intent(TakePictureActivity.this, TagLightsActivity.class);
+        Intent intent = new Intent(TakePictureActivity.this, SubmitActivity.class);
         startActivity(intent);
     }
 
@@ -208,7 +209,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         modeSelect.setChecked(true);
         cross[phase].setVisibility(View.VISIBLE);
         cross[togglePhase(phase)].setVisibility(View.INVISIBLE);
-
+        txtCaption.setText(getString(R.string.fotografieren,phase == 0 ? "Rot-Phase" : "Grün-Phase"));
     }
 
     /**
@@ -248,7 +249,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         if (motionService != null)
             photoB.setGyro(motionService.getPitch());
 
-        if (locationService != null && locationService.canGetLocation()){
+        if (locationService != null && locationService.canGetLocation()) {
             Location l = locationService.getLocation();
             photoB.setLocation(l);
         }
