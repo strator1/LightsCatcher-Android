@@ -10,10 +10,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
-import com.hs_augsburg_example.lightscatcher.utils.PersistenceManager;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Observable;
 
 /**

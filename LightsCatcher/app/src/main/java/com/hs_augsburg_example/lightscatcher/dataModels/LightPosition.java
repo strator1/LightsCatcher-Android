@@ -10,6 +10,10 @@ public class LightPosition {
     public double x;
     public double y;
 
+    public LightPosition() {
+        // Default constructor required for calls to DataSnapshot.getValue(User.class)
+    }
+
     public LightPosition(double x, double y, LightPhase phase, boolean isMostRelevant) {
         this.x = x;
         this.y = y;

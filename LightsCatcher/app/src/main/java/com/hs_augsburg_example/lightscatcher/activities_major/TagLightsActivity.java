@@ -4,10 +4,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,29 +20,27 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
+import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
-import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
-import com.hs_augsburg_example.lightscatcher.utils.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.GREEN;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.RED;
 
 
-public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
+public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener, OnFailureListener {
 
     private ProgressBar progressBar;
     private ImageView imageView;
@@ -57,14 +55,16 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private long lastTouchDown;
     private int CLICK_ACTION_THRESHHOLD = 200;
 
-    private StorageReference mStorageRef;
+    private Record record;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tag_lights);
-
         ActivityRegistry.register(this);
+
+        setContentView(R.layout.activity_tag_lights);
+        record = Record.latestRecord;
+
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         imageView = (ImageView) findViewById(R.id.imageView);
@@ -75,6 +75,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         ViewTreeObserver vto = imageView.getViewTreeObserver();
         vto.addOnPreDrawListener(this);
 
+
+        /*
         if (PhotoInformation.shared.getImage() != null) {
             image = PhotoInformation.shared.getImage();
             imageView.setImageBitmap(image);
@@ -85,8 +87,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 addNewView(0, 0, mostRel);
             }
         }
-
-        mStorageRef = FirebaseStorage.getInstance().getReference();
+        */
 
     }
 
@@ -100,7 +101,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        int[] location = new int[2];
+        /*int[] location = new int[2];
         v.getLocationOnScreen(location);
 
         int x = (int) event.getRawX();
@@ -112,7 +113,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 onActionDownTouch(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD)  {
+                if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD) {
                     if (pickedUpViews.size() == 0) {
                         addNewView(x, y, null);
                     } else if (pickedUpViews.size() == 1) {
@@ -127,7 +128,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             default:
                 return v.onTouchEvent(event);
         }
-
+*/
         return true;
     }
 
@@ -148,55 +149,69 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     }
 
     public void onUploadPressed(View v) {
-        for(LightInformation pos : insertedViews) {
+        for (LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
 
-        PhotoInformation.shared.resetLightPositions();
-        PhotoInformation.shared.setLightInformationList(insertedViews);
-        final Photo light = PhotoInformation.shared.getLight();
-
-        final String imageId = UUID.randomUUID().toString().toUpperCase();
-        StorageReference storageReference = mStorageRef.child("lights_images").child(imageId);
-
         progressBar.setVisibility(View.VISIBLE);
 
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
-        storageReference.putBytes(baos.toByteArray());
+        final Photo photo1, photo2;
+        if (record.redPhoto != null) {
+            photo1 = record.redPhoto;
+            photo2 = record.greenPhoto;
+        } else {
+            photo1 = record.greenPhoto;
+            photo2 = null;
+        }
 
-        UploadTask uploadTask = storageReference.putBytes(baos.toByteArray());
 
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                progressBar.setVisibility(View.GONE);
-                Toast toast = Toast.makeText(getApplicationContext(), "Upload nicht erfolgreich!!!", Toast.LENGTH_LONG);
-                toast.show();
-            }
-        });
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+        UploadTask task1;
+        task1 = PersistenceManager.shared.persistStorage(photo1.id, photo2.bitMap);
+        task1.addOnFailureListener(this);
+        task1.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                progressBar.setVisibility(View.GONE);
-                light.imageUrl = taskSnapshot.getDownloadUrl().toString();
+                photo1.imageUrl = taskSnapshot.getDownloadUrl().toString();
 
-                UserInformation.shared.increaseUserPoints(1);
-                Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich :)", Toast.LENGTH_LONG);
-                toast.show();
+                if (photo2 == null)
+                    TagLightsActivity.this.onUploadComplete();
+                else {
+                    UploadTask task2 = PersistenceManager.shared.persistStorage(photo2.id, photo2.bitMap);
+                    task2.addOnFailureListener(TagLightsActivity.this);
+                    task2.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            photo2.imageUrl = taskSnapshot.getDownloadUrl().toString();
+                            TagLightsActivity.this.onUploadComplete();
+                        }
+                    });
+                }
             }
         });
-
-        Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
-        startActivity(intent);
-        finish();
-
-        try {
-            baos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
+
+    private void onUploadComplete() {
+        Task task3 = PersistenceManager.shared.persist(record);
+        task3.addOnFailureListener(TagLightsActivity.this);
+        task3.addOnSuccessListener(new OnSuccessListener() {
+
+            @Override
+            public void onSuccess(Object o) {
+                Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+    }
+
+
+    @Override
+    public void onFailure(@NonNull Exception e) {
+        progressBar.setVisibility(View.GONE);
+        Toast toast = Toast.makeText(getApplicationContext(), "Upload nicht erfolgreich!!!", Toast.LENGTH_LONG);
+        toast.show();
+    }
+
 
     private void addNewView(int x, int y, LightInformation existingPos) {
         if (insertedViews.size() >= 3) {
@@ -213,7 +228,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
             boolean mostRelevantExists = false;
             for (LightInformation p : insertedViews) {
-                if (p.isMostRelevant){
+                if (p.isMostRelevant) {
                     mostRelevantExists = true;
                     break;
                 }

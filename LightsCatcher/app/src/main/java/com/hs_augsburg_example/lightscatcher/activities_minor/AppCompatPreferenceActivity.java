@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher;
+package com.hs_augsburg_example.lightscatcher.activities_minor;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
