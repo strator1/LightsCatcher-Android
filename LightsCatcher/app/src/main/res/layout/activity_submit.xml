@@ -16,11 +16,14 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight=".5">
-
-            <com.github.chrisbanes.photoview.PhotoView
+            <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
                 android:id="@+id/submit_photoTop"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"/>
+            <!--<com.github.chrisbanes.photoview.PhotoView-->
+                <!--android:id="@+id/submit_photoTop"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent" />-->
 
             <com.hs_augsburg_example.lightscatcher.views.Crosshair
                 android:layout_width="50dp"
@@ -38,10 +41,14 @@
             android:layout_height="0dp"
             android:layout_weight=".5">
 
-            <com.github.chrisbanes.photoview.PhotoView
+            <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
                 android:id="@+id/submit_photoBottom"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"/>
+            <!--<com.github.chrisbanes.photoview.PhotoView-->
+                <!--android:id="@+id/submit_photoBottom"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent" />-->
 
             <com.hs_augsburg_example.lightscatcher.views.Crosshair
                 android:layout_width="50dp"

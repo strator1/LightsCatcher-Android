@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
@@ -18,6 +20,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -52,6 +55,13 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     static final int PHASE_INIT = -1;
     public static final int PHASE_RED = 0;
     public static final int PHASE_GREEN = 1;
+
+    // crosshair constraints (center-coordinates relative to layoutContainer)
+    private static final double CROSSHAIR_X_MIN = .3;
+    private static final double CROSSHAIR_X_MAX = 1 - CROSSHAIR_X_MIN;
+    private static final double CROSSHAIR_Y_MIN = .2;
+    private static final double CROSSHAIR_Y_MAX = .4;
+    private static final Random random = new Random();
 
     private static Camera cam;
     private CameraPreview camPreview;
@@ -96,13 +106,8 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         this.redGreenSelect[PHASE_RED] = (RadioButton) findViewById(R.id.takePicture_modeRedSelect);
         this.redGreenSelect[PHASE_GREEN] = (RadioButton) findViewById(R.id.takePicture_modeGreenSelect);
 
-        // generate crosshair position
-        // coordinates are relative to parent_view
-        // and centered to the whole crosshair-view
-        final double x = randomDouble(CROSSHAIR_MARGIN_HOR, CROSSHAIR_MARGIN_HOR);
-        final double y = randomDouble(CROSSHAIR_MARGIN_TOP, CROSSHAIR_MARGIN_BOT);
 
-        addCrosshairView(x, y);
+
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -110,86 +115,145 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         motionService = new MotionService();
         locationService = new LocationService(getApplicationContext());
 
-        this.stateMachine.switchPhase(PHASE_RED);
+
+        this.rl.post(new Runnable() {
+            @Override
+            public void run() {
+
+                // generate crosshair position (center coordinates, relative to parent_view)
+                double x = randomDouble(CROSSHAIR_X_MIN, CROSSHAIR_X_MIN);
+                double y = randomDouble(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
+
+                //        final double x = CROSSHAIR_X_MIN;
+                //        final double y = CROSSHAIR_Y_MAX;
+
+                // this has to wait until the layout-process has finished:
+                addCrosshairView(x, y);
+                stateMachine.switchPhase(PHASE_RED);
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CAMERA_PERMISSION:
+                if (permissions.length != 1 || grantResults.length != 1) {
+                    throw new RuntimeException("Error on requesting camera permission.");
+                }
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "No permission!",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    if (!locationService.hasPermission()) {
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                2);
+                    }
+                }
+                // No need to start camera here; it is handled by onResume
+                break;
+        }
+    }
+
+    private void setupCamera() {
+        if (checkCameraHardware(getApplicationContext())) {
+            cam = getCameraInstance();
+            Camera.Parameters params = cam.getParameters();
+
+            /*List<Camera.Size> sizes = params.getSupportedPictureSizes();
+
+            for (Camera.Size s : sizes) {
+                System.out.println("Available resolutions: " + s.width + ", " + s.height);
+            }*/
+
+            cam.setDisplayOrientation(90);
+
+            camPreview = new CameraPreview(this, cam);
+            FrameLayout preview = (FrameLayout) findViewById(R.id.take_picture_cameraPreview);
+
+            preview.addView(camPreview);
+        }
+        ;
     }
 
 
-    private static int togglePhase(int in) {
-        return in == PHASE_RED ? PHASE_GREEN : PHASE_RED;
+    private boolean checkCameraHardware(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            // this device has a camera
+            return true;
+        } else {
+            // no camera on this device
+            return false;
+        }
     }
 
     /**
-     * This class manages the workflow of the {@link TakePictureActivity}.
+     * A safe way to get an instance of the Camera object.
      */
-    private class TakePictureStateMachine {
-
-        private final TakePictureActivity owner;
-        private final Photo[] snapshots;
-        private int phase = PHASE_INIT;
-
-
-        TakePictureStateMachine(TakePictureActivity owner) {
-            this.owner = owner;
-            this.snapshots = owner.snapshots;
+    private Camera getCameraInstance() {
+        if (cam != null) {
+            return cam;
+            /*cam.release();
+            cam = null;*/
         }
 
-
-        void switchPhase(int newPhase) {
-            if (this.phase == newPhase) return;
-
-            this.phase = newPhase;
-            owner.enterNextPhase(newPhase);
-
-            switch (this.phase) {
-                case PHASE_RED:
-                    this.phase = PHASE_GREEN;
-                case PHASE_GREEN:
-                    this.phase = newPhase;
-            }
+        try {
+            cam = Camera.open(); // attempt to get a Camera instance
+        } catch (Exception e) {
+            // Camera is not available (in use or does not exist)
+            e.printStackTrace();
         }
-
-        public void takeSnapshot(Photo snapshot) {
-            TakePictureActivity.this.snapshots[this.phase] = snapshot;
-
-            owner.notifySnapshotTaken(this.phase);
-
-            // After at least one snapshots was taken, we allow the user to submit the snapshots
-            owner.allowSubmit(true);
-
-            int otherPhase = togglePhase(this.phase);
-            if (this.snapshots[otherPhase] == null)
-                // no snapshots for the other phase was taken yet
-                this.switchPhase(otherPhase);
-            else {
-                // snapshots for both phases were taken
-                prepareUpload();
-            }
-        }
-
-        public void prepareUpload() {
-            if (TakePictureActivity.this.snapshots[PHASE_RED] == null && TakePictureActivity.this.snapshots[PHASE_GREEN] == null) {
-                // no snapshots were taken at all
-                Toast.makeText(TakePictureActivity.this.getApplicationContext(), "Please take a snapshots first!", Toast.LENGTH_SHORT).show();
-            } else {
-                this.owner.navigateToTagLights();
-            }
-        }
+        return cam; // returns null if camera is unavailable
     }
 
-    private void navigateToTagLights() {
 
-        // +1 points for each photo
-        int score = (snapshots[0] == null ? 0 : 1) + (snapshots[1] == null ? 0 : 1);
 
-        Record r = new Record(
-                UserInformation.shared.getUid(),
-                snapshots[PHASE_RED],
-                snapshots[PHASE_GREEN],
-                score);
+    private static double randomDouble(double min, double max) {
+        final double d = 1.0 - max - min;
+        return min + d * random.nextDouble();
+    }
 
-        Record.latestRecord = r;
-        Intent intent = new Intent(TakePictureActivity.this, SubmitActivity.class);
-        startActivity(intent);
+    private void addCrosshairView(double x, double y) {
+        // actually should use dimensions of the container-view instead of screen
+//        DisplayMetrics displayMetrics = new DisplayMetrics();
+//        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+//        final int parent_h = displayMetrics.heightPixels;
+//        final int parent_w = displayMetrics.widthPixels;
+
+        Rect parentRect = new Rect();
+        rl.getDrawingRect(parentRect);
+        parentRect.set(0,0,rl.getWidth(),rl.getHeight());
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        final int parent_h = displayMetrics.heightPixels;
+        final int parent_w = displayMetrics.widthPixels;
+        float density = getApplicationContext().getResources().getDisplayMetrics().density;
+
+        int viewHeight = (int) (50 * density) * 2;
+        int viewWidth = (int) (50 * density);
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewWidth, viewHeight);
+        params.leftMargin = (int) (parentRect.width() * x - viewWidth / 2);
+        params.topMargin = (int) (parentRect.height() * y - viewHeight / 2);
+
+        LayoutInflater inflater = this.getLayoutInflater();
+        crosshairView = inflater.inflate(R.layout.view_camera_crosshair, null);
+        //((FrameLayout)findViewById(R.id.take_picture_cameraPreview)).addView(crosshairView, params);
+        rl.addView(crosshairView, params);
+
+        this.cross[PHASE_RED] = crosshairView.findViewById(R.id.takePicture_redCross);
+        this.cross[PHASE_GREEN] = crosshairView.findViewById(R.id.takePicture_greenCross);
+
+        //remember posiction of the cross
+        this.crossHairX = x;
+        this.crossHairY = y;
+        // size relative to parent_width
+        this.crossHairWidth = (double) viewWidth / parentRect.width();
+    }
+
+    private static int togglePhase(int in) {
+        return in == PHASE_RED ? PHASE_GREEN : PHASE_RED;
     }
 
     /**
@@ -220,27 +284,37 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         box.setChecked(true);
     }
 
-    public void onGreenSelect(View view) {
-        stateMachine.switchPhase(PHASE_GREEN);
+    private void navigateToTagLights() {
+
+        // +1 points for each photo
+        int score = (snapshots[0] == null ? 0 : 1) + (snapshots[1] == null ? 0 : 1);
+
+        Record r = new Record(
+                UserInformation.shared.getUid(),
+                snapshots[PHASE_RED],
+                snapshots[PHASE_GREEN],
+                score);
+
+        Record.latestRecord = r;
+        Intent intent = new Intent(TakePictureActivity.this, SubmitActivity.class);
+        startActivity(intent);
     }
 
-    public void onRedSelect(View view) {
-        stateMachine.switchPhase(PHASE_RED);
-    }
+    private boolean permissionGranted = false;
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
         Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
         bmp = rotateImage(bmp, 90);
 
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) crosshairView.getLayoutParams();
 
         final LightPhase phase = stateMachine.phase == PHASE_RED ? LightPhase.RED : LightPhase.GREEN;
 
+        Point crosshair = translateRelativeLayoutToImage(crossHairX, crossHairY);
         //TODO: fix lightPosition: consider the size of the corsair
         // if this is a red picture the light is above
         // if it's a green picture it's bellow the crossHair center
-        LightPosition pos = new LightPosition(crossHairX, crossHairY, phase, true);
+        LightPosition pos = new LightPosition(crosshair, phase, true);
 
         Photo.Builder photoB = Photo.buildNew()
                 .setBitmap(bmp)
@@ -254,14 +328,22 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
             photoB.setLocation(l);
         }
 
-        TakePictureActivity.this.stateMachine.takeSnapshot(photoB.commit());
+        Photo snapshotData = photoB.commit();
+        // Store the image
+        this.snapshots[this.stateMachine.phase] = snapshotData;
+
+        // show visual feedback, that the snapshot was taken
+        this.notifySnapshotTaken(this.stateMachine.phase);
+
+        // After at least one snapshots was taken, we allow the user to submit the snapshots
+        this.allowSubmit(true);
+
+        TakePictureActivity.this.stateMachine.onSnapshotTaken(snapshotData);
 
         // prepare camera for next picture
         camera.stopPreview();
         camera.startPreview();
     }
-
-    private boolean permissionGranted = false;
 
     @Override
     protected void onResume() {
@@ -315,90 +397,22 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         mSensorManager.unregisterListener(motionService.getEventListener());
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CAMERA_PERMISSION:
-                if (permissions.length != 1 || grantResults.length != 1) {
-                    throw new RuntimeException("Error on requesting camera permission.");
-                }
-                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "No permission!",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    if (!locationService.hasPermission()) {
-                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                                2);
-                    }
-                }
-                // No need to start camera here; it is handled by onResume
-                break;
-        }
+    private Point translateRelativeLayoutToImage(double x, double y) {
+        Rect clip = new Rect();
+        this.camPreview.getDrawingRect(clip);
+        Log.i("CAM","DrawingRect: "+ clip.toShortString());
+
+        Point result = new Point((int) (clip.left+x*clip.width()), (int) (clip.top+y*clip.height()));
+        Log.i("CAM", String.format("translate {0} to {1}", x, y, result.x, result.y));
+        return result;
     }
 
-    private void setupCamera() {
-        if (checkCameraHardware(getApplicationContext())) {
-            cam = getCameraInstance();
-            Camera.Parameters params = cam.getParameters();
-
-            /*List<Camera.Size> sizes = params.getSupportedPictureSizes();
-
-            for (Camera.Size s : sizes) {
-                System.out.println("Available resolutions: " + s.width + ", " + s.height);
-            }*/
-
-            cam.setDisplayOrientation(90);
-
-            camPreview = new CameraPreview(this, cam);
-            FrameLayout preview = (FrameLayout) findViewById(R.id.take_picture_cameraPreview);
-
-            preview.addView(camPreview);
-        }
-        ;
+    public void onGreenSelect(View view) {
+        stateMachine.switchPhase(PHASE_GREEN);
     }
 
-
-    private static final double CROSSHAIR_MARGIN_HOR = .25;
-    private static final double CROSSHAIR_MARGIN_TOP = .2;
-    private static final double CROSSHAIR_MARGIN_BOT = .5;
-    private static final Random random = new Random();
-
-    private static double randomDouble(double min, double max) {
-        final double d = 1.0 - max - min;
-        return min + d * random.nextDouble();
-    }
-
-    private void addCrosshairView(double x, double y) {
-        // actually should use dimensions of the container-view instead of screen
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        final int parent_h = displayMetrics.heightPixels;
-        final int parent_w = displayMetrics.widthPixels;
-
-        float density = getApplicationContext().getResources().getDisplayMetrics().density;
-
-
-        int viewHeight = (int) (50 * density) * 2;
-        int viewWidth = (int) (50 * density);
-
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewWidth, viewHeight);
-        params.leftMargin = (int) (parent_w * x - viewWidth / 2);
-        params.topMargin = (int) (parent_h * y - viewHeight / 2);
-
-        LayoutInflater inflater = this.getLayoutInflater();
-        crosshairView = inflater.inflate(R.layout.view_camera_crosshair, null);
-        rl.addView(crosshairView, params);
-
-        this.cross[PHASE_RED] = crosshairView.findViewById(R.id.takePicture_redCross);
-        this.cross[PHASE_GREEN] = crosshairView.findViewById(R.id.takePicture_greenCross);
-
-        //remember posiction of the cross
-        this.crossHairX = x;
-        this.crossHairY = y;
-        // size relative to parent_width
-        this.crossHairWidth = (double) viewHeight / parent_w;
+    public void onRedSelect(View view) {
+        stateMachine.switchPhase(PHASE_RED);
     }
 
     public void onCaptureButtonPressed(View view) {
@@ -409,41 +423,9 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         cam.takePicture(null, null, this);
     }
 
-
-    private boolean checkCameraHardware(Context context) {
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            // this device has a camera
-            return true;
-        } else {
-            // no camera on this device
-            return false;
-        }
-    }
-
-    /**
-     * A safe way to get an instance of the Camera object.
-     */
-    private Camera getCameraInstance() {
-        if (cam != null) {
-            return cam;
-            /*cam.release();
-            cam = null;*/
-        }
-
-        try {
-            cam = Camera.open(); // attempt to get a Camera instance
-        } catch (Exception e) {
-            // Camera is not available (in use or does not exist)
-            e.printStackTrace();
-        }
-        return cam; // returns null if camera is unavailable
-    }
-
     public void onExitButtonClick(View view) {
         stateMachine.prepareUpload();
     }
-
-    private AlertDialog pictureHelpDialog;
 
     public void onInfoButtonPressed(View view) {
         if (pictureHelpDialog == null) {
@@ -459,6 +441,8 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         pictureHelpDialog.show();
     }
 
+    private AlertDialog pictureHelpDialog;
+
     public static Bitmap rotateImage(Bitmap source, float angle) {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
@@ -466,5 +450,57 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
                 matrix, true);
     }
 
+    /**
+     * This class manages the workflow of the {@link TakePictureActivity}.
+     */
+    private class TakePictureStateMachine {
+
+        private final TakePictureActivity owner;
+        private final Photo[] snapshots;
+        private int phase = PHASE_INIT;
+
+
+        TakePictureStateMachine(TakePictureActivity owner) {
+            this.owner = owner;
+            this.snapshots = owner.snapshots;
+        }
+
+
+        void switchPhase(int newPhase) {
+            if (this.phase == newPhase) return;
+
+            this.phase = newPhase;
+            owner.enterNextPhase(newPhase);
+
+            switch (this.phase) {
+                case PHASE_RED:
+                    this.phase = PHASE_GREEN;
+                case PHASE_GREEN:
+                    this.phase = newPhase;
+            }
+        }
+
+        public void onSnapshotTaken(Photo snapshot) {
+
+
+            int otherPhase = togglePhase(this.phase);
+            if (this.snapshots[otherPhase] == null)
+                // no snapshots for the other phase was taken yet
+                this.switchPhase(otherPhase);
+            else {
+                // snapshots for both phases were taken
+                prepareUpload();
+            }
+        }
+
+        public void prepareUpload() {
+            if (TakePictureActivity.this.snapshots[PHASE_RED] == null && TakePictureActivity.this.snapshots[PHASE_GREEN] == null) {
+                // no snapshots were taken at all
+                Toast.makeText(TakePictureActivity.this.getApplicationContext(), "Please take a snapshots first!", Toast.LENGTH_SHORT).show();
+            } else {
+                this.owner.navigateToTagLights();
+            }
+        }
+    }
 
 }

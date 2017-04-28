@@ -1,6 +1,8 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.content.Intent;
+import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
@@ -8,25 +10,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
-import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class SubmitActivity extends AppCompatActivity implements OnFailureListener {
@@ -46,32 +43,35 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         setContentView(R.layout.activity_submit);
         record = Record.latestRecord;
 
-
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
+        initPhotoView(record.redPhoto ,(FrameLayout) findViewById(R.id.submit_frameTop),(FrameLayout) findViewById(R.id.submit_frameBottom));
+        initPhotoView(record.greenPhoto,(FrameLayout) findViewById(R.id.submit_frameBottom),(FrameLayout) findViewById(R.id.submit_frameTop));
+
+    }
+
+    private void initPhotoView(Photo data, FrameLayout targetFrame, FrameLayout otherFrame){
+        if (data != null) {
+            targetFrame.setVisibility(View.VISIBLE);
+            final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) targetFrame.getChildAt(0);
+            //photoView.setImageBitmap(data.bitMap);
 
 
-        photoTop = (PhotoView) findViewById(R.id.submit_photoTop);
-        if (record.redPhoto != null) {
-            photoTop.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            photoTop.setImageBitmap(record.redPhoto.bitMap);
+            photoView.setImage(ImageSource.bitmap( data.bitMap));
+            photoView.setScaleAndCenter(2,new PointF(data.lightPos.x,data.lightPos.y));
+
+            //photoTop = photoView;
+            //photoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            //photoView.setScale(2f,true);
+//            photoView.post(new Runnable() {
+//                @Override
+//                public void run() {
+//
+//                }
+//            });
         } else {
-            FrameLayout frame = (FrameLayout) findViewById(R.id.submit_frameTop);
-            frame.setVisibility(View.GONE);
-
-
+            otherFrame.setVisibility(View.GONE);
         }
-
-        photoBottom = (PhotoView) findViewById(R.id.submit_photoBottom);
-        if (record.greenPhoto != null) {
-            photoBottom.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            photoBottom.setImageBitmap(record.greenPhoto.bitMap);
-        } else {
-            FrameLayout frame = (FrameLayout) findViewById(R.id.submit_frameBottom);
-            frame.setVisibility(View.GONE);
-        }
-
-
     }
 
     public void onUploadPressed(View v) {
@@ -147,6 +147,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     private View lightPhaseHelpDialogView;
 
     public void infoBtnPressed(View view) {
+
         if (lightPhaseHelpDialog == null) {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
             LayoutInflater inflater = this.getLayoutInflater();
