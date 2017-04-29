@@ -2,75 +2,46 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/tag_lights_rl"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        app:srcCompat="@mipmap/ic_launcher"
-        android:scaleType="fitXY"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="5dp"
-        android:shadowColor="@android:color/black"
-        android:shadowDx="1.5"
-        android:shadowDy="1.3"
-        android:shadowRadius="1.6"
-        android:text="@string/submit_txt_mark"
-        android:textSize="20dp"
-        android:textAllCaps="true"
-        android:textColor="@android:color/white"/>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/button_info"
-        android:layout_width="@dimen/floating_button"
-        android:layout_height="@dimen/floating_button"
-        android:layout_above="@+id/button_undo"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:onClick="infoBtnPressed"
-        app:backgroundTint="@color/common_google_signin_btn_text_dark_default"
-        app:rippleColor="@color/common_google_signin_btn_text_light_default"
-        app:srcCompat="@android:drawable/ic_menu_info_details" />
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/button_undo"
-        android:layout_width="@dimen/floating_button"
-        android:layout_height="@dimen/floating_button"
-        android:layout_above="@+id/button"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
-        app:backgroundTint="@color/common_google_signin_btn_text_dark_default"
-        app:rippleColor="@color/common_google_signin_btn_text_light_default"
-        android:onClick="undoBtnPressed"
-        app:srcCompat="@android:drawable/ic_menu_revert" />
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="onUploadPressed"
-        android:background="@color/white"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_alignParentTop="true"
+        android:scaleType="fitXY"
+        app:srcCompat="@mipmap/ic_launcher" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1.5"
+        android:shadowDy="1.3"
+        android:shadowRadius="1.6"
+        android:text="@string/submit_txt_mark"
+        android:textAllCaps="true"
+        android:textColor="@android:color/white"
+        android:textSize="20dp" />
+
+    <Button
+        android:id="@+id/button"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="8dp"
+        android:background="@color/white"
+        android:onClick="onUploadPressed"
         android:text="@string/submit_btn_upload" />
 
     <ProgressBar

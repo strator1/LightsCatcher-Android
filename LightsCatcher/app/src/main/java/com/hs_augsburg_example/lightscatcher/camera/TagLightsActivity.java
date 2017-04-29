@@ -147,9 +147,16 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     }
 
     public void onUploadPressed(View v) {
+
+        if (insertedViews.size() ==0){
+            Toast.makeText(this.getApplicationContext(), "Bitte erst mindestens eine Markierung hinzufügen! (Auf das Bild tippen)", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         for(LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
+
 
         PhotoInformation.shared.resetLightPositions();
         PhotoInformation.shared.setLightInformationList(insertedViews);

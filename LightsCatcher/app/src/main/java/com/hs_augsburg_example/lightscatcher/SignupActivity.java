@@ -92,7 +92,7 @@ public class SignupActivity extends AppCompatActivity {
                                 // signed in user can be handled in the listener.
                                 if (!task.isSuccessful()) {
                                     Toast.makeText(SignupActivity.this, "Authentication failed." + task.getException(),
-                                            Toast.LENGTH_SHORT).show();
+                                            Toast.LENGTH_LONG).show();
                                 } else {
                                     UserInformation.shared.createNewUser(task.getResult().getUser().getUid(),name, email);
                                     startActivity(new Intent(SignupActivity.this, HomeActivity.class));
