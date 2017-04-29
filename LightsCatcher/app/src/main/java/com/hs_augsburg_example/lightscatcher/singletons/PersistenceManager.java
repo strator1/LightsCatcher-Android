@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 
 public class PersistenceManager {
-    public static final String DATA_MODEL_VERSION = "1_1";
+    public static final String DATA_MODEL_VERSION = "v1_0";
     public static final PersistenceManager shared = new PersistenceManager();
     private final DatabaseReference root;
     private final DatabaseReference users;
