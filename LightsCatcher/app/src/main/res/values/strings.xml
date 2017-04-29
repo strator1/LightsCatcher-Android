@@ -41,7 +41,7 @@
     <!-- Strings related to Home-Activity-->
     <string name="home_txt_loggedInAs">Angemeldet als:</string>
     <string name="home_txt_rankCaption">Platzierung:</string>
-    <string name="home_txt_rank">Rang: %1$s</string>
+    <string name="home_txt_rank">%1$s</string>
     <string name="home_txt_score">(Punkte: %1$s)</string>
     <string name="home_txt_globalRanking">Rangliste:</string>
     <!-- Strings related to Settings -->

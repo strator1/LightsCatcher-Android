@@ -237,6 +237,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         swipeLayout.setRefreshing(false);
     }
 
+    @Override
+    public void onBackPressed() {
+        ActivityRegistry.finishAll();
+        super.onBackPressed();
+    }
+
     /**
      * A  Wrapper for a {@link User}. It's used by the RecyclerView
      */
