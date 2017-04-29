@@ -20,10 +20,16 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.FinishActivity;
+import com.hs_augsburg_example.lightscatcher.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
@@ -57,6 +63,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private int CLICK_ACTION_THRESHHOLD = 200;
 
     private StorageReference mStorageRef;
+    private FirebaseAuth mAuthRef;
+    private FirebaseDatabase mDatabaseRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +94,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         }
 
         mStorageRef = FirebaseStorage.getInstance().getReference();
+        mAuthRef = FirebaseAuth.getInstance();
+        mDatabaseRef = FirebaseDatabase.getInstance();
 
     }
 
@@ -151,6 +161,31 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             pos.convertToAbsoluteXY(imageView, image);
         }
 
+        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.getValue() == null) {
+                        //continue
+                        uploadPhoto();
+                    } else {
+                        //banned
+                        UserPreference.setUserBanned(TagLightsActivity.this.getApplicationContext());
+                        UserInformation.shared.logout();
+                        Intent i = new Intent(TagLightsActivity.this, LoginActivity.class);
+                        startActivity(i);
+                        finish();
+                    }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast toast = Toast.makeText(getApplicationContext(), "Du scheinst momentan keine Internetverbindung zu haben. Probiere es später einfach nochmal ;)", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        });
+    }
+
+    private void uploadPhoto() {
         PhotoInformation.shared.resetLightPositions();
         PhotoInformation.shared.setLightInformationList(insertedViews);
         final Light light = PhotoInformation.shared.getLight();

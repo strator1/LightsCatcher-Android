@@ -70,7 +70,7 @@ public class PhotoInformation {
     }
 
     public void createLight(String uid, Light light) {
-        mDatabase.child("lights").child(uid).setValue(light);
+        mDatabase.child("lights/v1_0").child(uid).setValue(light);
     }
 
     public int getLightCount() {

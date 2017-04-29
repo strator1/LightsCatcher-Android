@@ -17,6 +17,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -52,6 +53,11 @@ public class SignupActivity extends AppCompatActivity {
         btnSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (UserPreference.isUserBanned(getApplicationContext())) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.banned_message), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 final String name = inputName.getText().toString().trim();
                 final String email = inputEmail.getText().toString().trim();
                 String password = inputPassword.getText().toString().trim();
