@@ -12,7 +12,8 @@ import java.util.Map;
 
 @IgnoreExtraProperties
 public class User {
-
+    @Exclude
+    public String uid;
     public String name;
     public String email;
     public int points;
@@ -21,7 +22,7 @@ public class User {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public User(String name, String email, int points) {
+    public User(String uid,String name, String email, int points) {
         this.name = name;
         this.email = email;
         this.points = points;
