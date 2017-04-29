@@ -174,12 +174,6 @@ public class TakePictureActivity extends AppCompatActivity{
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        navigateBack(null);
-        super.onBackPressed();
-    }
-
     private void setupCamera() {
         if (checkCameraHardware(getApplicationContext())) {
             cam = getCameraInstance();
@@ -268,6 +262,7 @@ public class TakePictureActivity extends AppCompatActivity{
         startActivity(intent);
     }
 
+
     private AlertDialog pictureHelpDialog;
 
     public void onInfoButtonPressed(View view) {
@@ -290,5 +285,6 @@ public class TakePictureActivity extends AppCompatActivity{
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
     }
+
 
 }
