@@ -191,9 +191,15 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.settings_menu:
-                Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
-                startActivity(intent);
+            case R.id.datenschutz:
+                Intent intentDatenschutz = new Intent(HomeActivity.this, DatenschutzActivity.class);
+                startActivity(intentDatenschutz);
+                return true;
+            case R.id.logout:
+                UserInformation.shared.logout();
+                Intent intentLogout = new Intent(HomeActivity.this, LoginActivity.class);
+                startActivity(intentLogout);
+                finish();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
