@@ -20,7 +20,7 @@
     <string name="hint_password">Passwort</string>
     <string name="hint_name">Vollständiger Name</string>
     <string name="btn_login">LOGIN</string>
-    <string name="btn_link_to_register">Noch nicht registriert? Dann melde dich bei Firebase an und habe Spaß mit Ampeln!</string>
+    <string name="btn_link_to_register">Noch nicht registriert? Drücke hier zum Registrieren und habe Spaß mit Ampeln!</string>
     <string name="btn_link_to_login">Bereits registriert? Dann hier einloggen!</string>
     <string name="title_activity_reset_password">ResetPasswordActivity</string>
     <string name="btn_forgot_password">Passwort vergessen?</string>
@@ -45,12 +45,12 @@
     <string name="home_txt_rank">%1$s</string>
     <string name="home_txt_score">(Punkte: %1$s)</string>
     <string name="home_txt_globalRanking">Rangliste:</string>
-    <!-- Strings related to Settings -->
-    <string name="settings_username_label">Benutzername</string>
-    <string name="settings_button_logout">Logout</string>
-    <string name="settings_rechtliches">Rechtliches</string>
-    <string name="settings_datenschutz_label">Datenschutz</string>
-    <string name="settings_button_datenschutz">Datenschutz</string>
+
+    <!-- Strings related to TakePictureActivity -->
+    <string name="take_picture_activity_title_info"> "Erste Hilfe" </string>
+    <string name="take_picture_activity_txt_info"> "Bringe die momentan relevante Ampel ins Fadenkreuz und drücke den Auslöser. \n\n"Das Fadenkreuz wird jedes Mal zufällig auf dem Bildschirm platziert, um unterschiedliche Perspektiven auf die Ampel zu bekommen."</string>
+    <string name="take_picture_activity_button_info"> "Verstanden" </string>
+
     <!--Tag Lights Activity-->
     <string name="tag_lights_activity_help">Markiere per Tap auf den Bildschirm neben der fotografierten alle anderen Ampeln, die auf dem Bild zu sehen sind.</string>
     <!-- Example General settings -->

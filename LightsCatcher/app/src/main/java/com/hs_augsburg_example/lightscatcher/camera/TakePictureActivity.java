@@ -273,10 +273,10 @@ public class TakePictureActivity extends AppCompatActivity{
     public void onInfoButtonPressed(View view) {
         if (pictureHelpDialog == null) {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-            dialogBuilder.setTitle("Erste Hilfe");
-            dialogBuilder.setMessage("Bringe die momentan relevante Ampel ins Fadenkreuz und drücke den Auslöser");
+            dialogBuilder.setTitle(getString(R.string.take_picture_activity_title_info));
+            dialogBuilder.setMessage(getString(R.string.take_picture_activity_txt_info));
 
-            dialogBuilder.setPositiveButton("Verstanden", null);
+            dialogBuilder.setPositiveButton(getString(R.string.take_picture_activity_button_info), null);
 
             pictureHelpDialog = dialogBuilder.create();
         }
