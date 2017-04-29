@@ -107,8 +107,6 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         this.redGreenSelect[PHASE_GREEN] = (RadioButton) findViewById(R.id.takePicture_modeGreenSelect);
 
 
-
-
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -119,15 +117,12 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         this.rl.post(new Runnable() {
             @Override
             public void run() {
+                // this has to wait until the layout-process has finished:
 
                 // generate crosshair position (center coordinates, relative to parent_view)
                 double x = randomDouble(CROSSHAIR_X_MIN, CROSSHAIR_X_MIN);
                 double y = randomDouble(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
 
-                //        final double x = CROSSHAIR_X_MIN;
-                //        final double y = CROSSHAIR_Y_MAX;
-
-                // this has to wait until the layout-process has finished:
                 addCrosshairView(x, y);
                 stateMachine.switchPhase(PHASE_RED);
             }
@@ -208,7 +203,6 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     }
 
 
-
     private static double randomDouble(double min, double max) {
         final double d = 1.0 - max - min;
         return min + d * random.nextDouble();
@@ -223,11 +217,11 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
 
         Rect parentRect = new Rect();
         rl.getDrawingRect(parentRect);
-        parentRect.set(0,0,rl.getWidth(),rl.getHeight());
+        parentRect.set(0, 0, rl.getWidth(), rl.getHeight());
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        final int parent_h = displayMetrics.heightPixels;
-        final int parent_w = displayMetrics.widthPixels;
+//        final int parent_h = displayMetrics.heightPixels;
+//        final int parent_w = displayMetrics.widthPixels;
         float density = getApplicationContext().getResources().getDisplayMetrics().density;
 
         int viewHeight = (int) (50 * density) * 2;
@@ -273,7 +267,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         modeSelect.setChecked(true);
         cross[phase].setVisibility(View.VISIBLE);
         cross[togglePhase(phase)].setVisibility(View.INVISIBLE);
-        txtCaption.setText(getString(R.string.fotografieren,phase == 0 ? "Rot-Phase" : "Grün-Phase"));
+        txtCaption.setText(getString(R.string.fotografieren, phase == 0 ? "Rot-Phase" : "Grün-Phase"));
     }
 
     /**
@@ -398,12 +392,23 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     }
 
     private Point translateRelativeLayoutToImage(double x, double y) {
+
+        // layoutsize in screen
         Rect clip = new Rect();
         this.camPreview.getDrawingRect(clip);
-        Log.i("CAM","DrawingRect: "+ clip.toShortString());
 
-        Point result = new Point((int) (clip.left+x*clip.width()), (int) (clip.top+y*clip.height()));
-        Log.i("CAM", String.format("translate {0} to {1}", x, y, result.x, result.y));
+        Camera.Parameters camParams = this.camPreview.getCamera().getParameters();
+        Camera.Size picSize = camParams.getPictureSize();
+
+        Rect surface = this.camPreview.getSurface().getSurfaceFrame();
+
+        double ratioX = picSize.width / surface.width();
+        double ratioY = picSize.height / surface.height();
+
+
+//        Point result = new Point((int) (clip.left + x * clip.width()), (int) (clip.top + y * clip.height()));
+        Point result = new Point((int) (clip.left + ratioX * x * clip.width()), (int) (clip.top + ratioY * y * clip.height()));
+
         return result;
     }
 

@@ -5,12 +5,7 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by patrickvalenta on 08.04.17.
@@ -32,6 +27,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         // underlying surface is created and destroyed.
         mHolder = getHolder();
         mHolder.addCallback(this);
+
         // deprecated setting, but required on Android versions prior to 3.0
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
@@ -87,7 +83,6 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
         mPictureSize = CameraUtil.getMediumPictureSize(mCamera.getParameters());
         mPreviewSize = CameraUtil.chooseOptimalSize(mCamera.getParameters().getSupportedPreviewSizes(), width, height, mPictureSize);
-
     }
 
     private void startPreview(int w, int h) {
@@ -102,8 +97,11 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mCamera.startPreview();
     }
 
+    public SurfaceHolder getSurface(){
+        return this.mHolder;
+    }
+
     public Camera getCamera() {
         return mCamera;
     }
-
 }

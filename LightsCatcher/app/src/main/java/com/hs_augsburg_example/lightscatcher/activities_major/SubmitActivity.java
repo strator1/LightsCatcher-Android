@@ -45,20 +45,23 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        initPhotoView(record.redPhoto ,(FrameLayout) findViewById(R.id.submit_frameTop),(FrameLayout) findViewById(R.id.submit_frameBottom));
-        initPhotoView(record.greenPhoto,(FrameLayout) findViewById(R.id.submit_frameBottom),(FrameLayout) findViewById(R.id.submit_frameTop));
+        initPhotoView(record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
+        initPhotoView(record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
 
     }
 
-    private void initPhotoView(Photo data, FrameLayout targetFrame, FrameLayout otherFrame){
-        if (data != null) {
+    private void initPhotoView(final Photo photo, FrameLayout targetFrame, FrameLayout otherFrame) {
+        if (photo != null) {
             targetFrame.setVisibility(View.VISIBLE);
             final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) targetFrame.getChildAt(0);
             //photoView.setImageBitmap(data.bitMap);
 
 
-            photoView.setImage(ImageSource.bitmap( data.bitMap));
-            photoView.setScaleAndCenter(2,new PointF(data.lightPos.x,data.lightPos.y));
+            photoView.setImage(ImageSource.bitmap(photo.bitMap));
+
+//                    PointF marker = new PointF(data.lightPos.x,data.lightPos.y);
+            PointF marker = new PointF(photo.bitMap.getWidth() / 2, photo.bitMap.getHeight());
+            photoView.setScaleAndCenter(2, marker);
 
             //photoTop = photoView;
             //photoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
