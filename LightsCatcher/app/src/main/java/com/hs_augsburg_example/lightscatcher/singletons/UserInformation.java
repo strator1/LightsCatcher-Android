@@ -11,6 +11,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Observable;
 
 /**
@@ -41,7 +43,7 @@ public class UserInformation extends Observable {
      * TODO: quirin: Is this method really necessary??
      */
     public void createNewUser(String uid, String name, String email) {
-        this.usrSnapshot = new User(name, email, 0);
+        this.usrSnapshot = new User(uid,name, email, 0);
         mDatabase.child("users").child(uid).setValue(this.usrSnapshot);
     }
 
@@ -113,7 +115,7 @@ public class UserInformation extends Observable {
         this.startListenToUser(newUsr.getUid());
     }
 
-    private void startListenToUser(String uid){
+    private void startListenToUser(final String uid){
         //Log.d(TAG,"startListenToUser; uid=" + uid);
 
         // detach listener from previos user

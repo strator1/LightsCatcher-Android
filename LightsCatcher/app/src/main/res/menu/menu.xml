@@ -3,6 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/settings_menu"
-        android:title="Einstellungen" />
+        android:id="@+id/datenschutz"
+        android:title="Datenschutzerklärung" />
+    <item
+        android:id="@+id/logout"
+        android:title="Logout" />
 </menu>

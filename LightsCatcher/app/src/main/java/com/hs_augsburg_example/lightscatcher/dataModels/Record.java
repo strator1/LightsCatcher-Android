@@ -1,21 +1,25 @@
 package com.hs_augsburg_example.lightscatcher.dataModels;
 
+import android.util.Log;
+
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.hs_augsburg_example.lightscatcher.BuildConfig;
 
 import java.io.Serializable;
 import java.util.UUID;
-import java.util.function.BinaryOperator;
 
 /**
  * Created by quirin on 26.04.17.
  */
 
+/**
+ * The data-structure representing a snapshot of a traffic-light with ideally both red and green phases. Though the user may capture only one phase.
+ */
 @IgnoreExtraProperties
 public class Record implements Serializable {
 
-    public static Record latestRecord;
+    public static Record.Builder latestRecord;
     @Exclude
     public String id;
     public String userID;
@@ -28,52 +32,91 @@ public class Record implements Serializable {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public static Builder buildNew() {
+    public static Builder buildNew(String id) {
         Record r = new Record();
         r.appVersion = BuildConfig.VERSION_CODE;
-        r.id = UUID.randomUUID().toString().toUpperCase();
+        r.id = id;
         return new Builder(r);
     }
-
-    public Record(String userID, Photo redPhoto, Photo greenPhoto, int points) {
-        this.userID = userID;
-        this.redPhoto = redPhoto;
-        this.greenPhoto = greenPhoto;
-        this.points = points;
-        this.appVersion = BuildConfig.VERSION_CODE;
-        this.id = UUID.randomUUID().toString().toUpperCase();
+    public static Builder buildNew(){
+        return buildNew(UUID.randomUUID().toString().toUpperCase());
     }
+
+//    public Record(String userID, Photo redPhoto, Photo greenPhoto, int points) {
+//        this.userID = userID;
+//        this.redPhoto = redPhoto;
+//        this.greenPhoto = greenPhoto;
+//        this.points = points;
+//        this.appVersion = BuildConfig.VERSION_CODE;
+//        this.id = UUID.randomUUID().toString().toUpperCase();
+//    }
 
     public static class Builder {
 
-        private final Record r;
+        public final Record record;
 
         public Builder(Record r) {
-            this.r = r;
+            this.record = r;
         }
 
         public Builder setUser(String uid) {
-            r.userID = uid;
+            record.userID = uid;
+            return this;
+        }
+
+        public Builder setPhoto(LightPhase phase, Photo photo) {
+            switch (phase) {
+                case RED:
+                    record.redPhoto = photo;
+                case GREEN:
+                    record.greenPhoto = photo;
+            }
             return this;
         }
 
         public Builder setRedPhoto(Photo red) {
-            r.redPhoto = red;
+            record.redPhoto = red;
             return this;
         }
 
         public Builder setGreenPhoto(Photo greenPhoto) {
-            r.greenPhoto = greenPhoto;
+            record.greenPhoto = greenPhoto;
             return this;
         }
 
         public Builder setPoints(int points) {
-            r.points = points;
+            record.points = points;
             return this;
         }
 
-        public Record commit() {
-            return r;
+        /**
+         * Gives one point for each photo.
+         */
+        public Builder giveAppropriatePoints() {
+            int points = 0;
+            if (record.redPhoto != null)
+                points++;
+            if (record.greenPhoto != null)
+                points++;
+
+            record.points = points;
+            return this;
+        }
+
+        /**
+         * Checks for valid data and throws IllegalArgumentException when invalid.
+         */
+        public Record commit() throws IllegalArgumentException {
+            if (record.id == null)
+                throw new IllegalArgumentException("Record.id was null but is required!");
+            if (record.greenPhoto == null && record.redPhoto == null)
+                throw new IllegalArgumentException("Record.greenPhoto and Record.redPhoto both were null. At least one is required!");
+            if (record.userID == null)
+                throw new IllegalArgumentException("Record.userID was null but is required!");
+            if (record.points < 0) throw new IllegalArgumentException("Record.points was < 0!");
+            if (record.points == 0)
+                Log.w("APP", "Record.points was 0, Are you sure to give no credits?");
+            return record;
         }
     }
 }

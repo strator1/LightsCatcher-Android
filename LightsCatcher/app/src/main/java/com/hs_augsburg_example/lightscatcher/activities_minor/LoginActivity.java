@@ -21,6 +21,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 /**
  * A login screen that offers login via email/password.
@@ -61,6 +62,11 @@ public class LoginActivity extends AppCompatActivity {
         btnSignup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (UserPreference.isUserBanned(getApplicationContext())) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.banned_message), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 startActivity(new Intent(LoginActivity.this, SignupActivity.class));
             }
         });
@@ -68,6 +74,12 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                if (UserPreference.isUserBanned(getApplicationContext())) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.banned_message), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 String email = inputEmail.getText().toString();
                 final String password = inputPassword.getText().toString();
 

@@ -5,18 +5,30 @@ import android.location.Location;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
+//import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by patrickvalenta on 08.04.17.
  */
-
+@Deprecated
 public class PhotoInformation {
 
+    public enum LightPhase {
+        RED(0), GREEN(1);
+        private final int value;
 
+        private LightPhase(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
 
     public Bitmap image;
     public int lightCount;
@@ -51,16 +63,16 @@ public class PhotoInformation {
 
         this.image = image;
     }
-
-    public Photo getLight() {
-        //Photo light = new Photo(this);
-        return null;
+/*
+    public Light getLight() {
+        Light light = new Light(this);
+        return light;
     }
 
-    public void createLight(String uid, Photo light) {
-        mDatabase.child("lights").child(uid).setValue(light);
+    public void createLight(String uid, Light light) {
+        mDatabase.child("lights/" + PersistenceManager.DATA_MODEL_VERSION).child(uid).setValue(light);
     }
-
+*/
     public int getLightCount() {
         return lightCount;
     }

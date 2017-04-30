@@ -19,6 +19,7 @@ import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -54,6 +55,11 @@ public class SignupActivity extends AppCompatActivity {
         btnSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (UserPreference.isUserBanned(getApplicationContext())) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.banned_message), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 final String name = inputName.getText().toString().trim();
                 final String email = inputEmail.getText().toString().trim();
                 String password = inputPassword.getText().toString().trim();
@@ -94,7 +100,7 @@ public class SignupActivity extends AppCompatActivity {
                                 // signed in user can be handled in the listener.
                                 if (!task.isSuccessful()) {
                                     Toast.makeText(SignupActivity.this, "Authentication failed." + task.getException(),
-                                            Toast.LENGTH_SHORT).show();
+                                            Toast.LENGTH_LONG).show();
                                 } else {
                                     UserInformation.shared.createNewUser(task.getResult().getUser().getUid(),name, email);
                                     startActivity(new Intent(SignupActivity.this, HomeActivity.class));

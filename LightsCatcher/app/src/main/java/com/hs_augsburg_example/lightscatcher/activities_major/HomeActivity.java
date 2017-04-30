@@ -22,9 +22,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.hs_augsburg_example.lightscatcher.activities_minor.DatenschutzActivity;
 import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
-import com.hs_augsburg_example.lightscatcher.activities_minor.SettingsActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
@@ -193,9 +193,15 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.settings_menu:
-                Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
-                startActivity(intent);
+            case R.id.datenschutz:
+                Intent intentDatenschutz = new Intent(HomeActivity.this, DatenschutzActivity.class);
+                startActivity(intentDatenschutz);
+                return true;
+            case R.id.logout:
+                UserInformation.shared.logout();
+                Intent intentLogout = new Intent(HomeActivity.this, LoginActivity.class);
+                startActivity(intentLogout);
+                finish();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -237,6 +243,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         //stop loading animation
         swipeLayout.setRefreshing(false);
+    }
+
+    @Override
+    public void onBackPressed() {
+        ActivityRegistry.finishAll();
+        super.onBackPressed();
     }
 
     /**

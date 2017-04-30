@@ -15,6 +15,7 @@ import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 /**
  * Created by patrickvalenta on 08.04.17.
  */
+@Deprecated
 public class LightInformation extends AppCompatActivity {
 
     public static final int WIDTH = 40;
@@ -55,8 +56,8 @@ public class LightInformation extends AppCompatActivity {
         float percentX = (float) (this.x + (this.getWidth() /2)) / (float) iv.getWidth();
         float percentY = (float) (this.y + (this.getHeight() / 2)) / (float) iv.getHeight();
 
-        this.x = (int) (img.getWidth() * percentX);
-        this.y = (int) (img.getHeight() * percentY);
+        this.x = (int) (img.getWidth() * percentX) / img.getWidth();
+        this.y = (int) (img.getHeight() * percentY) / img.getHeight();
     }
 
     public int getWidth() {

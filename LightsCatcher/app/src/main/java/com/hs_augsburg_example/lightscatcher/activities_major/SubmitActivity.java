@@ -1,7 +1,6 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.content.Intent;
-import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -19,11 +18,19 @@ import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 
 public class SubmitActivity extends AppCompatActivity implements OnFailureListener {
@@ -33,7 +40,10 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     private PhotoView photoBottom;
 
     // data-object containing photos
-    private Record record;
+    private Record.Builder recordBuilder;
+
+    private FirebaseAuth mAuthRef;
+    private FirebaseDatabase mDatabaseRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +51,15 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         ActivityRegistry.register(this);
 
         setContentView(R.layout.activity_submit);
-        record = Record.latestRecord;
+        recordBuilder = Record.latestRecord;
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        initPhotoView(record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
-        initPhotoView(record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
+        initPhotoView(recordBuilder.record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
+        initPhotoView(recordBuilder.record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
 
+        mAuthRef = FirebaseAuth.getInstance();
+        mDatabaseRef = FirebaseDatabase.getInstance();
     }
 
     private void initPhotoView(final Photo photo, FrameLayout targetFrame, FrameLayout otherFrame) {
@@ -78,19 +90,45 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     }
 
     public void onUploadPressed(View v) {
-        progressBar.setVisibility(View.VISIBLE);
+        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() == null) {
+                    //continue
+                    uploadPhoto();
+                } else {
+                    //banned
+                    UserPreference.setUserBanned(SubmitActivity.this.getApplicationContext());
+                    UserInformation.shared.logout();
+                    Intent i = new Intent(SubmitActivity.this, LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast toast = Toast.makeText(getApplicationContext(), "Du scheinst momentan keine Internetverbindung zu haben. Probiere es später einfach nochmal ;)", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        });
+    }
+
+    private void uploadPhoto(){
+        // Check for valid data
+        Record rec = recordBuilder.commit();
 
         // one of the photos, either red or green may be null
         final Photo photo1, photo2;
-        if (record.redPhoto != null) {
-            photo1 = record.redPhoto;
-            photo2 = record.greenPhoto;
+        if (rec.redPhoto != null) {
+            photo1 = rec.redPhoto;
+            photo2 = rec.greenPhoto;
         } else {
-            photo1 = record.greenPhoto;
+            photo1 = rec.greenPhoto;
             photo2 = null;
         }
 
-        /*
+          /*
         UploadTask task1;
         task1 = PersistenceManager.shared.persistStorage(photo1.id, photo2.bitMap);
         task1.addOnFailureListener(this);
@@ -100,7 +138,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
                 photo1.imageUrl = taskSnapshot.getDownloadUrl().toString();
 
                 if (photo2 == null)
-                    SubmitActivity.this.onUploadComplete();
+                    SubmitActivity.this.onUploadComplete(rec);
                 else {
                     UploadTask task2 = PersistenceManager.shared.persistStorage(photo2.id, photo2.bitMap);
                     task2.addOnFailureListener(SubmitActivity.this);
@@ -108,7 +146,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             photo2.imageUrl = taskSnapshot.getDownloadUrl().toString();
-                            SubmitActivity.this.onUploadComplete();
+                            SubmitActivity.this.onUploadComplete(rec);
                         }
                     });
                 }
@@ -117,8 +155,8 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         */
     }
 
-    private void onUploadComplete() {
-        Task task3 = PersistenceManager.shared.persist(record);
+    private void onUploadComplete(Record rec) {
+        Task task3 = PersistenceManager.shared.persist(rec);
         task3.addOnFailureListener(SubmitActivity.this);
         task3.addOnSuccessListener(new OnSuccessListener() {
 
@@ -129,6 +167,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
                 finish();
             }
         });
+
     }
 
 
@@ -141,7 +180,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
 
 
     public void undoBtnPressed(View view) {
-        // discard this record.
+        // discard this recordBuilder.
         Record.latestRecord = null;
         this.finish();
     }

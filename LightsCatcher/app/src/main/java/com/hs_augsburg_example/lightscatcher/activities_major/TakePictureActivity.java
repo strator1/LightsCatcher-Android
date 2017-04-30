@@ -283,13 +283,14 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         // +1 points for each photo
         int score = (snapshots[0] == null ? 0 : 1) + (snapshots[1] == null ? 0 : 1);
 
-        Record r = new Record(
-                UserInformation.shared.getUid(),
-                snapshots[PHASE_RED],
-                snapshots[PHASE_GREEN],
-                score);
+        Record.Builder r = Record.buildNew();
+        r.setUser(UserInformation.shared.getUid());
+        r.setRedPhoto(snapshots[PHASE_RED]);
+        r.setGreenPhoto(snapshots[PHASE_GREEN]);
+        r.giveAppropriatePoints();
 
         Record.latestRecord = r;
+
         Intent intent = new Intent(TakePictureActivity.this, SubmitActivity.class);
         startActivity(intent);
     }
@@ -391,6 +392,18 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         mSensorManager.unregisterListener(motionService.getEventListener());
     }
 
+    @Override
+    public void onBackPressed() {
+        navigateBack(null);
+        super.onBackPressed();
+    }
+
+    public void navigateBack(View view) {
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
     private Point translateRelativeLayoutToImage(double x, double y) {
 
         // layoutsize in screen
@@ -435,10 +448,9 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     public void onInfoButtonPressed(View view) {
         if (pictureHelpDialog == null) {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-            dialogBuilder.setTitle("Erste Hilfe");
-            dialogBuilder.setMessage("Bringe die momentan relevante Ampel ins Fadenkreuz und drücke den Auslöser");
-
-            dialogBuilder.setPositiveButton("Verstanden", null);
+            dialogBuilder.setTitle(getString(R.string.take_picture_activity_title_info));
+            dialogBuilder.setMessage(getString(R.string.take_picture_activity_txt_info));
+            dialogBuilder.setPositiveButton(getString(R.string.take_picture_activity_button_info), null);
 
             pictureHelpDialog = dialogBuilder.create();
         }

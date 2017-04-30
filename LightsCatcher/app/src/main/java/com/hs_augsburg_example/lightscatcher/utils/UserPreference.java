@@ -11,6 +11,7 @@ public class UserPreference {
 
     final static String IS_FIRST_CAPTURE_KEY = "firstPic";
     final static String IS_FIRST_TAGGIN_KEY = "firstTag";
+    final static String IS_USER_BANNED = "isUserBanned";
 
     public static boolean isFirstCapture(Context ctx) {
         SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
@@ -23,7 +24,7 @@ public class UserPreference {
         }
 
         return firstCapture;
-    };
+    }
 
     public static boolean isFirstTagging(Context ctx) {
         SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
@@ -36,5 +37,19 @@ public class UserPreference {
         }
 
         return firstTag;
-    };
+    }
+
+    public static boolean isUserBanned(Context ctx) {
+        SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+
+        return preferences.getBoolean(IS_USER_BANNED, false);
+    }
+
+    public static boolean setUserBanned(Context ctx) {
+        SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putBoolean(IS_USER_BANNED, true).apply();
+        return true;
+    }
 }

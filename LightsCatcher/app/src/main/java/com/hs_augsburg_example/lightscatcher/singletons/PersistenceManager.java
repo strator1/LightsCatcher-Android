@@ -22,7 +22,7 @@ import java.util.UUID;
  */
 
 public class PersistenceManager {
-    public final String DATA_MODEL_VERSION = "1.1";
+    public final String DATA_MODEL_VERSION = "v1_1";
     public static final PersistenceManager shared = new PersistenceManager();
     private final DatabaseReference root;
     private final DatabaseReference users;
