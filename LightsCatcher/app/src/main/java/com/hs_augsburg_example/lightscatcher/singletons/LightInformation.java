@@ -28,6 +28,8 @@ public class LightInformation extends AppCompatActivity {
     public int x;
     public int y;
 
+    public double[] relPos = new double[2];
+
     public LightInformation(View v, Context ctx) {
         this.ctx = ctx;
         this.view = v;
@@ -56,8 +58,11 @@ public class LightInformation extends AppCompatActivity {
         float percentX = (float) (this.x + (this.getWidth() /2)) / (float) iv.getWidth();
         float percentY = (float) (this.y + (this.getHeight() / 2)) / (float) iv.getHeight();
 
-        this.x = (int) (img.getWidth() * percentX) / img.getWidth();
-        this.y = (int) (img.getHeight() * percentY) / img.getHeight();
+        this.x = (int) (img.getWidth() * percentX);
+        this.y = (int) (img.getHeight() * percentY);
+
+        this.relPos[0] = (img.getWidth() * percentX) / img.getWidth();
+        this.relPos[1] = (img.getHeight() * percentY) / img.getHeight();
     }
 
     public int getWidth() {
