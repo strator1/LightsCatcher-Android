@@ -13,8 +13,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
@@ -24,6 +26,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.camera.TakePictureActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
@@ -45,16 +48,19 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private SwipeRefreshLayout swipeLayout;
     private ValueEventListener listenerForCurrentRanking;
     private Observer loginObserver;
+    private Observer connectionObserver;
+    private ToggleButton btnStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG,"onCreate;");
+        Log.d(TAG, "onCreate;");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         this.txtUserName = (TextView) findViewById(R.id.home_txt_username);
         this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
         this.txtUserScore = (TextView) findViewById(R.id.home_txt_score);
         this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
+        this.btnStatus = (ToggleButton) findViewById(R.id.home_btn_status);
 
         // show loading animation:
         // it will be stopped by the {@link adapter} in onDataChanged
@@ -68,6 +74,23 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // listen to connection state:
+        this.updateOnlineStatus();
+        this.connectionObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                HomeActivity.this.updateOnlineStatus();
+            }
+        };
+        PersistenceManager.shared.connectedListener.addObserver(connectionObserver);
+
+        btnStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                buttonView.setChecked(PersistenceManager.shared.connectedListener.isConnected());
+            }
+        });
 
         // listen to login-changes:
         loginObserver = new Observer() {
@@ -170,12 +193,17 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
+    private void updateOnlineStatus() {
+        btnStatus.setChecked(PersistenceManager.shared.connectedListener.isConnected());
+    }
+
     @Override
     protected void onStop() {
         super.onStop();
         // detach all listeners from FireBase
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
         if (adapter != null) adapter.cleanup();
+        if (connectionObserver != null) PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
 
         // and other services:
         if (loginObserver != null) UserInformation.shared.deleteObserver(loginObserver);
