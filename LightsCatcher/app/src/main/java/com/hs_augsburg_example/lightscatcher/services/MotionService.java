@@ -61,7 +61,7 @@ public class MotionService {
 
                     averagePitch = (float) (Math.toDegrees(pitch) / 100);
 
-                    System.out.println(averagePitch);
+                    //System.out.println(averagePitch);
                 }
             }
         }

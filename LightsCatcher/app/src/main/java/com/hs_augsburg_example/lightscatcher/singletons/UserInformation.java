@@ -2,6 +2,7 @@ package com.hs_augsburg_example.lightscatcher.singletons;
 
 import android.util.Log;
 
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -47,15 +48,15 @@ public class UserInformation extends Observable {
         mDatabase.child("users").child(uid).setValue(this.usrSnapshot);
     }
 
-    public void increaseUserPoints(int points) {
+    public Task<Void> increaseUserPoints(int points) {
         if (this.usrSnapshot == null) {
-            return;
+            return null;
         }
 
         this.usrSnapshot.addToPoints(points);
         Map<String, Object> childUpdates = new HashMap<>();
         childUpdates.put("/users/" + getUid(), this.usrSnapshot.toMap());
-        mDatabase.updateChildren(childUpdates);
+        return mDatabase.updateChildren(childUpdates);
     }
 
     public String getUid() {

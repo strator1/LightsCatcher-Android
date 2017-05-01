@@ -69,6 +69,7 @@ public class PhotoInformation {
         return light;
     }
 
+    @Deprecated
     public void createLight(String uid, Light light) {
         mDatabase.child("lights/" + PersistenceManager.DATA_MODEL_VERSION).child(uid).setValue(light);
     }
