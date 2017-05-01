@@ -13,8 +13,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
@@ -26,6 +29,7 @@ import com.hs_augsburg_example.lightscatcher.activities_minor.DatenschutzActivit
 import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 
@@ -47,16 +51,38 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private SwipeRefreshLayout swipeLayout;
     private ValueEventListener listenerForCurrentRanking;
     private Observer loginObserver;
+    private Observer connectionObserver;
+    private ToggleButton btnStatus;
+    private LinearLayout warning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG,"onCreate;");
         super.onCreate(savedInstanceState);
+        ActivityRegistry.register(this);
+
+        //Has to be called before using Firebase
+        PersistenceManager.init();
+
+        // GUI-stuff
         setContentView(R.layout.activity_home);
         this.txtUserName = (TextView) findViewById(R.id.home_txt_username);
         this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
         this.txtUserScore = (TextView) findViewById(R.id.home_txt_score);
         this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
+        this.btnStatus = (ToggleButton) findViewById(R.id.home_btn_status);
+        this.warning = (LinearLayout) findViewById(R.id.home_warning);
+        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                navigateToCamera();
+            }
+        });
+
 
         // show loading animation:
         // it will be stopped by the {@link adapter} in onDataChanged
@@ -66,10 +92,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 swipeLayout.setRefreshing(true);
             }
         });
+        swipeLayout.setOnRefreshListener(this);
 
-        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         // listen to login-changes:
         loginObserver = new Observer() {
@@ -81,6 +105,23 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         };
         UserInformation.shared.addObserver(loginObserver);
 
+
+        // listen to connection state:
+        this.connectionObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                HomeActivity.this.updateOnlineStatus();
+            }
+        };
+        PersistenceManager.shared.connectedListener.addObserver(connectionObserver);
+
+        btnStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                HomeActivity.this.updateOnlineStatus();
+            }
+        });
+
         boolean loggedIn = UserInformation.shared.tryAuthenticate();
         if (!loggedIn) {
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
@@ -89,23 +130,13 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             return;
         }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                navigateToCamera();
-            }
-        });
-
-        ActivityRegistry.register(this);
-        swipeLayout.setOnRefreshListener(this);
 
         // query ordered list of users from firebase
         sortedUsers = FirebaseDatabase.getInstance().getReference("users").orderByChild("points");
         // top 50 users:
         top10 = sortedUsers.limitToLast(50);
 
-        // Create a new Adaptero
+        // Create a new adapter
         adapter = new FirebaseRecyclerAdapter<User, UserHolder>(User.class, R.layout.item_user, UserHolder.class, top10) {
             @Override
             protected void populateViewHolder(UserHolder viewHolder, User model, int position) {
@@ -113,7 +144,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 // invert position because we use a reverse layout manager.
                 // as a consequence position 0 is the first item from the bottom
                 position = adapter.getItemCount() - position;
-
                 viewHolder.applyUser(model, position);
             }
 
@@ -131,7 +161,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                     });
             }
         };
-
 
         // use reverse layout to sort users in descending order
         // firebase-queries currently do not support descending order
@@ -168,8 +197,26 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         };
         sortedUsers.addValueEventListener(listenerForCurrentRanking);
-        // show loading animation:
+    }
 
+    private void updateOnlineStatus() {
+        boolean connected = PersistenceManager.shared.connectedListener.isConnected();
+        btnStatus.setChecked(connected);
+        warning.setVisibility(connected ? View.GONE : View.VISIBLE);
+        if (connected) {
+            // resume unfinished upload tasks
+            try {
+                PersistenceManager.shared.resumePendingUploads(this.getApplicationContext());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        this.updateOnlineStatus();
     }
 
     @Override
@@ -178,6 +225,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         // detach all listeners from FireBase
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
         if (adapter != null) adapter.cleanup();
+        if (connectionObserver != null)
+            PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
 
         // and other services:
         if (loginObserver != null) UserInformation.shared.deleteObserver(loginObserver);

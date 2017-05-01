@@ -9,17 +9,17 @@ public class LightPosition {
 
     public int isMostRelevant;
     public int phase;
-    public int x;
-    public int y;
+    public double x;
+    public double y;
 
     public LightPosition() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public LightPosition(Point xy, LightPhase phase, boolean isMostRelevant) {
-        this.x = xy.x;
-        this.y = xy.y;
-        this.phase = phase.getValue();
+    public LightPosition(double x, double y, int phase, boolean isMostRelevant) {
+        this.x = x;
+        this.y = y;
+        this.phase = phase;
         this.isMostRelevant = isMostRelevant ? 0 : 1;
     }
 

@@ -4,7 +4,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,8 +17,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -27,18 +24,19 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+import com.google.firebase.storage.StorageTask;
 import com.hs_augsburg_example.lightscatcher.FinishActivity;
 import com.hs_augsburg_example.lightscatcher.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
+import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.LightUploadMonitor;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -122,7 +120,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 onActionDownTouch(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD)  {
+                if (System.currentTimeMillis() - lastTouchDown < CLICK_ACTION_THRESHHOLD) {
                     if (pickedUpViews.size() == 0) {
                         addNewView(x, y, null);
                     } else if (pickedUpViews.size() == 1) {
@@ -159,29 +157,31 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
     public void onUploadPressed(View v) {
 
-        if (insertedViews.size() ==0){
+        if (insertedViews.size() == 0) {
             Toast.makeText(this.getApplicationContext(), "Bitte erst mindestens eine Markierung hinzufügen! (Auf das Bild tippen)", Toast.LENGTH_LONG).show();
             return;
         }
 
-        for(LightInformation pos : insertedViews) {
+        for (LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
+        if (PersistenceManager.shared.connectedListener.isConnected()) {
 
+        }
         mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.getValue() == null) {
-                        //continue
-                        uploadPhoto();
-                    } else {
-                        //banned
-                        UserPreference.setUserBanned(TagLightsActivity.this.getApplicationContext());
-                        UserInformation.shared.logout();
-                        Intent i = new Intent(TagLightsActivity.this, LoginActivity.class);
-                        startActivity(i);
-                        finish();
-                    }
+                if (dataSnapshot.getValue() == null) {
+                    //continue
+                    uploadPhoto();
+                } else {
+                    //banned
+                    UserPreference.setUserBanned(TagLightsActivity.this.getApplicationContext());
+                    UserInformation.shared.logout();
+                    Intent i = new Intent(TagLightsActivity.this, LoginActivity.class);
+                    startActivity(i);
+                    finish();
+                }
             }
 
             @Override
@@ -197,45 +197,25 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         PhotoInformation.shared.setLightInformationList(insertedViews);
         final Light light = PhotoInformation.shared.getLight();
 
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 40, baos);
+        progressBar.setVisibility(View.VISIBLE);
+        final LightUploadMonitor monitor = LightUploadMonitor.newInstance(this.getApplicationContext());
 
         final String imageId = UUID.randomUUID().toString().toUpperCase();
-        StorageReference storageReference = mStorageRef.child("lights_images").child(imageId);
+        monitor.addTask("Lichter in Datenbank eingetragen", PersistenceManager.shared.persist(light, imageId));
 
-        progressBar.setVisibility(View.VISIBLE);
-        UploadTask uploadTask = storageReference.putBytes(baos.toByteArray());
+        StorageTask uploadTask = null;
+        try {
+            uploadTask = PersistenceManager.shared.persistLightsImage(this.getApplicationContext(), imageId, image);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        monitor.addTask("Foto hochgeladen",uploadTask);
 
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                progressBar.setVisibility(View.GONE);
-                Toast toast = Toast.makeText(getApplicationContext(), "Upload nicht erfolgreich!!!", Toast.LENGTH_LONG);
-                toast.show();
-            }
-        });
-
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                progressBar.setVisibility(View.GONE);
-                light.imageUrl = taskSnapshot.getDownloadUrl().toString();
-                PhotoInformation.shared.createLight(imageId, light);
-                UserInformation.shared.increaseUserPoints(1);
-                Toast toast = Toast.makeText(getApplicationContext(), "Upload erfolgreich :)", Toast.LENGTH_LONG);
-                toast.show();
-            }
-        });
+        monitor.addTask("Deine Punkte erhöht", UserInformation.shared.increaseUserPoints(1));
 
         Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
         startActivity(intent);
         finish();
-
-        try {
-            baos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void addNewView(int x, int y, LightInformation existingPos) {
@@ -253,7 +233,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
             boolean mostRelevantExists = false;
             for (LightInformation p : insertedViews) {
-                if (p.isMostRelevant){
+                if (p.isMostRelevant) {
                     mostRelevantExists = true;
                     break;
                 }
@@ -297,11 +277,9 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         Button greenButton = (Button) lightPhaseDialogView.findViewById(R.id.greenButton);
 
 
-
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("Delete pressed");
                 rl.removeView(pos.getView());
                 insertedViews.remove(pos);
                 lightPhaseDialog.dismiss();
@@ -311,7 +289,6 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         redButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("red pressed");
                 pos.setPhase(RED);
                 lightPhaseDialog.dismiss();
             }
@@ -320,7 +297,6 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         greenButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("green pressed");
                 pos.setPhase(GREEN);
                 lightPhaseDialog.dismiss();
             }
