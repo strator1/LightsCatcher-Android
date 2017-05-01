@@ -45,7 +45,7 @@ public class PersistenceManager {
     public static final PersistenceManager shared = new PersistenceManager();
 
     //destination folder of lights database-entries
-    static final String DATA_MODEL_VERSION = "v1_0_debug";
+    static final String DATA_MODEL_VERSION = "v1_0";
 
     // path where the images are stored temporarily on the device
     private static final String INTERNAL_IMG_PATH = "lights_images";

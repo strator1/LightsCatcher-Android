@@ -69,12 +69,9 @@ public class UserInformation extends Observable {
 
     public void logout() {
         this.mAuth.signOut();
-        usrSnapshot = null;
 
         // detach listener from previos user
-        if (this.currentUserRef != null && this.currentUserListener != null)
-            currentUserRef.removeEventListener(this.currentUserListener);
-
+        stopListenToCurrentUser();
         notifyObservers();
     }
 
@@ -116,12 +113,20 @@ public class UserInformation extends Observable {
         this.startListenToUser(newUsr.getUid());
     }
 
+    private void stopListenToCurrentUser() {
+        if (this.currentUserRef != null && this.currentUserListener != null){
+            currentUserRef.removeEventListener(this.currentUserListener);
+            // improves offline-mode
+            this.currentUserRef.keepSynced(false);
+        }
+        usrSnapshot = null;
+        currentUserRef = null;
+    }
     private void startListenToUser(final String uid){
         //Log.d(TAG,"startListenToUser; uid=" + uid);
 
         // detach listener from previos user
-        if (this.currentUserRef != null && this.currentUserListener != null)
-            currentUserRef.removeEventListener(this.currentUserListener);
+        stopListenToCurrentUser();
 
         // attach listener to current user
         if (this.currentUserListener == null)
@@ -142,6 +147,8 @@ public class UserInformation extends Observable {
             };
 
         this.currentUserRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
+        // improves offline-mode
+        this.currentUserRef.keepSynced(true);
         this.currentUserRef.addValueEventListener(currentUserListener);
     }
 }

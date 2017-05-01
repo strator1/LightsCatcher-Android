@@ -164,13 +164,15 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         for (LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
+        if (PersistenceManager.shared.connectedListener.isConnected()) {
 
+        }
         mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() == null) {
                     //continue
-                    //uploadPhoto();
+                    uploadPhoto();
                 } else {
                     //banned
                     UserPreference.setUserBanned(TagLightsActivity.this.getApplicationContext());
@@ -187,7 +189,6 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 toast.show();
             }
         });
-        uploadPhoto();
     }
 
     private void uploadPhoto() {
