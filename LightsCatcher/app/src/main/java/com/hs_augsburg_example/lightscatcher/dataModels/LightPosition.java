@@ -1,8 +1,7 @@
 package com.hs_augsburg_example.lightscatcher.dataModels;
 
-import android.graphics.Point;
-
 import com.google.firebase.database.IgnoreExtraProperties;
+import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 
 @IgnoreExtraProperties
 public class LightPosition {
@@ -16,10 +15,10 @@ public class LightPosition {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public LightPosition(double x, double y, int phase, boolean isMostRelevant) {
+    public LightPosition(double x, double y, LightPhase phase, boolean isMostRelevant) {
         this.x = x;
         this.y = y;
-        this.phase = phase;
+        this.phase = phase.getValue();
         this.isMostRelevant = isMostRelevant ? 0 : 1;
     }
 

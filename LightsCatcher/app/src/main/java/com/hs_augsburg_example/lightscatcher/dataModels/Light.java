@@ -10,8 +10,10 @@ import java.util.List;
 
 /**
  * Created by patrickvalenta on 15.04.17.
+ * replaced by class {@link Record}
  */
 
+@Deprecated
 @IgnoreExtraProperties
 public class Light {
 
@@ -43,7 +45,7 @@ public class Light {
         this.createdAt = Long.toString(System.currentTimeMillis());
 
         for(LightInformation l : information.getLightInformationList()) {
-            lightPositions.add(new LightPosition(l.relPos[0], l.relPos[1], l.getPhase().getValue(), l.isMostRelevant()));
+            lightPositions.add(new LightPosition(l.relPos[0], l.relPos[1], l.getPhase(), l.isMostRelevant()));
         }
     }
 

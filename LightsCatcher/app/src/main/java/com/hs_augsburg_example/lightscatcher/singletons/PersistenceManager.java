@@ -41,12 +41,11 @@ import static java.lang.String.format;
 
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
-    public final String DATA_MODEL_VERSION = "v1_1";
     private static final String TAG = "PersistenceManager";
     public static final PersistenceManager shared = new PersistenceManager();
 
     //destination folder of lights database-entries
-    static final String DATA_MODEL_VERSION = "v1_0";
+    public final String DATA_MODEL_VERSION = "v1_1";
 
     // path where the images are stored temporarily on the device
     private static final String INTERNAL_IMG_PATH = "lights_images";
@@ -95,13 +94,6 @@ public class PersistenceManager {
     public Task persist(Record rec) {
         if (rec.id == null) throw new IllegalArgumentException("Record.id was null.");
         return lights.child(rec.id).setValue(rec);
-    }
-
-    public UploadTask persistStorage(String id, Bitmap bmp) {
-
-    public Task persist(Light light, String uid) {
-        if (uid == null) throw new IllegalArgumentException("uid cannot be null");
-        return lights.child(uid).setValue(light);
     }
 
     public StorageTask<UploadTask.TaskSnapshot> persistLightsImage(Context ctx, final String imgId, Bitmap bmp) throws IOException {

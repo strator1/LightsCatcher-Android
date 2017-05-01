@@ -54,9 +54,7 @@ public class UserInformation extends Observable {
         }
 
         this.usrSnapshot.addToPoints(points);
-        PersistenceManager.shared.persist(usrSnapshot);
-
-
+        return PersistenceManager.shared.persist(usrSnapshot);
     }
 
     public String getUid() {

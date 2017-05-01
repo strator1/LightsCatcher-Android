@@ -305,11 +305,10 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
 
         final LightPhase phase = stateMachine.phase == PHASE_RED ? LightPhase.RED : LightPhase.GREEN;
 
-        Point crosshair = translateRelativeLayoutToImage(crossHairX, crossHairY);
         //TODO: fix lightPosition: consider the size of the corsair
         // if this is a red picture the light is above
         // if it's a green picture it's bellow the crossHair center
-        LightPosition pos = new LightPosition(crosshair, phase, true);
+        LightPosition pos = new LightPosition(crossHairX,crossHairY, phase, true);
 
         Photo.Builder photoB = Photo.buildNew()
                 .setBitmap(bmp)
