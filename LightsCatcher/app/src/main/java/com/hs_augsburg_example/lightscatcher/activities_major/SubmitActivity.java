@@ -1,5 +1,6 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
@@ -7,9 +8,11 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
@@ -31,6 +34,8 @@ import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
+
+import java.io.IOException;
 
 
 public class SubmitActivity extends AppCompatActivity implements OnFailureListener {
@@ -58,6 +63,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         initPhotoView(recordBuilder.record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
         initPhotoView(recordBuilder.record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
 
+
         mAuthRef = FirebaseAuth.getInstance();
         mDatabaseRef = FirebaseDatabase.getInstance();
     }
@@ -65,25 +71,16 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     private void initPhotoView(final Photo photo, FrameLayout targetFrame, FrameLayout otherFrame) {
         if (photo != null) {
             targetFrame.setVisibility(View.VISIBLE);
-            final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) targetFrame.getChildAt(0);
-            //photoView.setImageBitmap(data.bitMap);
 
+            final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) targetFrame.getChildAt(0);
 
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
 
-//                    PointF marker = new PointF(data.lightPos.x,data.lightPos.y);
-            PointF marker = new PointF(photo.bitMap.getWidth() / 2, photo.bitMap.getHeight());
-            photoView.setScaleAndCenter(2, marker);
+            // photoView eats absolute positions
+            float x = (float) (photo.bitMap.getWidth() * photo.lightPos.x);
+            float y = (float) (photo.bitMap.getHeight() * photo.lightPos.y);
+            photoView.setScaleAndCenter(2, new PointF(x, y));
 
-            //photoTop = photoView;
-            //photoView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            //photoView.setScale(2f,true);
-//            photoView.post(new Runnable() {
-//                @Override
-//                public void run() {
-//
-//                }
-//            });
         } else {
             otherFrame.setVisibility(View.GONE);
         }
@@ -108,66 +105,45 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast toast = Toast.makeText(getApplicationContext(), "Du scheinst momentan keine Internetverbindung zu haben. Probiere es später einfach nochmal ;)", Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(getApplicationContext(), "Dein Benutzeraccount kann nicht überprüft werden. Probiere es später einfach nochmal ;)", Toast.LENGTH_LONG);
                 toast.show();
             }
         });
     }
 
-    private void uploadPhoto(){
+    private void uploadPhoto() {
         // Check for valid data
         Record rec = recordBuilder.commit();
 
-        // one of the photos, either red or green may be null
-        final Photo photo1, photo2;
+        Context ctx = getApplicationContext();
+
+        // save database entry
+        PersistenceManager.shared.persist(rec);
+
+        // give credits
+        UserInformation.shared.increaseUserPoints(rec.points);
+
+        // upload red photo
         if (rec.redPhoto != null) {
-            photo1 = rec.redPhoto;
-            photo2 = rec.greenPhoto;
-        } else {
-            photo1 = rec.greenPhoto;
-            photo2 = null;
+            try {
+                PersistenceManager.shared.persistLightsImage(ctx, rec.redPhoto.id, rec.redPhoto.bitMap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-          /*
-        UploadTask task1;
-        task1 = PersistenceManager.shared.persistStorage(photo1.id, photo2.bitMap);
-        task1.addOnFailureListener(this);
-        task1.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                photo1.imageUrl = taskSnapshot.getDownloadUrl().toString();
-
-                if (photo2 == null)
-                    SubmitActivity.this.onUploadComplete(rec);
-                else {
-                    UploadTask task2 = PersistenceManager.shared.persistStorage(photo2.id, photo2.bitMap);
-                    task2.addOnFailureListener(SubmitActivity.this);
-                    task2.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            photo2.imageUrl = taskSnapshot.getDownloadUrl().toString();
-                            SubmitActivity.this.onUploadComplete(rec);
-                        }
-                    });
-                }
+        // upload green photo
+        if (rec.redPhoto != null) {
+            try {
+                PersistenceManager.shared.persistLightsImage(ctx, rec.redPhoto.id, rec.redPhoto.bitMap);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        });
-        */
-    }
+        }
 
-    private void onUploadComplete(Record rec) {
-        Task task3 = PersistenceManager.shared.persist(rec);
-        task3.addOnFailureListener(SubmitActivity.this);
-        task3.addOnSuccessListener(new OnSuccessListener() {
-
-            @Override
-            public void onSuccess(Object o) {
-                Intent intent = new Intent(SubmitActivity.this, FinishActivity.class);
-                startActivity(intent);
-                finish();
-            }
-        });
-
+        Intent intent = new Intent(SubmitActivity.this, FinishActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 

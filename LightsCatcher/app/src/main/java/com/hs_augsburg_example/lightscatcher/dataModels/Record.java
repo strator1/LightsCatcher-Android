@@ -14,7 +14,7 @@ import java.util.UUID;
  */
 
 /**
- * The data-structure representing a snapshot of a traffic-light with ideally both red and green phases. Though the user may capture only one phase.
+ * The data-structure representing a snapshot of a traffic-light with ideally both red and green phases from the same perspective. Though the user may capture only one phase.
  */
 @IgnoreExtraProperties
 public class Record implements Serializable {

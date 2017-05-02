@@ -10,7 +10,7 @@ import java.io.IOException;
 /**
  * Created by patrickvalenta on 08.04.17.
  */
-
+@Deprecated
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     private static final String TAG = "dfasf";
     private SurfaceHolder mHolder;
@@ -103,5 +103,12 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public Camera getCamera() {
         return mCamera;
+    }
+
+    public void zoomOut() {
+    }
+
+    public void zoomIn() {
+
     }
 }

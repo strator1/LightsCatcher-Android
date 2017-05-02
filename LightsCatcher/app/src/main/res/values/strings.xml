@@ -129,4 +129,5 @@
     <string name="submit_txt_mark">markieren</string>
     <string name="fotografieren">%1$s fotografieren</string>
     <string name="home_txt_status">Verbindung:</string>
+    <string name="toast_snapshotNotTaken">Bitte erst mindestens ein Photo schießen!</string>
 </resources>

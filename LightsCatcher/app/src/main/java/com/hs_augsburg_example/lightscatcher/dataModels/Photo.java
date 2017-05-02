@@ -57,7 +57,7 @@ public String id;
         }
 
         public Builder setLocation(Location l) {
-            if (l == null) throw new IllegalArgumentException("Location l");
+            if (l == null) return this;
             p.longitude = Double.toString(l.getLongitude());
             p.latitude = Double.toString(l.getLatitude());
 

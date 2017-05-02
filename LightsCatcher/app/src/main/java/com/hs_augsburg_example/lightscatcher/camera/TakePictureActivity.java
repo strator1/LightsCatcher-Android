@@ -41,7 +41,7 @@
 //    private static final int REQUEST_CAMERA_PERMISSION = 1;
 //    private static final String FRAGMENT_DIALOG = "dialog";
 //
-//    private static Camera cam;
+//    private static Camera camera;
 //    private CameraPreview camPreview;
 //
 //    SensorManager mSensorManager;
@@ -138,7 +138,7 @@
 //        super.onPause();
 //
 //        if (camPreview != null && camPreview.getCamera() != null) {
-//            camPreview.getCamera().stopPreview();
+//            camPreview.getCamera().releaseCamera();
 //        }
 //
 //        locationService.stopListening();
@@ -182,8 +182,8 @@
 //
 //    private void setupCamera() {
 //        if (checkCameraHardware(getApplicationContext())) {
-//            cam = getCameraInstance();
-//            Camera.Parameters params = cam.getParameters();
+//            camera = getCameraInstance();
+//            Camera.Parameters params = camera.getParameters();
 //
 //            List<Camera.Size> sizes = params.getSupportedPictureSizes();
 //
@@ -191,9 +191,9 @@
 //                System.out.println("Available resolutions: " + s.width + ", " + s.height);
 //            }
 //
-//            cam.setDisplayOrientation(90);
+//            camera.setDisplayOrientation(90);
 //
-//            camPreview = new CameraPreview(this, cam);
+//            camPreview = new CameraPreview(this, camera);
 //            FrameLayout preview = (FrameLayout) findViewById(R.id.take_picture_cameraPreview);
 //
 //            preview.addView(camPreview);
@@ -226,7 +226,7 @@
 //            return;
 //        }
 //
-//        cam.takePicture(null, null, mPicture);
+//        camera.takePicture(null, null, mPicture);
 //    }
 //
 //    private void onAfterPictureTaken() {
@@ -246,20 +246,20 @@
 //
 //    /** A safe way to get an instance of the Camera object. */
 //    private Camera getCameraInstance(){
-//        if (cam != null) {
-//            return cam;
-//            /*cam.release();
-//            cam = null;*/
+//        if (camera != null) {
+//            return camera;
+//            /*camera.release();
+//            camera = null;*/
 //        }
 //
 //        try {
-//            cam = Camera.open(); // attempt to get a Camera instance
+//            camera = Camera.open(); // attempt to get a Camera instance
 //        }
 //        catch (Exception e){
 //            // Camera is not available (in use or does not exist)
 //            e.printStackTrace();
 //        }
-//        return cam; // returns null if camera is unavailable
+//        return camera; // returns null if camera is unavailable
 //    }
 //
 //    public void navigateBack(View view) {
