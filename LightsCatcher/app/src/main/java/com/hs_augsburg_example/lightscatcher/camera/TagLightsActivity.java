@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -51,6 +52,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private ImageView imageView;
     private Bitmap image;
     private RelativeLayout rl;
+    private FloatingActionButton undoBtn;
 
     private List<LightInformation> insertedViews = new ArrayList<LightInformation>();
     private List<LightInformation> pickedUpViews = new ArrayList<LightInformation>();
@@ -74,6 +76,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         imageView = (ImageView) findViewById(R.id.imageView);
         rl = (RelativeLayout) findViewById(R.id.tag_lights_rl);
+        undoBtn = (FloatingActionButton) findViewById(R.id.button_undo);
 
         imageView.setOnTouchListener(this);
 
@@ -88,6 +91,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
 
             if (mostRel != null) {
                 addNewView(0, 0, mostRel);
+            } else {
+                undoBtn.setEnabled(false);
             }
         }
 
@@ -245,6 +250,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
             pos.setView(v);
         }
 
+        undoBtn.setEnabled(true);
+
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(pos.getWidth(), pos.getHeight());
         params.leftMargin = pos.getX();
         params.topMargin = pos.getY();
@@ -341,13 +348,17 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     }
 
     public void undoBtnPressed(View view) {
-        if (insertedViews.size() == 0) {
-            return;
-        }
+//        if (insertedViews.size() == 0) {
+//            return;
+//        }
 
         LightInformation lastPos = insertedViews.get(insertedViews.size() - 1);
         rl.removeView(lastPos.getView());
         insertedViews.remove(lastPos);
+
+        if (insertedViews.size() == 0) {
+            undoBtn.setEnabled(false);
+        }
     }
 
     private AlertDialog lightPhaseHelpDialog;
