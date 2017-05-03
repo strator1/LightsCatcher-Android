@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,16 +16,18 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.ExceptionHelp;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 public class SignupActivity extends AppCompatActivity {
-
+    private static final boolean LOG = false;
     private EditText inputEmail, inputPassword, inputName;
     private Button btnSignIn, btnSignUp;
     private ProgressBar progressBar;
-    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +37,6 @@ public class SignupActivity extends AppCompatActivity {
         ActivityRegistry.register(this);
 
         //Get Firebase auth instance
-        auth = FirebaseAuth.getInstance();
 
         btnSignIn = (Button) findViewById(R.id.sign_in_button);
         btnSignUp = (Button) findViewById(R.id.sign_up_button);
@@ -85,22 +87,31 @@ public class SignupActivity extends AppCompatActivity {
                 btnSignUp.setEnabled(false);
 
                 progressBar.setVisibility(View.VISIBLE);
+
                 //create user
-                auth.createUserWithEmailAndPassword(email, password)
+                FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(SignupActivity.this, new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 btnSignUp.setEnabled(true);
-                                Toast.makeText(SignupActivity.this, "createUserWithEmail:onComplete:" + task.isSuccessful(), Toast.LENGTH_SHORT).show();
-                                progressBar.setVisibility(View.GONE);
+                                progressBar.setVisibility(View.INVISIBLE);
                                 // If sign in fails, display a message to the user. If sign in succeeds
                                 // the auth state listener will be notified and logic to handle the
                                 // signed in user can be handled in the listener.
                                 if (!task.isSuccessful()) {
-                                    Toast.makeText(SignupActivity.this, "Authentication failed." + task.getException(),
-                                            Toast.LENGTH_LONG).show();
+
+                                    Exception e = task.getException();
+                                    if (LOG && e != null) Log.e("LOGIN", e.toString(), e);
+
+                                    String detail = ExceptionHelp.germanMsg(SignupActivity.this, e);
+                                    Toast.makeText(SignupActivity.this, getString(R.string.error_registration_failed) + " " + detail, Toast.LENGTH_LONG).show();
+
+                                    //
                                 } else {
-                                    UserInformation.shared.createNewUser(task.getResult().getUser().getUid(),name, email);
+                                    // create database-entry for this user
+                                    User usr = new User(task.getResult().getUser().getUid(), name, email);
+                                    PersistenceManager.shared.persist(usr);
+
                                     startActivity(new Intent(SignupActivity.this, HomeActivity.class));
                                     finish();
                                 }
@@ -114,6 +125,10 @@ public class SignupActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    public void onPrivacyClick(View view) {
+        startActivity(new Intent(this, DatenschutzActivity.class));
     }
 }

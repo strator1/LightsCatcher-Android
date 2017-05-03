@@ -1,5 +1,7 @@
 package com.hs_augsburg_example.lightscatcher.singletons;
 
+import android.database.sqlite.SQLiteBindOrColumnIndexOutOfRangeException;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
@@ -25,8 +27,9 @@ import java.util.Observable;
  * Holds state of the current user.
  */
 public class UserInformation extends Observable {
+    private static boolean LOG = true;
     public static UserInformation shared = new UserInformation();
-    private static  final  String TAG = "UserInformation";
+    private static final String TAG = "UserInformation";
 
     private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
@@ -35,17 +38,25 @@ public class UserInformation extends Observable {
     private ValueEventListener currentUserListener;
     private DatabaseReference currentUserRef;
 
+
     private UserInformation() {
         this.mAuth = FirebaseAuth.getInstance();
+        mAuth.addAuthStateListener(new AuthStateListener());
         this.mDatabase = FirebaseDatabase.getInstance().getReference();
     }
 
-    /*
-     * TODO: quirin: Is this method really necessary??
-     */
-    public void createNewUser(String uid, String name, String email) {
-        this.usrSnapshot = new User(uid,name, email, 0);
-        mDatabase.child("users").child(uid).setValue(this.usrSnapshot);
+    public static void init() {
+        // just to get the static contructor called in time
+    }
+
+    private class AuthStateListener implements FirebaseAuth.AuthStateListener {
+        @Override
+        public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+            FirebaseUser fbu = firebaseAuth.getCurrentUser();
+            if (LOG) Log.d("APP", "onAuthStateChanged");
+
+            switchUser(fbu);
+        }
     }
 
     public Task<Void> increaseUserPoints(int points) {
@@ -70,9 +81,8 @@ public class UserInformation extends Observable {
     public void logout() {
         this.mAuth.signOut();
 
-        // detach listener from previos user
-        stopListenToCurrentUser();
-        notifyObservers();
+// the auth listener will do the rest
+
     }
 
     public User getUserSnapshot() {
@@ -81,40 +91,38 @@ public class UserInformation extends Observable {
 
     /**
      * Updates and {@field usrSnapshot} and notifies all Observers
+     *
      * @param usr
      */
-    private void setUserSnapshot(User usr){
+    private void setUserSnapshot(User usr) {
         this.usrSnapshot = usr;
         this.setChanged();
         UserInformation.shared.notifyObservers();
     }
 
     /**
-     * Tries to authenticate with Firebase and fetches the user's meta-data from Firebase.
-     * @return true if authentication succeeded.
+     * Returns true if user is authenticated
      */
     public boolean tryAuthenticate() {
-        //Log.d(TAG,"tryAuthenticate;" );
-        FirebaseUser fbuser = mAuth.getCurrentUser();
-        if (fbuser == null ) return false; // not logged in yet.
-
-        switchUser(fbuser);
-        return true;
+        if (LOG) Log.d(TAG, "tryAuthenticate;");
+        return mAuth.getCurrentUser() != null;
     }
 
     private void switchUser(FirebaseUser newUsr) {
         // lets see if the user has changed
+        if (this.firebaseUsr != null && newUsr != null && this.firebaseUsr.getUid().equals(newUsr.getUid()))
+            return; // user did not change
+
         if (this.firebaseUsr != null)
-            if (this.firebaseUsr.equals(newUsr))
-                return; // user is already logged in, no need to fetch userData
-            else
+            stopListenToCurrentUser();
 
         this.firebaseUsr = newUsr;
-        this.startListenToUser(newUsr.getUid());
+        if (newUsr != null)
+            this.startListenToUser(newUsr.getUid());
     }
 
     private void stopListenToCurrentUser() {
-        if (this.currentUserRef != null && this.currentUserListener != null){
+        if (this.currentUserRef != null && this.currentUserListener != null) {
             currentUserRef.removeEventListener(this.currentUserListener);
             // improves offline-mode
             this.currentUserRef.keepSynced(false);
@@ -122,7 +130,8 @@ public class UserInformation extends Observable {
         usrSnapshot = null;
         currentUserRef = null;
     }
-    private void startListenToUser(final String uid){
+
+    private void startListenToUser(final String uid) {
         //Log.d(TAG,"startListenToUser; uid=" + uid);
 
         // detach listener from previos user
@@ -133,6 +142,7 @@ public class UserInformation extends Observable {
             this.currentUserListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.e(TAG, "fetch user-info from Firebase, onDataChanged");
                     User user = dataSnapshot.getValue(User.class);
                     user.uid = uid;
                     UserInformation.shared.setUserSnapshot(user);
@@ -140,8 +150,8 @@ public class UserInformation extends Observable {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Log.e(TAG,"Failed to fetch user-info from Firebase.");
-                    Log.e(TAG,databaseError.getDetails());
+                    Log.e(TAG, "Failed to fetch user-info from Firebase.");
+                    Log.e(TAG, databaseError.getDetails());
                     UserInformation.shared.setUserSnapshot(null); // this snapshot is no longer valid
                 }
             };

@@ -59,7 +59,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         ActivityRegistry.register(this);
 
         //Has to be called before using Firebase
-        PersistenceManager.init();
+        //PersistenceManager.init();
 
         // GUI-stuff
         setContentView(R.layout.activity_home);
@@ -121,7 +121,9 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         });
 
         boolean loggedIn = UserInformation.shared.tryAuthenticate();
-        if (!loggedIn) {
+        if (loggedIn) {
+            updateUI_UserData(UserInformation.shared.getUserSnapshot());
+        }else{
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
