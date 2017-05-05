@@ -10,6 +10,9 @@ import com.hs_augsburg_example.lightscatcher.R;
  * Created by quirin on 03.05.17.
  */
 
+/**
+ * Translates common Exception-Messages of firebase to german
+ */
 public class ExceptionHelp {
     public static String germanMsg(Context ctx, Exception e) {
         if (e instanceof FirebaseAuthException) {

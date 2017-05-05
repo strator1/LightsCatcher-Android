@@ -155,19 +155,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     @Override
-    protected void onResume() {
-        if (LOG) Log.d(TAG, "onResume");
-        super.onResume();
-        this.onOnlineStatusChanged();
-    }
-
-    @Override
-    protected void onPause() {
-        if (LOG) Log.d(TAG, "onPause");
-        super.onPause();
-    }
-
-    @Override
     protected void onStart() {
         if (LOG) Log.d(TAG, "onStart");
         super.onStart();
@@ -180,8 +167,9 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 HomeActivity.this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
             }
         };
-
         UserInformation.shared.addObserver(loginObserver);
+
+
         // listen to connection state:
         this.connectionObserver = new Observer() {
             @Override
@@ -220,6 +208,19 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         };
         sortedUsers.addValueEventListener(listenerForCurrentRanking);
+    }
+
+    @Override
+    protected void onResume() {
+        if (LOG) Log.d(TAG, "onResume");
+        super.onResume();
+        this.onOnlineStatusChanged();
+    }
+
+    @Override
+    protected void onPause() {
+        if (LOG) Log.d(TAG, "onPause");
+        super.onPause();
     }
 
     @Override
@@ -321,6 +322,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
      */
     @Override
     public void onRefresh() {
+        onOnlineStatusChanged();
+
         //show loading animation during loading
         swipeLayout.setRefreshing(true);
 

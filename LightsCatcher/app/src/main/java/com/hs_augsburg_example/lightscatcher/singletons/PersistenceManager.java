@@ -43,7 +43,7 @@ import static java.lang.String.format;
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
     private static final String TAG = "PersistenceManager";
-    private static final boolean LOG = true;
+    private static final boolean LOG = Log.ENABLED && true;
 
     public static final PersistenceManager shared = new PersistenceManager();
 
@@ -241,7 +241,8 @@ public class PersistenceManager {
                 } else if (uploadTask.isCanceled()) {
                     Exception e = uploadTask.getException();
                     if (LOG)
-                        Log.d(TAG, "existing task is canceled, restarting; exception: " + (e == null ? "null" : e.getMessage()));
+                        Log.e(TAG, "existing task is canceled, restarting; exception: " + (e == null ? "null" : e.getMessage()));
+
                     uploadTask = ref.putFile(Uri.fromFile(file), meta);
                     listenToImageUploadTask(ctx, uploadTask, ref, file);
                 }
@@ -250,6 +251,7 @@ public class PersistenceManager {
                 // this should not happen usually
                 if (LOG)
                     Log.d(TAG, format("found %1$s existing UploadTasks to storage location '%2$s'", active.size(), ref.toString()));
+
                 for (UploadTask task : active) {
                     if (LOG)
                         Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s; exception: %4$s", task.toString(), task.isInProgress(), task.isCanceled(), task.getException().toString()));

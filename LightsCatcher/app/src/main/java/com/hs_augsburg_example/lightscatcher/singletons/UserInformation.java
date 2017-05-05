@@ -151,7 +151,8 @@ public class UserInformation extends Observable {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    if (LOG) Log.e(TAG, "Failed to fetch user-info from Firebase. "+ databaseError.getMessage());
+                    if (LOG)
+                        Log.e(TAG, "Failed to fetch user-info from Firebase. " + databaseError.getMessage());
 
                     UserInformation.shared.setUserSnapshot(null); // this snapshot is no longer valid
                 }
