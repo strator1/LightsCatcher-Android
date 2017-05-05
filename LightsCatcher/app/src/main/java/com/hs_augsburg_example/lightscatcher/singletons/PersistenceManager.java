@@ -43,7 +43,7 @@ import static java.lang.String.format;
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
     private static final String TAG = "PersistenceManager";
-    private static final boolean LOG = true;
+    private static final boolean LOG = Log.ENABLED && true;
 
     public static final PersistenceManager shared = new PersistenceManager();
 

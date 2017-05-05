@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,13 +17,15 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
-import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.ExceptionHelp;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 public class SignupActivity extends AppCompatActivity {
-    private static final boolean LOG = false;
+    private static final String TAG= "SignupActivity";
+    private static final boolean LOG = Log.ENABLED && true;
+
     private EditText inputEmail, inputPassword, inputName;
     private Button btnSignIn, btnSignUp;
     private ProgressBar progressBar;
@@ -101,7 +102,7 @@ public class SignupActivity extends AppCompatActivity {
                                 if (!task.isSuccessful()) {
 
                                     Exception e = task.getException();
-                                    if (LOG && e != null) Log.e("LOGIN", e.toString(), e);
+                                    if (LOG && e != null) Log.e(TAG, e.toString(), e);
 
                                     String detail = ExceptionHelp.germanMsg(SignupActivity.this, e);
                                     Toast.makeText(SignupActivity.this, getString(R.string.error_registration_failed) + " " + detail, Toast.LENGTH_LONG).show();
@@ -117,7 +118,6 @@ public class SignupActivity extends AppCompatActivity {
                                 }
                             }
                         });
-
             }
         });
     }
