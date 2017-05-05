@@ -2,10 +2,10 @@
 
     <!-- These settings headers are only used on tablets. -->
 
-    <header
-        android:fragment="com.hs_augsburg_example.lightscatcher.upload.UploadActivity$GeneralPreferenceFragment"
-        android:icon="@drawable/ic_info_black_24dp"
-        android:title="@string/pref_header_general" />
+    <!--<header-->
+        <!--android:fragment="com.hs_augsburg_example.lightscatcher.upload.UploadActivity$GeneralPreferenceFragment"-->
+        <!--android:icon="@drawable/ic_info_black_24dp"-->
+        <!--android:title="@string/pref_header_general" />-->
 
     <header
         android:fragment="com.hs_augsburg_example.lightscatcher.upload.UploadActivity$NotificationPreferenceFragment"

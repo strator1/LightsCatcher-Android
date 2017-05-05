@@ -2,7 +2,6 @@ package com.hs_augsburg_example.lightscatcher.singletons;
 
 import android.database.sqlite.SQLiteBindOrColumnIndexOutOfRangeException;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -13,6 +12,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,9 +27,10 @@ import java.util.Observable;
  * Holds state of the current user.
  */
 public class UserInformation extends Observable {
-    private static boolean LOG = true;
-    public static UserInformation shared = new UserInformation();
     private static final String TAG = "UserInformation";
+    private static final boolean LOG = Log.ENABLED && true;
+
+    public static UserInformation shared = new UserInformation();
 
     private FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
@@ -53,7 +54,7 @@ public class UserInformation extends Observable {
         @Override
         public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
             FirebaseUser fbu = firebaseAuth.getCurrentUser();
-            if (LOG) Log.d("APP", "onAuthStateChanged");
+            if (LOG) Log.d(TAG, "onAuthStateChanged");
 
             switchUser(fbu);
         }
@@ -142,7 +143,7 @@ public class UserInformation extends Observable {
             this.currentUserListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    Log.e(TAG, "fetch user-info from Firebase, onDataChanged");
+                    if (LOG) Log.d(TAG, "fetch user-info from Firebase, onDataChanged");
                     User user = dataSnapshot.getValue(User.class);
                     user.uid = uid;
                     UserInformation.shared.setUserSnapshot(user);
@@ -150,8 +151,8 @@ public class UserInformation extends Observable {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Log.e(TAG, "Failed to fetch user-info from Firebase.");
-                    Log.e(TAG, databaseError.getDetails());
+                    if (LOG) Log.e(TAG, "Failed to fetch user-info from Firebase. "+ databaseError.getMessage());
+
                     UserInformation.shared.setUserSnapshot(null); // this snapshot is no longer valid
                 }
             };

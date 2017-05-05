@@ -119,6 +119,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
     public void onBackPressed() {
         ActivityRegistry.finishAll();
         super.onBackPressed();
