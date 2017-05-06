@@ -9,6 +9,7 @@ import android.content.res.Resources;
 import android.hardware.Camera;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Size;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,17 +97,13 @@ public class CameraUtil {
     public static Camera.Size getMediumPictureSize(Camera.Parameters descriptor) {
         Camera.Size result=null;
 
-        for (Camera.Size size : descriptor.getSupportedPictureSizes()) {
-            if (result == null) {
-                result=size;
-            }
 
-            if (size.width <= 2048) {
-                return size;
-            }
-        }
+        List<Camera.Size> supportedSizes = descriptor.getSupportedPictureSizes();
+        Camera.Size size1 = getPictureSizeWidthSmaller(2048, supportedSizes);
+        Collections.reverse(supportedSizes);
+        Camera.Size size2 = getPictureSizeWidthSmaller(2048, supportedSizes);
 
-        return result;
+        return size1.width >= size2.width ? size1 : size2;
     }
 
     public static Camera.Size getSmallestPictureSize(Camera.Parameters descriptor) {
@@ -127,6 +124,22 @@ public class CameraUtil {
         }
 
         return(result);
+    }
+
+    public static Camera.Size getPictureSizeWidthSmaller(int maxWidth, List<Camera.Size> supportedSizes) {
+        Camera.Size result=null;
+        
+        for (Camera.Size size : supportedSizes) {
+            if (result == null) {
+                result=size;
+            }
+
+            if (size.width <= maxWidth) {
+                return size;
+            }
+        }
+
+        return result;
     }
 
     // based on https://github.com/googlesamples/android-Camera2Basic/blob/master/Application/src/main/java/com/example/android/camera2basic/Camera2BasicFragment.java
