@@ -7,13 +7,7 @@
     android:fitsSystemWindows="true"
     tools:context="com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity">
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_gravity="center|bottom"
-        android:layout_marginBottom="20dp"
-        android:visibility="gone" />
+
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -74,6 +68,13 @@
                 android:textColorHint="@android:color/white" />
         </android.support.design.widget.TextInputLayout>
 
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center|bottom"
+            android:layout_marginBottom="20dp"
+            android:visibility="invisible" />
         <!-- Login Button -->
 
         <Button

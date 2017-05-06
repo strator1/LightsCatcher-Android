@@ -2,17 +2,25 @@ package com.hs_augsburg_example.lightscatcher.camera.utils;
 
 import android.content.Context;
 import android.hardware.Camera;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import com.hs_augsburg_example.lightscatcher.utils.Log;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by patrickvalenta on 08.04.17.
  */
 @Deprecated
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
-    private static final String TAG = "dfasf";
+    private static final String TAG = "CameraPreview";
+    private static final boolean LOG = Log.ENABLED && true;
+
     private SurfaceHolder mHolder;
     private Camera mCamera;
 
@@ -38,7 +46,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             mCamera.setPreviewDisplay(holder);
             startPreview(holder.getSurfaceFrame().width(), holder.getSurfaceFrame().height());
         } catch (IOException e) {
-            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+            Log.e(TAG, "Error setting camera preview: " + e.getMessage());
         }
     }
 
@@ -71,7 +79,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             startPreview(w, h);
 
         } catch (Exception e) {
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+            if (LOG)Log.e(TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
 
@@ -91,24 +99,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
         parameters.setPictureSize(mPictureSize.width, mPictureSize.height);
 
-        //System.out.println("PICTURE SIZE: " + mPictureSize.width + ", " + mPictureSize.height);
+        if (LOG)Log.d(TAG,"PICTURE SIZE: " + mPictureSize.width + ", " + mPictureSize.height);
 
         mCamera.setParameters(parameters);
         mCamera.startPreview();
-    }
-
-    public SurfaceHolder getSurface(){
-        return this.mHolder;
     }
 
     public Camera getCamera() {
         return mCamera;
     }
 
-    public void zoomOut() {
-    }
-
-    public void zoomIn() {
-
-    }
 }

@@ -2,10 +2,8 @@ package com.hs_augsburg_example.lightscatcher.utils;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -19,7 +17,8 @@ import java.util.List;
  */
 
 public class LightUploadMonitor implements OnSuccessListener, OnFailureListener {
-    //private  static final List<LightUploadMonitor> pendingTransactions = Collections.synchronizedList(new ArrayList<LightUploadMonitor>()) ;
+    private static final String TAG = "LightUploadMonitor";
+    private static final boolean LOG = Log.ENABLED && true;
 
     private static LightUploadMonitor mostRecent;
     private static ArrayList<Tuple<String, Task<?>>> pendingTasks = new ArrayList<>();
@@ -60,7 +59,7 @@ public class LightUploadMonitor implements OnSuccessListener, OnFailureListener 
         synchronized (this) {
             boolean all = pendingTasks.size() > 0;
             for (Tuple<String, Task<?>> t : this.pendingTasks) {
-                Log.d("APP", System.currentTimeMillis() + ": " + t.v1 + ": " + t.v2.isSuccessful());
+                if(LOG) Log.d(TAG, System.currentTimeMillis() + ": " + t.v1 + ": " + t.v2.isSuccessful());
                 if (!t.v2.isSuccessful()) {
                     all = false;
                     break;
@@ -74,8 +73,7 @@ public class LightUploadMonitor implements OnSuccessListener, OnFailureListener 
     @Override
     public void onFailure(@NonNull Exception e) {
         Toast.makeText(ctx, "Beim Upload ist leider ein Fehler aufgetreten :(", Toast.LENGTH_LONG).show();
-        Log.e("APP",e.getMessage());
-        e.printStackTrace();
+        if(LOG) Log.e(TAG,e.getMessage(),e);
     }
 
     public static class Tuple<T1, T2> {

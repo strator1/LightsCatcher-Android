@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.util.Log;
+
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -23,6 +23,7 @@ import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -42,7 +43,8 @@ import static java.lang.String.format;
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
     private static final String TAG = "PersistenceManager";
-    private static final boolean LOG = false;
+    private static final boolean LOG = Log.ENABLED && true;
+
     public static final PersistenceManager shared = new PersistenceManager();
 
     //destination folder of lights database-entries
@@ -103,7 +105,7 @@ public class PersistenceManager {
         StorageReference ref = lights_images.child(imgId);
         try {
             // create a bookmark in the shared application settings
-            // this is required when we try to recover the upload
+            // in order to remember this task in case the process dies
             addUploadBookmark(ctx, ref, null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -115,7 +117,7 @@ public class PersistenceManager {
         try {
 
             // compress image to reduce network-traffic for users
-            baos= new ByteArrayOutputStream();
+            baos = new ByteArrayOutputStream();
             bmp.compress(Bitmap.CompressFormat.JPEG, 40, baos);
 
             // save the image on the device so it doesn't get lost when the upload gets canceled
@@ -149,7 +151,7 @@ public class PersistenceManager {
         SharedPreferences sessions = ctx.getSharedPreferences(PENDING_UPLOADS, Context.MODE_PRIVATE);
         Set<? extends Map.Entry<String, ?>> set = sessions.getAll().entrySet();
         if (set.size() == 0) {
-            if(LOG)Log.d(TAG, "no pending uploads found");
+            if (LOG) Log.d(TAG, "no pending uploads found");
         } else {
             for (Map.Entry<String, ?> p : set) {
                 String storageUri = p.getKey();
@@ -263,7 +265,7 @@ public class PersistenceManager {
         task.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG, "onSuccess from " + taskSnapshot.getStorage().getPath());
+                if (LOG) Log.d(TAG, "onSuccess from " + taskSnapshot.getStorage().getPath());
 
                 // upload finished,
                 // remove the bookmark
@@ -275,7 +277,7 @@ public class PersistenceManager {
 
                 // delete image data on the device
                 try {
-                    if(LOG)Log.d(TAG, "delete file " + file.toURI());
+                    if (LOG) Log.d(TAG, "delete file " + file.toURI());
                     file.deleteOnExit();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -335,7 +337,7 @@ public class PersistenceManager {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             this.isConnected = dataSnapshot.getValue(Boolean.class);
-            if(LOG)Log.d(TAG, ".info/connected changed: " + isConnected);
+            if (LOG) Log.d(TAG, ".info/connected changed: {0}; observers: {1}", isConnected, this.countObservers());
             this.setChanged();
             this.notifyObservers();
         }
@@ -343,7 +345,7 @@ public class PersistenceManager {
         @Override
         public void onCancelled(DatabaseError databaseError) {
             this.isConnected = false;
-            if(LOG)Log.d(TAG, ".info/connected hanged: " + isConnected);
+            if (LOG) Log.d(TAG, ".info/connected listener was cancelled: " + databaseError.getMessage());
             this.setChanged();
             this.notifyObservers();
         }

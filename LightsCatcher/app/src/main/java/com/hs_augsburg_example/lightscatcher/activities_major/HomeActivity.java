@@ -4,20 +4,20 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DataSnapshot;
@@ -32,6 +32,7 @@ import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 
 import java.util.Observable;
@@ -42,26 +43,35 @@ import java.util.Observer;
  */
 public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String TAG = "HomeActivity";
-    private FirebaseRecyclerAdapter<User, UserHolder> adapter = null;
-    private Query sortedUsers = null;
-    private Query top10 = null;
+    private static final boolean LOG = Log.ENABLED && true;
+
+
+    // GUI:
     private TextView txtUserName;
     private TextView txtUserRank;
     private TextView txtUserScore;
+    private View layoutOffline;
+    private View layoutOnline;
     private SwipeRefreshLayout swipeLayout;
+    private LinearLayout warning;
+
+    //FIELDS:
+    private Query sortedUsers = null;
+    private Query top10 = null;
+    private FirebaseRecyclerAdapter<User, UserHolder> adapter = null;
     private ValueEventListener listenerForCurrentRanking;
     private Observer loginObserver;
     private Observer connectionObserver;
-    private ToggleButton btnStatus;
-    private LinearLayout warning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (LOG) Log.d(TAG, "onCreate");
+
         super.onCreate(savedInstanceState);
         ActivityRegistry.register(this);
 
         //Has to be called before using Firebase
-        PersistenceManager.init();
+        //PersistenceManager.init();
 
         // GUI-stuff
         setContentView(R.layout.activity_home);
@@ -69,8 +79,9 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
         this.txtUserScore = (TextView) findViewById(R.id.home_txt_score);
         this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
-        this.btnStatus = (ToggleButton) findViewById(R.id.home_btn_status);
-        this.warning = (LinearLayout) findViewById(R.id.home_warning);
+        this.layoutOffline = findViewById(R.id.home_layout_offline);
+        this.layoutOnline = findViewById(R.id.home_layout_online);
+        this.warning = (LinearLayout) findViewById(R.id.home_layout_warning);
         final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -94,42 +105,15 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         });
         swipeLayout.setOnRefreshListener(this);
 
-
-        // listen to login-changes:
-        loginObserver = new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                //Log.d(TAG,"update from loginObserver");
-                HomeActivity.this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
-            }
-        };
-        UserInformation.shared.addObserver(loginObserver);
-
-
-        // listen to connection state:
-        this.connectionObserver = new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                HomeActivity.this.updateOnlineStatus();
-            }
-        };
-        PersistenceManager.shared.connectedListener.addObserver(connectionObserver);
-
-        btnStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                HomeActivity.this.updateOnlineStatus();
-            }
-        });
-
         boolean loggedIn = UserInformation.shared.tryAuthenticate();
-        if (!loggedIn) {
+        if (loggedIn) {
+            updateUI_UserData(UserInformation.shared.getUserSnapshot());
+        } else {
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
             return;
         }
-
 
         // query ordered list of users from firebase
         sortedUsers = FirebaseDatabase.getInstance().getReference("users").orderByChild("points");
@@ -170,6 +154,35 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         recyclerView.setLayoutManager(lm);
         recyclerView.setAdapter(adapter);
 
+    }
+
+    @Override
+    protected void onStart() {
+        if (LOG) Log.d(TAG, "onStart");
+        super.onStart();
+
+        // listen to login-changes:
+        loginObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (LOG) Log.d(TAG, "update from loginObserver");
+                HomeActivity.this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
+            }
+        };
+        UserInformation.shared.addObserver(loginObserver);
+
+
+        // listen to connection state:
+        this.connectionObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (LOG) Log.d(TAG, "connectionObserver.update");
+                onOnlineStatusChanged();
+            }
+        };
+        PersistenceManager.shared.connectedListener.addObserver(connectionObserver);
+
+
         // Listen to the whole userslist to calculate the rank of the current user
         // this might cause a lot of network-traffic when there are many users.
         // maybe there's a better solution, but for now it does the job
@@ -199,38 +212,67 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         sortedUsers.addValueEventListener(listenerForCurrentRanking);
     }
 
-    private void updateOnlineStatus() {
-        boolean connected = PersistenceManager.shared.connectedListener.isConnected();
-        btnStatus.setChecked(connected);
-        warning.setVisibility(connected ? View.GONE : View.VISIBLE);
-        if (connected) {
-            // resume unfinished upload tasks
-            try {
-                PersistenceManager.shared.resumePendingUploads(this.getApplicationContext());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    @Override
+    protected void onResume() {
+        if (LOG) Log.d(TAG, "onResume");
+        super.onResume();
+        this.onOnlineStatusChanged();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        this.updateOnlineStatus();
+    protected void onPause() {
+        if (LOG) Log.d(TAG, "onPause");
+        super.onPause();
     }
 
     @Override
     protected void onStop() {
-        super.onStop();
+        if (LOG) Log.d(TAG, "onStop");
+
         // detach all listeners from FireBase
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
-        if (adapter != null) adapter.cleanup();
-        if (connectionObserver != null)
-            PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
+
+        if (connectionObserver != null) PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
 
         // and other services:
         if (loginObserver != null) UserInformation.shared.deleteObserver(loginObserver);
+
+        super.onStop();
     }
+
+    @Override
+    protected void onDestroy() {
+        if (LOG) Log.d(TAG, "onDestroy");
+
+        super.onDestroy();
+        if (adapter != null) adapter.cleanup();
+
+    }
+
+    private void onOnlineStatusChanged() {
+        onOnlineStatusChanged(PersistenceManager.shared.connectedListener.isConnected());
+    }
+
+    private void onOnlineStatusChanged(boolean connected) {
+        if (connected) {
+            // try to resume unfinished upload tasks
+            try {
+                PersistenceManager.shared.resumePendingUploads(getApplicationContext());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        updateOnlineStatus(connected);
+    }
+
+    private void updateOnlineStatus(boolean connected) {
+        int vis = connected ? View.GONE : View.VISIBLE;
+        int vis_invert = connected ? View.VISIBLE : View.GONE;
+        warning.setVisibility(vis);
+        layoutOffline.setVisibility(vis);
+        layoutOnline.setVisibility(vis_invert);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -282,6 +324,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
      */
     @Override
     public void onRefresh() {
+        onOnlineStatusChanged();
+
         //show loading animation during loading
         swipeLayout.setRefreshing(true);
 
@@ -298,6 +342,20 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     public void onBackPressed() {
         ActivityRegistry.finishAll();
         super.onBackPressed();
+    }
+
+    public void onOfflineInfoClicked(View view) {
+
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        View dlgView = inflater.inflate(R.layout.content_offline_helpdialog, null);
+        dialogBuilder.setView(dlgView);
+        dialogBuilder.setTitle("Info zum Offline Modus");
+
+        dialogBuilder.setPositiveButton("Verstanden", null);
+
+        dialogBuilder.create().show();
     }
 
     /**
