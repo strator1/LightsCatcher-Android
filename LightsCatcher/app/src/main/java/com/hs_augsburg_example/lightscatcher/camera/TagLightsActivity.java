@@ -36,6 +36,7 @@ import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.LightUploadMonitor;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.IOException;
@@ -47,6 +48,9 @@ import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.
 import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.LightPhase.RED;
 
 public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
+
+    private static final String TAG = "TagLightsActivity";
+    private static final boolean LOG = Log.ENABLED && true;
 
     private ProgressBar progressBar;
     private ImageView imageView;
@@ -205,17 +209,17 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         final LightUploadMonitor monitor = LightUploadMonitor.newInstance(this.getApplicationContext());
 
         final String imageId = UUID.randomUUID().toString().toUpperCase();
-        monitor.addTask("Lichter in Datenbank eingetragen", PersistenceManager.shared.persist(light, imageId));
+        PersistenceManager.shared.persist(light, imageId);
 
         StorageTask uploadTask = null;
         try {
             uploadTask = PersistenceManager.shared.persistLightsImage(this.getApplicationContext(), imageId, image);
         } catch (IOException e) {
-            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Während dem Upload ist ein Fehler aufgetreten :(", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Exception beim Upload: " + e.getMessage(), e);
         }
-        monitor.addTask("Foto hochgeladen",uploadTask);
 
-        monitor.addTask("Deine Punkte erhöht", UserInformation.shared.increaseUserPoints(1));
+        UserInformation.shared.increaseUserPoints(1);
 
         Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
         startActivity(intent);

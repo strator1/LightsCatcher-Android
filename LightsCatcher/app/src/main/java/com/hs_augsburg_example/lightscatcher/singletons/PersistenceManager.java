@@ -48,17 +48,15 @@ public class PersistenceManager {
     public static final PersistenceManager shared = new PersistenceManager();
 
     //destination folder of lights database-entries
-    static final String DATA_MODEL_VERSION = "v1_0";
+    static final String DATA_MODEL_VERSION = "v1_0_testing";
 
     // path where the images are stored temporarily on the device
     private static final String INTERNAL_IMG_PATH = "lights_images";
 
-    // shared settings key
+    // shared settings key for upload-bookmarks
     private static final String PENDING_UPLOADS = "pendingUploads";
 
-    /**
-     * Supervises the state of the connection to the Firebase-database
-     */
+    //Supervises the state of the connection to the Firebase-database
     public final ConnectedListener connectedListener;
 
     private final FirebaseDatabase db;
@@ -82,7 +80,7 @@ public class PersistenceManager {
 
 
         connectedListener = new ConnectedListener();
-        FirebaseDatabase.getInstance().getReference(".info/connected").addValueEventListener(connectedListener);
+        db.getReference(".info/connected").addValueEventListener(connectedListener);
     }
 
     public List<UploadTask> getPendingImageUploads() {
@@ -118,40 +116,45 @@ public class PersistenceManager {
             e.printStackTrace();
         }
 
-        ByteArrayOutputStream baos = null;
         FileOutputStream out = null;
 
+
+        // compress image to reduce network-traffic for users
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 40, baos);
+
+        File file = null;
+        UploadTask uploadTask = null;
         try {
-
-            // compress image to reduce network-traffic for users
-            baos = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.JPEG, 40, baos);
-
             // save the image on the device so it doesn't get lost when the upload gets canceled
             File imagesDir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
-
-            File file = new File(imagesDir, imgId);
+            file = new File(imagesDir, imgId);
             if (!file.exists()) {
                 file.createNewFile();
             }
 
             out = new FileOutputStream(file);
+
+            if (LOG) Log.d(TAG, "writing photo to file: " + file.toURI().toString());
             baos.writeTo(out);
 
             // now start the upload()
-            UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
-
-            // and register listeners
-            listenToImageUploadTask(ctx, uploadTask, ref, file);
-            return uploadTask;
+            uploadTask = ref.putFile(Uri.fromFile(file));
 
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return null;
+            Log.e(TAG, ex.getMessage(), ex);
+            // if photo could not be stored on device, try to upload using memory-data
+            if (LOG) Log.d(TAG, "uploading from memory");
+            uploadTask = ref.putBytes(baos.toByteArray());
+
         } finally {
             out.close();
             baos.close();
         }
+        // register listeners, they will do important stuff after upload to firebase
+        listenToImageUploadTask(ctx, uploadTask, ref, file);
+        return uploadTask;
+
     }
 
     public void resumePendingUploads(Context ctx) {
@@ -267,16 +270,21 @@ public class PersistenceManager {
         task.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                if (LOG) Log.d(TAG, "onProgress from " + taskSnapshot.getStorage().toString());
                 // this may not get called in case of bad network connection
+                if (LOG) Log.d(TAG, "onProgress from " + taskSnapshot.getStorage().toString());
+
                 if (!saved[0]) {
                     Uri sessionUri = taskSnapshot.getUploadSessionUri();
                     if (sessionUri != null) {
                         // A persisted session has begun with the server.
                         // Now we know the sessionUri, which we can use to resume the upload
-                        saved[0] = true;
+                        // amend the uploadBookmark
                         addUploadBookmark(ctx, ref, sessionUri);
+                    } else {
+                        Log.e(TAG, "UploadSessionUri was null onProgress");
                     }
+                    // this should be called only once
+                    saved[0] = true;
                 }
             }
         });
@@ -293,12 +301,14 @@ public class PersistenceManager {
                     ex.printStackTrace();
                 }
 
-                // delete image data on the device
-                try {
-                    if (LOG) Log.d(TAG, "delete file " + file.toURI());
-                    file.deleteOnExit();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                // delete image data on the device if it's there
+                if (file != null) {
+                    try {
+                        if (LOG) Log.d(TAG, "delete file " + file.toURI());
+                        file.deleteOnExit();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
 
                 // and add the image url to the database
