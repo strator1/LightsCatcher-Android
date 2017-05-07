@@ -30,7 +30,7 @@ public class Light {
     }
 
     public Light(PhotoInformation information) {
-        this.user = UserInformation.shared.getUid();
+        this.user = UserInformation.shared.getUserId();
         this.gyroPosition = Float.toString(information.getGyroPosition());
         this.lightsCount = information.getLightInformationList().size();
 

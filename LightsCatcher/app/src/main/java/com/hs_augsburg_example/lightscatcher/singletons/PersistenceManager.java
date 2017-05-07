@@ -76,7 +76,7 @@ public class PersistenceManager {
         root = db.getReference();
         users = root.child("users");
         lights = root.child("lights/" + DATA_MODEL_VERSION);
-        lights_images = FirebaseStorage.getInstance().getReference("lights_images");
+        lights_images = FirebaseStorage.getInstance().getReference("lights_images/" +DATA_MODEL_VERSION);
 
 
         connectedListener = new ConnectedListener();

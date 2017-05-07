@@ -94,7 +94,7 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/home_layout_offline" />
     </LinearLayout>
-    <!--android:text="Du bist Offline,\nkannst aber ganz\nnormal Fotos\nsammeln"-->
+
     <TextView
         android:id="@+id/home_txt_username"
         android:layout_width="wrap_content"
@@ -148,7 +148,7 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="3dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/home_layout_warning"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/home_txt3">
@@ -158,31 +158,31 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+    </android.support.v4.widget.SwipeRefreshLayout>
 
-        <LinearLayout
-            android:id="@+id/home_layout_warning"
+    <LinearLayout
+        android:id="@+id/home_layout_warning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:layout_margin="2dp"
+            android:background="#000"
+            app:srcCompat="@android:drawable/stat_sys_warning" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="3dp"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_gravity="center"
-                android:layout_margin="2dp"
-                android:background="#000"
-                app:srcCompat="@android:drawable/stat_sys_warning" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="6dp"
-                android:layout_marginRight="4dp"
-                android:lineSpacingMultiplier=".8"
-                android:text="Liste ist möglicherweiße nicht mehr aktuell!"
-                android:textSize="14dp" />
-        </LinearLayout>
-    </android.support.v4.widget.SwipeRefreshLayout>
+            android:layout_gravity="center"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="4dp"
+            android:lineSpacingMultiplier=".8"
+            android:text="Liste ist möglicherweiße nicht mehr aktuell!"
+            android:textSize="14dp" />
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>

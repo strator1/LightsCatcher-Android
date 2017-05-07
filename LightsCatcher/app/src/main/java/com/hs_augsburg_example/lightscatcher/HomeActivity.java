@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -104,9 +103,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         swipeLayout.setOnRefreshListener(this);
 
         boolean loggedIn = UserInformation.shared.tryAuthenticate();
-        if (loggedIn) {
-            updateUI_UserData(UserInformation.shared.getUserSnapshot());
-        } else {
+        if (!loggedIn) {
             Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
             startActivity(intent);
             finish();
@@ -164,10 +161,11 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public void update(Observable o, Object arg) {
                 if (LOG) Log.d(TAG, "update from loginObserver");
-                HomeActivity.this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
+                HomeActivity.this.updateUI_UserData();
             }
         };
         UserInformation.shared.addObserver(loginObserver);
+        this.updateUI_UserData();
 
 
         // listen to connection state:
@@ -192,7 +190,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 int n = (int) dataSnapshot.getChildrenCount();
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
                     String key = child.getKey();
-                    if (key.equals(UserInformation.shared.getUid())) {
+                    if (key.equals(UserInformation.shared.getUserId())) {
                         usersRank = n - i;
 
                     }
@@ -213,6 +211,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     protected void onResume() {
         if (LOG) Log.d(TAG, "onResume");
+
         super.onResume();
         this.onOnlineStatusChanged();
     }
@@ -305,7 +304,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         txtUserRank.setText(getString(R.string.home_txt_rank, Integer.toString(rank)));
     }
 
-    private void updateUI_UserData(User usr) {
+    private void updateUI_UserData() {
+        User usr = UserInformation.shared.getUserSnapshot();
         if (usr != null) {
             txtUserName.setText(usr.name);
             txtUserScore.setText(getString(R.string.home_txt_score, Integer.toString(usr.points)));
@@ -333,7 +333,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // update the view
         this.adapter.notifyDataSetChanged();
-        this.updateUI_UserData(UserInformation.shared.getUserSnapshot());
+        this.updateUI_UserData();
         // this does not update the current user's rank. let's hope that {@link listenerForCurrentRanking} works properly
 
         //stop loading animation
@@ -377,7 +377,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         public void applyUser(User usr, int rank) {
-
             txtRank.setText(rank + ":");
             txtName.setText(usr.name);
             txtPoints.setText(Integer.toString(usr.points));

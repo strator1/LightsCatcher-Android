@@ -21,6 +21,10 @@ public class ExceptionHelp {
                     return "Diese Email-Adresse wird bereits verwendet.";
                 case "ERROR_USER_DISABLED":
                     return "Dieser Account wurde deaktiviert.";
+                case "ERROR_WRONG_PASSWORD":
+                    return "Falsches Passwort.";
+                case "ERROR_USER_NOT_FOUND":
+                    return "Unbekannter Benutzername.";
                 default:
                     return ((FirebaseAuthException) e).getErrorCode();
             }

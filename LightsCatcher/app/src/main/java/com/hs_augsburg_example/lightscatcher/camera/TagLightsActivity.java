@@ -176,7 +176,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         if (PersistenceManager.shared.connectedListener.isConnected()) {
 
         }
-        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() == null) {
