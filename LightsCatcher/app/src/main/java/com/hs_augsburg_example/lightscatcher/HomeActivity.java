@@ -286,6 +286,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 Intent intentDatenschutz = new Intent(HomeActivity.this, DatenschutzActivity.class);
                 startActivity(intentDatenschutz);
                 return true;
+            case R.id.terms_of_use:
+                Intent intentTermsOfUse = new Intent(HomeActivity.this, TermsOfUseActivity.class);
+                startActivity(intentTermsOfUse);
+                return true;
             case R.id.logout:
                 UserInformation.shared.logout();
                 Intent intentLogout = new Intent(HomeActivity.this, LoginActivity.class);

@@ -25,11 +25,11 @@
             android:layout_height="wrap_content"
             android:layout_weight="0.14"
             android:gravity="center_vertical|center_horizontal"
-            android:text="Lights Catcher"
+            android:text="LightsCatcher"
             android:textColor="@color/colorAccent"
             android:textSize="26dp"
             android:textStyle="bold"
-            tools:text="Lights Catcher" />
+            tools:text="LightsCatcher" />
 
         <ImageView
             android:layout_width="@dimen/logo_w_h"
