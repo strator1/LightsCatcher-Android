@@ -69,6 +69,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private StorageReference mStorageRef;
     private FirebaseAuth mAuthRef;
     private FirebaseDatabase mDatabaseRef;
+    private Button btnUpload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +79,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         ActivityRegistry.register(this);
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        btnUpload = (Button) findViewById(R.id.tagLights_upload);
         imageView = (ImageView) findViewById(R.id.imageView);
         rl = (RelativeLayout) findViewById(R.id.tag_lights_rl);
         undoBtn = (FloatingActionButton) findViewById(R.id.button_undo);
@@ -176,6 +178,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         if (PersistenceManager.shared.connectedListener.isConnected()) {
 
         }
+        setUiBusy(true);
         mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -198,6 +201,11 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
                 toast.show();
             }
         });
+    }
+
+    private void setUiBusy(boolean busy) {
+        progressBar.setVisibility(busy ? View.VISIBLE : View.GONE);
+        btnUpload.setEnabled(!busy);
     }
 
     private void uploadPhoto() {

@@ -72,9 +72,9 @@
         android:layout_marginTop="8dp"
         android:orientation="vertical"
         android:visibility="gone"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible">
+        tools:visibility="visible"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
 
         <Button
             android:id="@+id/home_btn_offlineInfo"
@@ -178,11 +178,12 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_gravity="center|top"
             android:layout_marginLeft="6dp"
             android:layout_marginRight="4dp"
+            android:layout_marginBottom="1dp"
             android:lineSpacingMultiplier=".8"
-            android:text="Liste ist möglicherweiße nicht mehr aktuell!"
+            android:text="Offline-Modus: Liste kann veraltet sein!"
             android:textSize="14dp" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

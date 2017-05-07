@@ -135,5 +135,12 @@
     <string name="home_txt_status">Verbindung:</string>
     <string name="privacy_link">Datenschutzerklärung</string>
     <string name="title_activity_terms_of_use">Nutzungsbedingungen</string>
+    <string name="signUp_txt_pwRepeat">Passwort wiederholen</string>
+    <string name="signUp_error_pwDoNotMatch">Passwörter stimmen nicht überein.</string>
+    <string name="signUp_nameAlreadyInUse">Dieser Benutzername wird schon von einem anderen Account verwendet.</string>
+    <string name="ERROR_EMAIL_ALREADY_IN_USE">Diese Email-Adresse wird bereits verwendet.</string>
+    <string name="ERROR_USER_DISABLED">Dieser Account wurde deaktiviert.</string>
+    <string name="ERROR_WRONG_PASSWORD">Falsches Passwort.</string>
+    <string name="ERROR_USER_NOT_FOUND">Unbekannter Benutzername.</string>
 
 </resources>

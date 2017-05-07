@@ -93,13 +93,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
 
         // show loading animation:
-        // it will be stopped by the {@link adapter} in onDataChanged
-        swipeLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                swipeLayout.setRefreshing(true);
-            }
-        });
+        setRefreshAnimation(true);
         swipeLayout.setOnRefreshListener(this);
 
         boolean loggedIn = UserInformation.shared.tryAuthenticate();
@@ -125,22 +119,18 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 position = adapter.getItemCount() - position;
                 viewHolder.applyUser(model, position);
             }
+        };
+        top10.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                setRefreshAnimation(false);
+            }
 
             @Override
-            protected void onDataChanged() {
-                super.onDataChanged();
-
-                // if the loading-animation is still running stop it
-                if (swipeLayout.isRefreshing())
-                    swipeLayout.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            swipeLayout.setRefreshing(false);
-                        }
-                    });
+            public void onCancelled(DatabaseError databaseError) {
+                setRefreshAnimation(false);
             }
-        };
-
+        });
         // use reverse layout to sort users in descending order
         // firebase-queries currently do not support descending order
         final LinearLayoutManager lm = new LinearLayoutManager(this);
@@ -149,6 +139,16 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         recyclerView.setLayoutManager(lm);
         recyclerView.setAdapter(adapter);
 
+    }
+
+    private void setRefreshAnimation(final boolean b) {
+        if (swipeLayout.isRefreshing())
+            swipeLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeLayout.setRefreshing(b);
+                }
+            });
     }
 
     @Override
@@ -229,7 +229,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         // detach all listeners from FireBase
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
 
-        if (connectionObserver != null) PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
+        if (connectionObserver != null)
+            PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
 
         // and other services:
         if (loginObserver != null) UserInformation.shared.deleteObserver(loginObserver);
@@ -329,15 +330,14 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         onOnlineStatusChanged();
 
         //show loading animation during loading
-        swipeLayout.setRefreshing(true);
-
+        setRefreshAnimation(true);
         // update the view
         this.adapter.notifyDataSetChanged();
         this.updateUI_UserData();
         // this does not update the current user's rank. let's hope that {@link listenerForCurrentRanking} works properly
 
         //stop loading animation
-        swipeLayout.setRefreshing(false);
+        setRefreshAnimation(false);
     }
 
     @Override

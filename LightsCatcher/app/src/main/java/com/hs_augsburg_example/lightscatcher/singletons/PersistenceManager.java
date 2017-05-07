@@ -280,11 +280,11 @@ public class PersistenceManager {
                         // Now we know the sessionUri, which we can use to resume the upload
                         // amend the uploadBookmark
                         addUploadBookmark(ctx, ref, sessionUri);
+                        saved[0] = true;
                     } else {
                         Log.e(TAG, "UploadSessionUri was null onProgress");
                     }
                     // this should be called only once
-                    saved[0] = true;
                 }
             }
         });
