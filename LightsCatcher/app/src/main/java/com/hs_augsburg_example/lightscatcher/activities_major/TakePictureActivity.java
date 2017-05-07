@@ -24,7 +24,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +31,7 @@ import android.widget.ToggleButton;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.CameraTextureView;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
@@ -39,7 +39,7 @@ import com.hs_augsburg_example.lightscatcher.services.LocationService;
 import com.hs_augsburg_example.lightscatcher.services.MotionService;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
-import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.util.Random;
@@ -48,18 +48,20 @@ import java.util.Random;
  * Activity to capture a traffic light. Up to 2 pictures can be taken in a row, one for each phase of the traffic light.
  */
 public class TakePictureActivity extends AppCompatActivity implements Camera.PictureCallback {
+    private static final String TAG = "TakePictureActivity";
+    private static final boolean LOG = true;
 
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
     static final int PHASE_INIT = -1;
     public static final int PHASE_RED = 0;
-    public static final int PHASE_GREEN = 1;
 
+    public static final int PHASE_GREEN = 1;
     // crosshair constraints (center-coordinates relative to layoutContainer)
-    private static final float CROSSHAIR_X_MIN = .3f;
-    private static final float CROSSHAIR_X_MAX = 1f - CROSSHAIR_X_MIN;
-    private static final float CROSSHAIR_Y_MIN = .2f;
-    private static final float CROSSHAIR_Y_MAX = .4f;
+    public static final float CROSSHAIR_X_MIN = .3f;
+    public static final float CROSSHAIR_X_MAX = 1f - CROSSHAIR_X_MIN;
+    public static final float CROSSHAIR_Y_MIN = .2f;
+    public static final float CROSSHAIR_Y_MAX = .45f;
     private static final Random random = new Random();
 
     //private static Camera camera;
@@ -113,8 +115,11 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         locationService = new LocationService(getApplicationContext());
 
         // generate crosshair position (center coordinates, relative to parent_view)
-        crossHairX = randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MIN);
+        crossHairX = randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
         crossHairY = randomFloat(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
+
+        crossHairX = CROSSHAIR_X_MAX;
+        crossHairY = CROSSHAIR_Y_MAX;
 
         camPreview = new CameraTextureView(this.getApplicationContext());
         camPreview.setPivotRelative(new PointF(crossHairX, crossHairY));
@@ -185,13 +190,13 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     }
 
 
-    private static float randomFloat(float min, float max) {
-        final double d = 1.0 - max - min;
+    public static float randomFloat(float min, float max) {
+        final double d = max - min;
         return (float) (min + d * random.nextDouble());
     }
 
     private void addCrosshairView(float x, float y) {
-
+        if (LOG)Log.d(TAG,"addCrosshairView: " + x + "; " + y);
         Rect parentRect = new Rect();
         rl.getDrawingRect(parentRect);
         parentRect.set(0, 0, rl.getWidth(), rl.getHeight());
@@ -422,6 +427,14 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
 
     public void onDiscardButtonClick(View view) {
         this.stateMachine.reset();
+    }
+
+    public void zoomIn_Click(View view) {
+        camPreview.zoomIn();
+    }
+
+    public void zoomOut_Click(View view) {
+        camPreview.zoomOut();
     }
 
     /**

@@ -32,6 +32,7 @@ public class CameraTextureView extends TextureView implements TextureView.Surfac
     private Camera.Size mPictureSize;
     private Camera.Size mPreviewSize;
     private SurfaceTexture mSurface;
+    private float mZoomStep = 1.1f;
 
     public CameraTextureView(Context context) {
         super(context);
@@ -155,4 +156,19 @@ public class CameraTextureView extends TextureView implements TextureView.Surfac
 
     }
 
+    public void zoomIn() {
+        mScale *= mZoomStep;
+        if (mScale > maxScale) {
+            mScale = maxScale;
+        }
+        updateScale();
+    }
+
+    public void zoomOut() {
+        mScale /= mZoomStep;
+        if (mScale < minScale) {
+            mScale = minScale;
+        }
+        updateScale();
+    }
 }

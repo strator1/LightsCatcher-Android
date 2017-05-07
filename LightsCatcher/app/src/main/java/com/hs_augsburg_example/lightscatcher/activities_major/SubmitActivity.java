@@ -41,13 +41,12 @@ import java.io.IOException;
 public class SubmitActivity extends AppCompatActivity implements OnFailureListener {
 
     private ProgressBar progressBar;
-    private PhotoView photoTop;
-    private PhotoView photoBottom;
+    private SubsamplingScaleImageView photoTop;
+    private SubsamplingScaleImageView photoBottom;
 
     // data-object containing photos
     private Record.Builder recordBuilder;
 
-    private FirebaseAuth mAuthRef;
     private FirebaseDatabase mDatabaseRef;
 
     @Override
@@ -60,15 +59,14 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
-        initPhotoView(recordBuilder.record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
-        initPhotoView(recordBuilder.record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
+        photoTop = initPhotoView(recordBuilder.record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
+        photoBottom = initPhotoView(recordBuilder.record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
 
 
-        mAuthRef = FirebaseAuth.getInstance();
         mDatabaseRef = FirebaseDatabase.getInstance();
     }
 
-    private void initPhotoView(final Photo photo, FrameLayout targetFrame, FrameLayout otherFrame) {
+    private SubsamplingScaleImageView initPhotoView(final Photo photo, FrameLayout targetFrame, FrameLayout otherFrame) {
         if (photo != null) {
             targetFrame.setVisibility(View.VISIBLE);
 
@@ -81,8 +79,10 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
             float y = (float) (photo.bitMap.getHeight() * photo.lightPos.y);
             photoView.setScaleAndCenter(2, new PointF(x, y));
 
+            return photoView;
         } else {
             otherFrame.setVisibility(View.GONE);
+            return null;
         }
     }
 
@@ -112,10 +112,23 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     }
 
     private void uploadPhoto() {
+
+        // read out current light-position from photoview:
+        if (photoTop != null) {
+            Photo ph = recordBuilder.record.redPhoto;
+            PointF center = photoTop.getCenter();
+            ph.lightPos.x = center.x * ph.bitMap.getWidth();
+            ph.lightPos.y = center.y * ph.bitMap.getHeight();
+        }
+        if (photoBottom != null) {
+            Photo ph = recordBuilder.record.greenPhoto;
+            PointF center = photoBottom.getCenter();
+            ph.lightPos.x = center.x * ph.bitMap.getWidth();
+            ph.lightPos.y = center.y * ph.bitMap.getHeight();
+        }
+
         // Check for valid data
         Record rec = recordBuilder.commit();
-
-        Context ctx = getApplicationContext();
 
         // save database entry
         PersistenceManager.shared.persist(rec);
@@ -123,6 +136,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         // give credits
         UserInformation.shared.increaseUserPoints(rec.points);
 
+        Context ctx = getApplicationContext();
         // upload red photo
         if (rec.redPhoto != null) {
             try {
