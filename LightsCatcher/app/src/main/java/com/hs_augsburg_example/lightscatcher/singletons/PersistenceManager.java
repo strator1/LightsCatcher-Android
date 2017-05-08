@@ -48,7 +48,7 @@ public class PersistenceManager {
     public static final PersistenceManager shared = new PersistenceManager();
 
     //destination folder of lights database-entries
-    static final String DATA_MODEL_VERSION = "v1_0_testing";
+    static final String DATA_MODEL_VERSION = "v1_0";
 
     // path where the images are stored temporarily on the device
     private static final String INTERNAL_IMG_PATH = "lights_images";
@@ -76,7 +76,7 @@ public class PersistenceManager {
         root = db.getReference();
         users = root.child("users");
         lights = root.child("lights/" + DATA_MODEL_VERSION);
-        lights_images = FirebaseStorage.getInstance().getReference("lights_images/" +DATA_MODEL_VERSION);
+        lights_images = FirebaseStorage.getInstance().getReference("lights_images/");
 
 
         connectedListener = new ConnectedListener();
