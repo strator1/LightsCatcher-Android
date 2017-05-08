@@ -12,14 +12,12 @@ import android.view.ScaleGestureDetector;
 import android.view.TextureView;
 import android.view.View;
 
-import com.hs_augsburg_example.lightscatcher.camera.utils.CameraUtil;
-
 import java.io.IOException;
 
 /**
  * Created by quirin on 01.05.17.
  */
-public class CameraTextureView extends TextureView implements TextureView.SurfaceTextureListener, View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener {
+public class CameraTexturePreview extends TextureView implements TextureView.SurfaceTextureListener, View.OnTouchListener, ScaleGestureDetector.OnScaleGestureListener {
     static final String TAG = "CameraTextureView";
     static final boolean LOG = false;
     public Camera camera;
@@ -34,7 +32,7 @@ public class CameraTextureView extends TextureView implements TextureView.Surfac
     private SurfaceTexture mSurface;
     private float mZoomStep = 1.1f;
 
-    public CameraTextureView(Context context) {
+    public CameraTexturePreview(Context context) {
         super(context);
         this.setSurfaceTextureListener(this);
         this.setOnTouchListener(this);

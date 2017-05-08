@@ -34,7 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hs_augsburg_example.lightscatcher.R;
-import com.hs_augsburg_example.lightscatcher.camera.CameraTextureView;
+import com.hs_augsburg_example.lightscatcher.camera.CameraTexturePreview;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
@@ -82,7 +82,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     private TextView txtCaption;
     private RelativeLayout rl;
     private View crosshairView;
-    private CameraTextureView camPreview;
+    private CameraTexturePreview camPreview;
     private Camera camera;
 
     // use PHASE_GREEN or PHASE_RED as index to access the corresponding snapshot
@@ -166,7 +166,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         crossHairX = CROSSHAIR_X_MAX;
         crossHairY = CROSSHAIR_Y_MAX;
 
-        camPreview = new CameraTextureView(this.getApplicationContext());
+        camPreview = new CameraTexturePreview(this.getApplicationContext());
         camPreview.setPivotRelative(new PointF(crossHairX, crossHairY));
         camPreview.setPivotRelative(new PointF(crossHairX, crossHairY));
         rl.addView(camPreview, 0);

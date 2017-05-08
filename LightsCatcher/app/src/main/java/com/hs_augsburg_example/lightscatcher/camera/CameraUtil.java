@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher.camera.utils;
+package com.hs_augsburg_example.lightscatcher.camera;
 
 import android.Manifest;
 import android.content.Context;

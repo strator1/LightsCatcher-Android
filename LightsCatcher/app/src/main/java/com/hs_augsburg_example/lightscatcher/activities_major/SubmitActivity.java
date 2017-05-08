@@ -28,12 +28,15 @@ import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.IOException;
 
 
 public class SubmitActivity extends AppCompatActivity implements OnFailureListener {
+    private static final String TAG = "TagLightsActivity";
+    private static final boolean LOG = Log.ENABLED && true;
 
     private ProgressBar progressBar;
     private SubsamplingScaleImageView photoTop;
@@ -158,6 +161,11 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         finish();
     }
 
+    private void setUiBusy(boolean busy) {
+        progressBar.setVisibility(busy ? View.VISIBLE : View.GONE);
+        btnUpload.setEnabled(!busy);
+    }
+
 
     @Override
     public void onFailure(@NonNull Exception e) {
@@ -192,10 +200,5 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         }
 
         lightPhaseHelpDialog.show();
-    }
-
-    private void setUiBusy(boolean busy) {
-        progressBar.setVisibility(busy ? View.VISIBLE : View.GONE);
-        btnUpload.setEnabled(!busy);
     }
 }

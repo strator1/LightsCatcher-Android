@@ -2,6 +2,6 @@
     <declare-styleable name="Crosshair">
         <attr name="crossColor" format="color" />
     </declare-styleable>
-    <declare-styleable name="CameraTextureView">
+    <declare-styleable name="CameraTexturePreview">
     </declare-styleable>
 </resources>
