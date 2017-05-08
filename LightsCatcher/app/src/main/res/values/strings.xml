@@ -7,7 +7,7 @@
     <string name="enter_password">Bitte gebe ein Passwort ein</string>
     <string name="enter_username">Bitte gebe ein Usernamen an</string>
     <string name="invalid_email">Bitte gebe eine gültige E-Mail-Adresse an!</string>
-    <string name="minimum_password">Passwort zu kurz, bitte gebe sie mindestens 6 Zeichen ein!</string>
+    <string name="minimum_password">Passwort zu kurz, bitte gebe mindestens 6 Zeichen ein!</string>
     <string name="change_email">E-Mail Adresse änderen</string>
     <string name="change_password">Passwort ändern</string>
     <string name="send_password_reset_email">Zum Zurücksetzen des Passwortes eine E-Mail senden</string>

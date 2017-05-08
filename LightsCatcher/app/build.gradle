@@ -7,8 +7,8 @@ android {
         applicationId "com.hs_augsburg_example.lightscatcher"
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 10
-        versionName "1.1"
+        versionCode 4
+        versionName "1.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -37,6 +37,7 @@ dependencies {
     compile 'com.davemorrissey.labs:subsampling-scale-image-view:3.6.0'
     testCompile 'junit:junit:4.12'
 }
+
 
 
 

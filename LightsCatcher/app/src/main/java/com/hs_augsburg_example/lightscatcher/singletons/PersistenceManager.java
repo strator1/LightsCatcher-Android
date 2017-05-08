@@ -22,7 +22,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.dataModels.Light;
-import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 
@@ -48,8 +47,10 @@ public class PersistenceManager {
 
     public static final PersistenceManager shared = new PersistenceManager();
 
+    static final String DATA_MODEL_VERSION = "v1_2";
+
     //destination folder of lights database-entries
-    private final String LIGHTS_DATA_PATH = "lights/v1_1";
+    private final String LIGHTS_DATA_PATH = "lights/" + DATA_MODEL_VERSION ;
     private final String USERS_DATA_PATH = "users";
 
     //destination for lights images
