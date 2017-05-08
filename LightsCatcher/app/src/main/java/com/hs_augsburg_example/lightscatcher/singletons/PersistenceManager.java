@@ -21,6 +21,7 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
+import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
@@ -57,7 +58,7 @@ public class PersistenceManager {
     // path where the images are stored temporarily on the device
     private static final String INTERNAL_IMG_PATH = "lights_images";
 
-    // shared settings key
+    // shared settings key for upload-bookmarks
     private static final String PENDING_UPLOADS = "pendingUploads";
 
     //Supervises the state of the connection to the Firebase-database
@@ -83,7 +84,7 @@ public class PersistenceManager {
 
 
         connectedListener = new ConnectedListener();
-        FirebaseDatabase.getInstance().getReference(".info/connected").addValueEventListener(connectedListener);
+        db.getReference(".info/connected").addValueEventListener(connectedListener);
     }
 
     public List<UploadTask> getPendingImageUploads() {
@@ -111,40 +112,45 @@ public class PersistenceManager {
             e.printStackTrace();
         }
 
-        ByteArrayOutputStream baos = null;
         FileOutputStream out = null;
 
+
+        // compress image to reduce network-traffic for users
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 40, baos);
+
+        File file = null;
+        UploadTask uploadTask = null;
         try {
-
-            // compress image to reduce network-traffic for users
-            baos = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.JPEG, 40, baos);
-
             // save the image on the device so it doesn't get lost when the upload gets canceled
             File imagesDir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
-
-            File file = new File(imagesDir, imgId);
+            file = new File(imagesDir, imgId);
             if (!file.exists()) {
                 file.createNewFile();
             }
 
             out = new FileOutputStream(file);
+
+            if (LOG) Log.d(TAG, "writing photo to file: " + file.toURI().toString());
             baos.writeTo(out);
 
             // now start the upload()
-            UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
-
-            // and register listeners
-            listenToImageUploadTask(ctx, uploadTask, ref, file);
-            return uploadTask;
+            uploadTask = ref.putFile(Uri.fromFile(file));
 
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return null;
+            Log.e(TAG, ex.getMessage(), ex);
+            // if photo could not be stored on device, try to upload using memory-data
+            if (LOG) Log.d(TAG, "uploading from memory");
+            uploadTask = ref.putBytes(baos.toByteArray());
+
         } finally {
             out.close();
             baos.close();
         }
+        // register listeners, they will do important stuff after upload to firebase
+        listenToImageUploadTask(ctx, uploadTask, ref, file);
+        return uploadTask;
+
     }
 
     public void resumePendingUploads(Context ctx) {
@@ -157,7 +163,8 @@ public class PersistenceManager {
                 String storageUri = p.getKey();
                 String sessionUri = (String) p.getValue();
 
-                if(LOG)Log.d(TAG, format("Found pending upload to '%1$s'; sessionId: '%2$s'", storageUri, sessionUri));
+                if (LOG)
+                    Log.d(TAG, format("Found pending upload to '%1$s'; sessionId: '%2$s'", storageUri, sessionUri));
 
                 UploadTask uploadTask = null;
                 try {
@@ -166,7 +173,7 @@ public class PersistenceManager {
                     ex.printStackTrace();
                 }
                 if (uploadTask == null) {
-                    if(LOG)Log.d(TAG, "Failed to resume upload.");
+                    if (LOG) Log.d(TAG, "Failed to resume upload.");
                 }
             }
         }
@@ -179,7 +186,8 @@ public class PersistenceManager {
 
         File file = new File(ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE), imgId);
         if (!file.exists()) {
-            if(LOG)Log.d(TAG, "cannot restore upload, image-file is missing. expected path: " + file.toString());
+            if (LOG)
+                Log.d(TAG, "cannot restore upload, image-file is missing. expected path: " + file.toString());
 
             // no chance to resume the upload when there's no image file.
             // remove the bookmark because this should not be tried again
@@ -201,42 +209,50 @@ public class PersistenceManager {
         switch (active.size()) {
             case 0:
                 if (sessionId == null) {
-                    if(LOG)Log.d(TAG, "restarting UploadTask to storage location " + ref.toString());
+                    if (LOG)
+                        Log.d(TAG, "restarting UploadTask to storage location " + ref.toString());
                     // no upload-session available. we have to (re-)start the upload task.
                     // this may occur when the process terminated and no network-connection could be established before
                     uploadTask = ref.putFile(Uri.fromFile(file), meta);
                     listenToImageUploadTask(ctx, uploadTask, ref, file);
                 } else {
                     // upload started before but process was terminated
-                    if(LOG)Log.d(TAG, "resuming UploadTask to storage location " + ref.toString());
+                    if (LOG)
+                        Log.d(TAG, "resuming UploadTask to storage location " + ref.toString());
                     uploadTask = ref.putFile(Uri.fromFile(file), meta, Uri.parse(sessionId));
                     listenToImageUploadTask(ctx, uploadTask, ref, file);
                 }
                 break;
             case 1:
-                if(LOG)Log.d(TAG, "found existing UploadTasks to storage location " + ref.toString());
+                if (LOG)
+                    Log.d(TAG, "found existing UploadTasks to storage location " + ref.toString());
                 uploadTask = active.get(0);
-                if(LOG)Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s", uploadTask.toString(), uploadTask.isInProgress(), uploadTask.isCanceled()));
+                if (LOG)
+                    Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s", uploadTask.toString(), uploadTask.isInProgress(), uploadTask.isCanceled()));
 
                 if (uploadTask.isInProgress()) {
                     //this is just fine, task will hopefully be finished soon
-                    if(LOG)Log.d(TAG, "existing task is running");
+                    if (LOG) Log.d(TAG, "existing task is running");
                     break;
                 } else if (uploadTask.isPaused()) {
-                    if(LOG)Log.d(TAG, "existing task is paused, resuming");
+                    if (LOG) Log.d(TAG, "existing task is paused, resuming");
                     uploadTask.resume();
                 } else if (uploadTask.isCanceled()) {
                     Exception e = uploadTask.getException();
-                    if(LOG)Log.d(TAG, "existing task was canceled, restarting; exception: " + (e == null ? "null" : e.getMessage()));
+                    Log.e(TAG, "existing task is canceled, restarting; exception: " + (e == null ? "null" : e.getMessage()));
+
                     uploadTask = ref.putFile(Uri.fromFile(file), meta);
                     listenToImageUploadTask(ctx, uploadTask, ref, file);
                 }
                 break;
             default:
                 // this should not happen usually
-                if(LOG)Log.d(TAG, format("found %1$s existing UploadTasks to storage location '%2$s'", active.size(), ref.toString()));
+                if (LOG)
+                    Log.d(TAG, format("found %1$s existing UploadTasks to storage location '%2$s'", active.size(), ref.toString()));
+
                 for (UploadTask task : active) {
-                    if(LOG)Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s; exception: %4$s", task.toString(), task.isInProgress(), task.isCanceled(), task.getException().toString()));
+                    if (LOG)
+                        Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s; exception: %4$s", task.toString(), task.isInProgress(), task.isCanceled(), task.getException().toString()));
                 }
                 uploadTask = active.get(0);
                 break;
@@ -249,15 +265,19 @@ public class PersistenceManager {
         task.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                if(LOG)Log.d(TAG, "onProgress from " + taskSnapshot.getStorage().toString());
                 // this may not get called in case of bad network connection
+                if (LOG) Log.d(TAG, "onProgress from " + taskSnapshot.getStorage().toString());
+
                 if (!saved[0]) {
                     Uri sessionUri = taskSnapshot.getUploadSessionUri();
                     if (sessionUri != null) {
                         // A persisted session has begun with the server.
                         // Now we know the sessionUri, which we can use to resume the upload
-                        saved[0] = true;
+                        // amend the uploadBookmark
                         addUploadBookmark(ctx, ref, sessionUri);
+                        saved[0] = true; // this should be called only once
+                    } else {
+                        Log.e(TAG, "UploadSessionUri was null onProgress");
                     }
                 }
             }
@@ -275,12 +295,14 @@ public class PersistenceManager {
                     ex.printStackTrace();
                 }
 
-                // delete image data on the device
-                try {
-                    if (LOG) Log.d(TAG, "delete file " + file.toURI());
-                    file.deleteOnExit();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                // delete image data on the device if it's there
+                if (file != null) {
+                    try {
+                        if (LOG) Log.d(TAG, "delete file " + file.toURI());
+                        file.deleteOnExit();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
 
                 // and add the image url to the database
@@ -297,7 +319,7 @@ public class PersistenceManager {
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                if(LOG)Log.d(TAG, "onFailure from " + task.getSnapshot().getStorage().toString());
+                if (LOG) Log.d(TAG, "onFailure from " + task.getSnapshot().getStorage().toString());
                 e.printStackTrace();
             }
         });
@@ -308,7 +330,7 @@ public class PersistenceManager {
         SharedPreferences.Editor edit = sessions.edit();
         edit.putString(ref.getPath(), sessionUri == null ? null : sessionUri.toString());
         edit.apply();
-        if(LOG)Log.d(TAG, "add upload bookmark: " + ref.toString());
+        if (LOG) Log.d(TAG, "add upload bookmark: " + ref.toString());
     }
 
     private void removeUploadBookmark(Context ctx, String storageRef) {
@@ -316,7 +338,7 @@ public class PersistenceManager {
         SharedPreferences.Editor edit = sessions.edit();
         edit.remove(storageRef);
         edit.apply();
-        if(LOG)Log.d(TAG, "remove upload bookmark: " + storageRef);
+        if (LOG) Log.d(TAG, "remove upload bookmark: " + storageRef);
     }
 
 
@@ -337,7 +359,8 @@ public class PersistenceManager {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             this.isConnected = dataSnapshot.getValue(Boolean.class);
-            if (LOG) Log.d(TAG, ".info/connected changed: {0}; observers: {1}", isConnected, this.countObservers());
+            if (LOG)
+                Log.d(TAG, ".info/connected changed: {0}; observers: {1}", isConnected, this.countObservers());
             this.setChanged();
             this.notifyObservers();
         }
@@ -345,7 +368,8 @@ public class PersistenceManager {
         @Override
         public void onCancelled(DatabaseError databaseError) {
             this.isConnected = false;
-            if (LOG) Log.d(TAG, ".info/connected listener was cancelled: " + databaseError.getMessage());
+            if (LOG)
+                Log.d(TAG, ".info/connected listener was cancelled: " + databaseError.getMessage());
             this.setChanged();
             this.notifyObservers();
         }

@@ -47,7 +47,7 @@ public class LoginActivity extends AppCompatActivity {
         ActivityRegistry.register(this);
 
         inputEmail = (EditText) findViewById(R.id.email);
-        inputPassword = (EditText) findViewById(R.id.password);
+        inputPassword = (EditText) findViewById(R.id.signUp_password1);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         btnSignup = (Button) findViewById(R.id.btn_signup);
         btnLogin = (Button) findViewById(R.id.btn_login);

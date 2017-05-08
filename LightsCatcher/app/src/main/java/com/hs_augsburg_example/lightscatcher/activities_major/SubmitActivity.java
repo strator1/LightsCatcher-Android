@@ -8,20 +8,15 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
-import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -48,6 +43,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     private Record.Builder recordBuilder;
 
     private FirebaseDatabase mDatabaseRef;
+    private View btnUpload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +57,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
 
         photoTop = initPhotoView(recordBuilder.record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
         photoBottom = initPhotoView(recordBuilder.record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
-
+        btnUpload = (View) findViewById(R.id.submit_btn_upload);
 
         mDatabaseRef = FirebaseDatabase.getInstance();
     }
@@ -87,7 +83,8 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     }
 
     public void onUploadPressed(View v) {
-        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+        setUiBusy(true);
+        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() == null) {
@@ -107,6 +104,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
             public void onCancelled(DatabaseError databaseError) {
                 Toast toast = Toast.makeText(getApplicationContext(), "Dein Benutzeraccount kann nicht überprüft werden. Probiere es später einfach nochmal ;)", Toast.LENGTH_LONG);
                 toast.show();
+                setUiBusy(false);
             }
         });
     }
@@ -196,4 +194,8 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         lightPhaseHelpDialog.show();
     }
 
+    private void setUiBusy(boolean busy) {
+        progressBar.setVisibility(busy ? View.VISIBLE : View.GONE);
+        btnUpload.setEnabled(!busy);
+    }
 }

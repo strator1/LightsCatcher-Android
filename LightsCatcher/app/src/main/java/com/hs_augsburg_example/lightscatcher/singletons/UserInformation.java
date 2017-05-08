@@ -1,6 +1,5 @@
 package com.hs_augsburg_example.lightscatcher.singletons;
 
-import android.database.sqlite.SQLiteBindOrColumnIndexOutOfRangeException;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.tasks.Task;
@@ -69,7 +68,7 @@ public class UserInformation extends Observable {
         return PersistenceManager.shared.persist(usrSnapshot);
     }
 
-    public String getUid() {
+    public String getUserId() {
         return isLoggedIn() ? mAuth.getCurrentUser().getUid() : null;
     }
 
@@ -133,7 +132,7 @@ public class UserInformation extends Observable {
     private void startListenToUser(final String uid) {
         //Log.d(TAG,"startListenToUser; uid=" + uid);
 
-        // detach listener from previos user
+        // detach listener from previous user
         stopListenToCurrentUser();
 
         // attach listener to current user
@@ -143,8 +142,12 @@ public class UserInformation extends Observable {
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     if (LOG) Log.d(TAG, "fetch user-info from Firebase, onDataChanged");
                     User user = dataSnapshot.getValue(User.class);
-                    user.uid = dataSnapshot.getKey();
-                    UserInformation.shared.setUserSnapshot(user);
+                    if (user == null) {
+                        // this happens when after a new user was created, and the snapshot was not submitted to the database
+                    } else {
+                        user.uid = uid;
+                        UserInformation.shared.setUserSnapshot(user);
+                    }
                 }
 
                 @Override

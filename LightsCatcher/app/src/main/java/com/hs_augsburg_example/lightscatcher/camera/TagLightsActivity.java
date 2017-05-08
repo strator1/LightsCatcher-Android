@@ -36,6 +36,7 @@ import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.LightUploadMonitor;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
 import java.io.IOException;
@@ -48,6 +49,9 @@ import static com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation.
 
 @Deprecated
 public class TagLightsActivity extends AppCompatActivity implements View.OnTouchListener, ViewTreeObserver.OnPreDrawListener {
+
+    private static final String TAG = "TagLightsActivity";
+    private static final boolean LOG = Log.ENABLED && true;
 
     private ProgressBar progressBar;
     private ImageView imageView;
@@ -66,6 +70,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
     private StorageReference mStorageRef;
     private FirebaseAuth mAuthRef;
     private FirebaseDatabase mDatabaseRef;
+    private Button btnUpload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +80,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         ActivityRegistry.register(this);
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        btnUpload = (Button) findViewById(R.id.tagLights_upload);
         imageView = (ImageView) findViewById(R.id.imageView);
         rl = (RelativeLayout) findViewById(R.id.tag_lights_rl);
         undoBtn = (FloatingActionButton) findViewById(R.id.button_undo);
@@ -173,7 +179,8 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         if (PersistenceManager.shared.connectedListener.isConnected()) {
 
         }
-        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+        setUiBusy(true);
+        mDatabaseRef.getReference("bannedUsers").child(UserInformation.shared.getUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getValue() == null) {
@@ -197,6 +204,11 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         });
     }
 
+    private void setUiBusy(boolean busy) {
+        progressBar.setVisibility(busy ? View.VISIBLE : View.GONE);
+        btnUpload.setEnabled(!busy);
+    }
+
     private void uploadPhoto() {
         PhotoInformation.shared.resetLightPositions();
         PhotoInformation.shared.setLightInformationList(insertedViews);
@@ -206,17 +218,17 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         final LightUploadMonitor monitor = LightUploadMonitor.newInstance(this.getApplicationContext());
 
         final String imageId = UUID.randomUUID().toString().toUpperCase();
-        monitor.addTask("Lichter in Datenbank eingetragen", PersistenceManager.shared.persist(light, imageId));
+        PersistenceManager.shared.persist(light, imageId);
 
         StorageTask uploadTask = null;
         try {
             uploadTask = PersistenceManager.shared.persistLightsImage(this.getApplicationContext(), imageId, image);
         } catch (IOException e) {
-            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Während dem Upload ist ein Fehler aufgetreten :(", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Exception beim Upload: " + e.getMessage(), e);
         }
-        monitor.addTask("Foto hochgeladen",uploadTask);
 
-        monitor.addTask("Deine Punkte erhöht", UserInformation.shared.increaseUserPoints(1));
+        UserInformation.shared.increaseUserPoints(1);
 
         Intent intent = new Intent(TagLightsActivity.this, FinishActivity.class);
         startActivity(intent);

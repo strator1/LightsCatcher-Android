@@ -63,11 +63,31 @@
             android:layout_height="wrap_content">
 
             <EditText
-                android:id="@+id/password"
+                android:id="@+id/signUp_password1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:focusableInTouchMode="true"
                 android:hint="@string/hint_password"
+                android:imeActionId="@+id/login"
+                android:imeOptions="actionUnspecified"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:textColor="@android:color/white"
+                android:textColorHint="@android:color/white" />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/signUp_password2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:focusableInTouchMode="true"
+                android:hint="@string/signUp_txt_pwRepeat"
                 android:imeActionId="@+id/login"
                 android:imeOptions="actionUnspecified"
                 android:inputType="textPassword"
@@ -116,9 +136,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dip"
             android:background="@null"
+            android:onClick="onPrivacyClick"
             android:text="@string/privacy_link"
             android:textAllCaps="false"
-            android:onClick="onPrivacyClick"
             android:textColor="@color/colorAccent"
             android:textSize="15dp" />
     </LinearLayout>

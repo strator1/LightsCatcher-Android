@@ -5,4 +5,5 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="logo_w_h">100dp</dimen>
     <dimen name="floating_button">90dp</dimen>
+    <dimen name="badgeSize">15dp</dimen>
 </resources>

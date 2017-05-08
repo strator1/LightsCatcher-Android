@@ -9,6 +9,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
@@ -22,12 +25,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.CameraTextureView;
@@ -41,6 +45,7 @@ import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
+import com.hs_augsburg_example.lightscatcher.views.BadgeDrawable;
 
 import java.util.Random;
 
@@ -52,7 +57,6 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     private static final boolean LOG = true;
 
     private static final int REQUEST_CAMERA_PERMISSION = 1;
-    private static final String FRAGMENT_DIALOG = "dialog";
     static final int PHASE_INIT = -1;
     public static final int PHASE_RED = 0;
 
@@ -64,33 +68,45 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     public static final float CROSSHAIR_Y_MAX = .45f;
     private static final Random random = new Random();
 
-    //private static Camera camera;
-    private CameraTextureView camPreview;
 
-    SensorManager mSensorManager;
-    Sensor accelerometer;
-    Sensor magnetometer;
-    MotionService motionService;
-
-    private LocationService locationService;
-
-    private RelativeLayout rl;
-    private View crosshairView;
     private float crossHairX;
     private float crossHairY;
+    private float crossHairWidth;
+
     private View[] cross = new View[2];
+
+
+    private CompoundButton[] phaseSelect = new CompoundButton[2];
+    private BadgeDrawable[] badges = new BadgeDrawable[2];
+    private Button exitButton;
+    private TextView txtCaption;
+    private RelativeLayout rl;
+    private View crosshairView;
+    private CameraTextureView camPreview;
+    private Camera camera;
 
     // use PHASE_GREEN or PHASE_RED as index to access the corresponding snapshot
     // so index 0 is for red-snapshot, index 1 for green
     private final Photo[] snapshots = new Photo[2];
-    private final TakePictureStateMachine stateMachine = new TakePictureStateMachine(this);
 
-    private ToggleButton[] redGreenSelect = new ToggleButton[2];
-    private View[] snapshotStatus = new View[2];
-    private Button exitButton;
-    private float crossHairWidth;
-    private TextView txtCaption;
-    private Camera camera;
+    private SensorManager mSensorManager;
+    private Sensor accelerometer;
+    private Sensor magnetometer;
+    private LocationService locationService;
+    private MotionService motionService;
+
+    private final TakePictureStateMachine stateMachine = new TakePictureStateMachine(this);
+    private Animation grow;
+    private Animation shrink;
+
+    private static <T> int indexOf(T[] array, T elem) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == elem) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,10 +119,39 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
 
         exitButton = (Button) findViewById(R.id.takePicture_exitBtn);
         txtCaption = (TextView) findViewById(R.id.takePicture_caption);
-        this.snapshotStatus[PHASE_RED] = findViewById(R.id.takePicture_redStatus);
-        this.snapshotStatus[PHASE_GREEN] = findViewById(R.id.takePicture_greenStatus);
-        this.redGreenSelect[PHASE_RED] = (ToggleButton) findViewById(R.id.takePicture_redSelect);
-        this.redGreenSelect[PHASE_GREEN] = (ToggleButton) findViewById(R.id.takePicture_greenSelect);
+
+        // phase-button animation:
+        shrink = AnimationUtils.loadAnimation(this, R.anim.phaseselect_shrink);
+        grow = AnimationUtils.loadAnimation(this, R.anim.phaseselect_grow);
+
+        CompoundButton.OnCheckedChangeListener onCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+            }
+        };
+        CompoundButton.OnClickListener onClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int phase = indexOf(phaseSelect, v);
+                if (!stateMachine.switchPhase(phase))
+                    v.startAnimation(grow);
+            }
+        };
+        int[] ids = new int[]{R.id.takePicture_redSelect, R.id.takePicture_greenSelect,};
+        for (int phase = 0; phase < 2; phase++) {
+
+            CompoundButton b = (CompoundButton) findViewById(ids[phase]);
+            b.setOnCheckedChangeListener(onCheckedChangeListener);
+            b.setOnClickListener(onClickListener);
+            try {
+                this.badges[phase] = createBadge(b);
+            } catch (Exception ex) {
+                Log.e(TAG, ex);
+            }
+
+            this.phaseSelect[phase] = b;
+        }
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -134,6 +179,15 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
                 stateMachine.switchPhase(PHASE_RED);
             }
         });
+    }
+
+    private BadgeDrawable createBadge(CompoundButton btn) {
+        StateListDrawable background = (StateListDrawable) btn.getBackground();
+        BadgeDrawable badgeDrawable = new BadgeDrawable(this);
+
+        LayerDrawable localLayerDrawable = new LayerDrawable(new Drawable[]{background, badgeDrawable});
+        btn.setBackgroundDrawable(localLayerDrawable);
+        return badgeDrawable;
     }
 
     @Override
@@ -196,7 +250,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     }
 
     private void addCrosshairView(float x, float y) {
-        if (LOG)Log.d(TAG,"addCrosshairView: " + x + "; " + y);
+        if (LOG) Log.d(TAG, "addCrosshairView: " + x + "; " + y);
         Rect parentRect = new Rect();
         rl.getDrawingRect(parentRect);
         parentRect.set(0, 0, rl.getWidth(), rl.getHeight());
@@ -243,28 +297,38 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     /**
      * @param phase use {@link #PHASE_RED} or {@link #PHASE_GREEN}
      */
-    private void enterNextPhase(int phase) {
-        int otherPhase =togglePhase(phase);
-        this.redGreenSelect[phase].setChecked(true);
-        redGreenSelect[otherPhase].setChecked(false);
+    private void notifyNextPhase(int phase) {
+        int otherPhase = togglePhase(phase);
+        this.phaseSelect[phase].setChecked(true);
+        phaseSelect[otherPhase].setChecked(false);
         cross[phase].setVisibility(View.VISIBLE);
         cross[otherPhase].setVisibility(View.INVISIBLE);
         txtCaption.setText(getString(R.string.fotografieren, phase == 0 ? "Rot-Phase" : "Grün-Phase"));
+        phaseSelect[phase].startAnimation(grow);
+        phaseSelect[otherPhase].startAnimation(shrink);
     }
 
     /**
      * @param redOrGreen use {@link #PHASE_RED} or {@link #PHASE_GREEN}
-     * @param b
      */
-    private void notifySnapshotTaken(int redOrGreen, boolean b) {
-        CheckBox box = (CheckBox) this.snapshotStatus[redOrGreen];
-        box.setChecked(b);
+    private void notifySnapshotTaken(int redOrGreen, Photo photo) {
+        BadgeDrawable view = badges[stateMachine.phase];
+        if (view != null) {
+            view.setCount(1);
+        }
     }
 
-    private void navigateToTagLights() {
+    private void notifyReset() {
+        badges[0].setCount(0);
+        badges[1].setCount(0);
+
+        phaseSelect[0].startAnimation(grow);
+    }
+
+    private void navigateToSubmit() {
 
         Record.Builder r = Record.buildNew();
-        r.setUser(UserInformation.shared.getUid());
+        r.setUser(UserInformation.shared.getUserId());
         r.setRedPhoto(snapshots[PHASE_RED]);
         r.setGreenPhoto(snapshots[PHASE_GREEN]);
         r.giveAppropriatePoints();
@@ -279,7 +343,6 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     public void onPictureTaken(byte[] data, Camera camera) {
         Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
         bmp = rotateImage(bmp, 90);
-
 
         final LightPhase phase = stateMachine.phase == PHASE_RED ? LightPhase.RED : LightPhase.GREEN;
 
@@ -307,7 +370,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
                 .commit();
 
 
-        TakePictureActivity.this.stateMachine.onSnapshotTaken(snapshotData);
+        TakePictureActivity.this.stateMachine.snapshotTaken(snapshotData);
 
         // prepare camera for next picture
         camera.stopPreview();
@@ -380,17 +443,6 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         startActivity(intent);
     }
 
-
-    public void onGreenSelect(View view) {
-        redGreenSelect[PHASE_GREEN].setChecked(true);
-        stateMachine.switchPhase(PHASE_GREEN);
-    }
-
-    public void onRedSelect(View view) {
-        redGreenSelect[PHASE_GREEN].setChecked(false);
-        stateMachine.switchPhase(PHASE_RED);
-    }
-
     public void onCaptureButtonPressed(View view) {
         if (!permissionGranted || camPreview.camera == null) {
             Toast.makeText(this.getApplicationContext(), "Kamera nicht verfügbar :(", Toast.LENGTH_SHORT).show();
@@ -400,7 +452,7 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
     }
 
     public void onExitButtonClick(View view) {
-        stateMachine.prepareSubmit();
+        stateMachine.goToSubmit();
     }
 
     public void onInfoButtonPressed(View view) {
@@ -451,20 +503,21 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
         }
 
 
-        void switchPhase(int newPhase) {
-            if (this.phase == newPhase) return;
+        boolean switchPhase(int newPhase) {
+            if (this.phase == newPhase) return false;
 
             this.phase = newPhase;
-            owner.enterNextPhase(newPhase);
+            owner.notifyNextPhase(newPhase);
+            return true;
         }
 
-        void onSnapshotTaken(Photo snapshot) {
+        void snapshotTaken(Photo snapshot) {
 
             // Store the image
             owner.snapshots[this.phase] = snapshot;
 
             // show visual feedback, that the snapshot was taken
-            owner.notifySnapshotTaken(this.phase, true);
+            owner.notifySnapshotTaken(this.phase, snapshot);
 
             // After at least one snapshots was taken, we allow the user to submit the snapshots
             owner.allowSubmit(true);
@@ -475,31 +528,34 @@ public class TakePictureActivity extends AppCompatActivity implements Camera.Pic
                     this.switchPhase(PHASE_GREEN);
                     break;
                 case PHASE_GREEN:
-                    prepareSubmit();
+                    goToSubmit();
             }
         }
 
-        void prepareSubmit() {
+        void goToSubmit() {
             if (owner.snapshots[PHASE_RED] == null && owner.snapshots[PHASE_GREEN] == null) {
                 // no snapshots were taken at all
                 Toast.makeText(TakePictureActivity.this.getApplicationContext(), R.string.toast_snapshotNotTaken, Toast.LENGTH_SHORT).show();
             } else {
-                this.owner.navigateToTagLights();
+                this.owner.navigateToSubmit();
             }
         }
 
-        void reset(){
+        void reset() {
             // discard existing snapshots
             Photo[] photos = owner.snapshots;
             photos[0] = photos[1] = null;
 
-            owner.notifySnapshotTaken(PHASE_RED,false);
-            owner.notifySnapshotTaken(PHASE_GREEN,false);
+            // don't allow continue
+            allowSubmit(false);
 
-            owner.allowSubmit(false);
+            // update UI
+            owner.notifyReset();
 
+            // switch to default phase
             this.switchPhase(PHASE_RED);
         }
     }
+
 
 }

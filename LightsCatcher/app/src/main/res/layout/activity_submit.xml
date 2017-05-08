@@ -47,11 +47,6 @@
                 android:layout_gravity="center"
                 custom:crossColor="#80f0" />
 
-            <!--<TextView-->
-                <!--android:background="#fff"-->
-                <!--android:id="@+id/submint_txt_centerBottom"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"/>-->
         </FrameLayout>
 
     </LinearLayout>
@@ -74,7 +69,7 @@
         android:textSize="20dp"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/button_info"
+        android:id="@+id/submit_btn_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="3dp"
@@ -87,7 +82,7 @@
         app:srcCompat="@android:drawable/ic_menu_info_details" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/button_undo"
+        android:id="@+id/submit_btn_undo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -101,7 +96,7 @@
 
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/button"
+        android:id="@+id/submit_btn_upload"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"

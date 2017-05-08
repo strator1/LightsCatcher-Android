@@ -1,0 +1,5 @@
+___________________________________
+== v1.1 === 08.05.2017
+ * Offline-Unterstützung
+ * Doppelte Passwortabfrage bei Registrierung
+ * viele viele kleine Bugfixes

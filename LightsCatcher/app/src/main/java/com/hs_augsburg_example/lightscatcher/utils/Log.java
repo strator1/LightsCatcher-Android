@@ -11,7 +11,7 @@ import java.text.MessageFormat;
  */
 public class Log {
     // flag to disable logging application-wide
-    public static final boolean ENABLED = false;
+    public static final boolean ENABLED = true;
 
     public static void d(String tag, String format) {
         android.util.Log.d(tag, format);
@@ -23,6 +23,10 @@ public class Log {
 
     public static void e(String tag, String s) {
         android.util.Log.e(tag, s);
+    }
+
+    public static void e(String tag, Exception e) {
+        android.util.Log.e(tag, e.getMessage(), e);
     }
 
     public static void e(String tag, String s, Exception e) {

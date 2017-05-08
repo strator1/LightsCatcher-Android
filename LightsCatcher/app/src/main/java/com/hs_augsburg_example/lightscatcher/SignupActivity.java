@@ -1,4 +1,4 @@
-package com.hs_augsburg_example.lightscatcher.activities_minor;
+package com.hs_augsburg_example.lightscatcher;
 
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -16,15 +16,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.hs_augsburg_example.lightscatcher.R;
-import com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
-import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.ExceptionHelp;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
@@ -171,7 +168,8 @@ public class SignupActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        setInProgress(false);
+        btnSignUp.setEnabled(true);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
     public void onPrivacyClick(View view) {
