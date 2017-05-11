@@ -2,11 +2,11 @@ package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -17,17 +17,14 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewTreeObserver;
-import android.view.Window;
-import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -46,10 +43,13 @@ import com.hs_augsburg_example.lightscatcher.services.MotionService;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
+import com.hs_augsburg_example.lightscatcher.utils.MiscUtils;
 import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 import com.hs_augsburg_example.lightscatcher.views.BadgeDrawable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
@@ -63,7 +63,10 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private static final String TAG = "TakePictureActivity";
     private static final boolean LOG = true;//&& Log.ENABLED;
 
-    private static final int REQUEST_CAMERA_PERMISSION = 1;
+    private static final int REQUEST_CAMERA = 1;
+    private static final int REQUEST_LOCATION = 2;
+    private static final int REQUEST_ALL = REQUEST_CAMERA | REQUEST_LOCATION;
+
     static final int STATE_INIT = -1;
     public static final int STATE_RED = 0;
     public static final int STATE_GREEN = 1;
@@ -105,15 +108,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private final TakePictureStateMachine stateMachine = new TakePictureStateMachine(this);
     private Animation grow;
     private Animation shrink;
-
-    private static <T> int indexOf(T[] array, T elem) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == elem) {
-                return i;
-            }
-        }
-        return -1;
-    }
+    private boolean locationPermission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,7 +137,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         CompoundButton.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int phase = indexOf(phaseSelect, v);
+                int phase = MiscUtils.indexOf(phaseSelect, v);
                 if (!stateMachine.switchPhase(LightPhase.fromValue(phase)))
                     v.startAnimation(grow);
             }
@@ -186,6 +181,161 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         });
     }
 
+    @Override
+    protected void onStart() {
+        if (LOG) Log.d(TAG, "onStart");
+        super.onStart();
+        cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        locationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        List<String> requests = new ArrayList<>();
+        if (cameraPermission) {
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+            if (LOG) Log.d(TAG, "shouldShowRequestPermissionRationale: true");
+
+            // the app has requested this permission previously and the user denied the request.
+            // show a dialog and explain that we really need the permission
+            showCameraRequestDialog();
+        } else {
+            if (LOG) Log.d(TAG, "shouldShowRequestPermissionRationale: false");
+            //First request at all, Never ask again selected, or device policy prohibits the app from having that permission.
+            requests.add(Manifest.permission.CAMERA);
+        }
+
+        if (!locationPermission) {
+            boolean requestedBefore = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION);
+            if (!requestedBefore)
+                requests.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (requests.size() > 0) {
+            if (LOG) Log.d(TAG, "calling requestPermissions ...");
+            String[] arr = new String[requests.size()];
+            requests.toArray(arr);
+            ActivityCompat.requestPermissions(TakePictureActivity.this, arr, REQUEST_ALL);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        if (LOG) Log.d(TAG, "onResume");
+        super.onResume();
+        if (LOG) Log.d(TAG, "cameraPermission: " + cameraPermission);
+        if (cameraPermission) {
+            if (camera == null) {
+                setupCamera();
+            }
+            camPreview.statPreview();
+        }
+
+        if (locationPermission) {
+            locationService.startListening();
+        }
+        if (UserPreference.isFirstCapture(getApplicationContext())) {
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    onInfoButtonPressed(null);
+                }
+            });
+        }
+        mSensorManager.registerListener(motionService.getEventListener(), accelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(motionService.getEventListener(), magnetometer, SensorManager.SENSOR_DELAY_UI);
+    }
+
+    @Override
+    protected void onPause() {
+        if (LOG) Log.d(TAG, "onPause");
+        super.onPause();
+
+        if (camPreview != null) {
+            camPreview.releaseCamera();
+            camera = null;
+        }
+
+        locationService.stopListening();
+        mSensorManager.unregisterListener(motionService.getEventListener());
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (LOG) Log.d(TAG, "onDestroy");
+        super.onDestroy();
+        locationService.stopListening();
+        mSensorManager.unregisterListener(motionService.getEventListener());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (LOG)
+                Log.d(TAG, "onRequestPermissionsResult: code: {0}, relult: {1}", permissions[i], grantResults[i]);
+
+            switch (permissions[i]) {
+                case Manifest.permission.CAMERA:
+                    cameraPermission = grantResults[i] == PackageManager.PERMISSION_GRANTED;
+                    if (!cameraPermission) {
+                        showCameraRequestDialog();
+                        Toast.makeText(this, "Kein Zugriff auf Kamera genemigt!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // No need to start camera here; it is handled by onResume
+                    }
+                    break;
+                case Manifest.permission.ACCESS_FINE_LOCATION:
+                    locationPermission = grantResults[i] == PackageManager.PERMISSION_GRANTED;
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onPictureTaken(byte[] data, Camera camera) {
+        Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+        bmp = MiscUtils.rotateImage(bmp, 90);
+
+        final LightPhase phase = stateMachine.state == STATE_RED ? RED : GREEN;
+
+        Location loc = null;
+        if (locationService != null && locationService.canGetLocation())
+            loc = locationService.getLocation();
+
+        float gyro = 0;
+        if (motionService != null)
+            gyro = motionService.getPitch();
+
+
+        //TODO: fix lightPosition: consider the size of the corsair
+        // if this is a red picture the light is a little above
+        // if it's a green picture it's bellow the crossHair center
+        PointF crossLayout = new PointF(crossHairX, crossHairY);
+        PointF crossImage = camPreview.translateLayoutToImage(crossLayout);
+        Log.d(TAG, "translate crosshair: {0} -> {1}", crossLayout, crossImage);
+
+        PointF test = camPreview.translateImageToLayout(crossImage);
+        Log.d(TAG, "test: -> " + test);
+        LightPosition pos = new LightPosition(crossImage.x, crossImage.y, phase, true);
+
+        String uid = UserInformation.shared.getUserId();
+
+        Photo snapshotData = Photo.buildNew()
+                .setUser(uid)
+                .setBitmap(bmp)
+                .addLightPos(pos)
+                .setLocation(loc)
+                .setGyro(gyro)
+                .setCredits(1)
+                .commit();
+
+        TakePictureActivity.this.stateMachine.snapshotTaken(snapshotData);
+    }
+
+    @Override
+    public void onBackPressed() {
+        navigateBack(null);
+        super.onBackPressed();
+    }
+
+
     private BadgeDrawable createBadge(CompoundButton btn) {
         StateListDrawable background = (StateListDrawable) btn.getBackground();
         BadgeDrawable badgeDrawable = new BadgeDrawable(this);
@@ -195,10 +345,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         return badgeDrawable;
     }
 
-
     private void setRandomCrosshairView() {
-        float x = randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
-        float y = randomFloat(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
+        float x = MiscUtils.randomFloat(random, CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
+        float y = MiscUtils.randomFloat(random, CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
 
         setCrosshairView(.5f, .5f);
     }
@@ -239,29 +388,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CAMERA_PERMISSION:
-                if (permissions.length != 1 || grantResults.length != 1) {
-                    throw new RuntimeException("Error on requesting camera permission.");
-                }
-                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "No permission!",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    if (!locationService.hasPermission()) {
-                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                                2);
-                    }
-                }
-                // No need to start camera here; it is handled by onResume
-                break;
-        }
-    }
-
-
     private boolean checkCameraHardware(Context context) {
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             // this device has a camera
@@ -269,6 +395,15 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         } else {
             // no camera on this device
             return false;
+        }
+    }
+
+    private boolean cameraPermission = false;
+
+    private void setupCamera() {
+        if (checkCameraHardware(getApplicationContext())) {
+            camera = getCameraInstance();
+            camPreview.setCamera(camera);
         }
     }
 
@@ -293,12 +428,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     }
 
 
-    public static float randomFloat(float min, float max) {
-        final double d = max - min;
-        return (float) (min + d * random.nextDouble());
-    }
-
-
+    /**
+     * Updates the UI to reflect the given lightphase
+     *
+     * @param lightphase The desired phase.
+     */
     private void notifyNextPhase(LightPhase lightphase) {
         int phase = lightphase.value;
         int otherPhase = LightPhase.toggle(lightphase).value;
@@ -312,7 +446,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         phaseSelect[otherPhase].startAnimation(shrink);
     }
 
-
+    /**
+     * Updates the UI to show that the snapshot was taken and committed
+     *
+     * @param photo A reference to the committed snapshot
+     */
     private void notifySnapshotTaken(Photo photo) {
         BadgeDrawable view = badges[stateMachine.state];
         if (view != null) {
@@ -320,6 +458,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
     }
 
+    /**
+     * Resets the UI to the default initial state
+     */
     private void notifyReset() {
         badges[0].setCount(0);
         badges[1].setCount(0);
@@ -333,45 +474,12 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         startActivity(intent);
     }
 
-    @Override
-    public void onPictureTaken(byte[] data, Camera camera) {
-        Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-        bmp = rotateImage(bmp, 90);
+    private void showSubmitPopup(Photo snapshotData) {
+        SubmitDialog popup = new SubmitDialog.Builder(submitListener)
+                .setPhoto(snapshotData)
+                .build();
 
-        final LightPhase phase = stateMachine.state == STATE_RED ? RED : GREEN;
-
-        Location loc = null;
-        if (locationService != null && locationService.canGetLocation())
-            loc = locationService.getLocation();
-
-        float gyro = 0;
-        if (motionService != null)
-            gyro = motionService.getPitch();
-
-
-        //TODO: fix lightPosition: consider the size of the corsair
-        // if this is a red picture the light is a little above
-        // if it's a green picture it's bellow the crossHair center
-        PointF crossLayout = new PointF(crossHairX, crossHairY);
-        PointF crossImage = camPreview.translateLayoutToImage(crossLayout);
-        Log.d(TAG, "translate crosshair: {0} -> {1}", crossLayout, crossImage);
-
-        PointF test = camPreview.translateImageToLayout(crossImage);
-        Log.d(TAG, "test: -> " + test);
-        LightPosition pos = new LightPosition(crossImage.x, crossImage.y, phase, true);
-
-        String uid = UserInformation.shared.getUserId();
-
-        Photo snapshotData = Photo.buildNew()
-                .setUser(uid)
-                .setBitmap(bmp)
-                .addLightPos(pos)
-                .setLocation(loc)
-                .setGyro(gyro)
-                .setCredits(1)
-                .commit();
-
-        TakePictureActivity.this.stateMachine.snapshotTaken(snapshotData);
+        popup.show(getSupportFragmentManager(), SubmitDialog.TAG);
     }
 
     private final SubmitDialog.SubmitDialogListener submitListener = new SubmitDialog.SubmitDialogListener() {
@@ -398,73 +506,30 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     };
 
-
-    private void showSubmitPopup(Photo snapshotData) {
-        SubmitDialog popup = new SubmitDialog.Builder(submitListener)
-                .setPhoto(snapshotData)
-                .build();
-
-        popup.show(getSupportFragmentManager(), SubmitDialog.TAG);
-    }
-
-    private boolean permissionGranted = false;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            permissionGranted = true;
-            if (camera == null) {
-                setupCamera();
-            }
-            camPreview.statPreview();
-        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-            permissionGranted = false;
-        } else {
-            permissionGranted = false;
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
-        }
-        if (locationService.hasPermission()) {
-            locationService.startListening();
-        }
-        if (UserPreference.isFirstCapture(getApplicationContext())) {
-            onInfoButtonPressed(null);
-        }
-        mSensorManager.registerListener(motionService.getEventListener(), accelerometer, SensorManager.SENSOR_DELAY_UI);
-        mSensorManager.registerListener(motionService.getEventListener(), magnetometer, SensorManager.SENSOR_DELAY_UI);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        if (camPreview != null) {
-            camPreview.releaseCamera();
-            camera = null;
-        }
-
-        locationService.stopListening();
-        mSensorManager.unregisterListener(motionService.getEventListener());
-    }
-
-    private void setupCamera() {
-        if (checkCameraHardware(getApplicationContext())) {
-            camera = getCameraInstance();
-            camPreview.setCamera(camera);
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        locationService.stopListening();
-        mSensorManager.unregisterListener(motionService.getEventListener());
-    }
-
-    @Override
-    public void onBackPressed() {
-        navigateBack(null);
-        super.onBackPressed();
+    private void showCameraRequestDialog() {
+        AlertDialog dlg = new AlertDialog.Builder(this)
+                .setTitle("Kein Kamerazugriff")
+                .setMessage("LightsCatcher benötigt zwingend Zugriff auf die Kamera, um fortzufahren.")
+                .setPositiveButton("Zugriff anfordern.", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // delay so that the alert-dialog has time to close
+                        new Handler().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                ActivityCompat.requestPermissions(TakePictureActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
+                            }
+                        });
+                    }
+                })
+                .setNegativeButton("Beenden", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .create();
+        dlg.show();
     }
 
     public void navigateBack(View view) {
@@ -474,7 +539,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     }
 
     public void onCaptureButtonPressed(View view) {
-        if (!permissionGranted || camPreview.getCamera() == null) {
+        if (!cameraPermission || camPreview.getCamera() == null) {
             Toast.makeText(this.getApplicationContext(), "Kamera nicht verfügbar :(", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -494,18 +559,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
             pictureHelpDialog = dialogBuilder.create();
         }
-
         pictureHelpDialog.show();
+
     }
 
     private AlertDialog pictureHelpDialog;
-
-    public static Bitmap rotateImage(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
 
     public void onDiscardButtonClick(View view) {
         this.stateMachine.discard();

@@ -131,14 +131,17 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
     }
 
     public void releaseCamera() {
-        camera.stopPreview();
-        try {
-            camera.setPreviewTexture(null);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (camera != null) {
+
+            camera.stopPreview();
+            try {
+                camera.setPreviewTexture(null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            camera.release();
+            camera = null;
         }
-        camera.release();
-        camera = null;
     }
 
     void updateScale() {
