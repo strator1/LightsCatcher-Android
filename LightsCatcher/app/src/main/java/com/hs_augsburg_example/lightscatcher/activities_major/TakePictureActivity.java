@@ -186,7 +186,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         });
     }
 
-
     private BadgeDrawable createBadge(CompoundButton btn) {
         StateListDrawable background = (StateListDrawable) btn.getBackground();
         BadgeDrawable badgeDrawable = new BadgeDrawable(this);
@@ -300,18 +299,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     }
 
 
-    /**
-     * Configures the UI so that the user can navigate to next activity
-     *
-     * @param allow
-     */
-    private void allowSubmit(boolean allow) {
-        this.exitButton.setEnabled(allow);
-    }
-
-    /**
-     * @param lightphase use {@link #STATE_RED} or {@link #STATE_GREEN}
-     */
     private void notifyNextPhase(LightPhase lightphase) {
         int phase = lightphase.value;
         int otherPhase = LightPhase.toggle(lightphase).value;
@@ -325,10 +312,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         phaseSelect[otherPhase].startAnimation(shrink);
     }
 
-    /**
-     * @param redOrGreen use {@link #STATE_RED} or {@link #STATE_GREEN}
-     */
-    private void notifySnapshotTaken(int redOrGreen, Photo photo) {
+
+    private void notifySnapshotTaken(Photo photo) {
         BadgeDrawable view = badges[stateMachine.state];
         if (view != null) {
             view.setCount(1);
@@ -367,9 +352,13 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         //TODO: fix lightPosition: consider the size of the corsair
         // if this is a red picture the light is a little above
         // if it's a green picture it's bellow the crossHair center
-        //TODO: transform to coordinates relative to the image
-        // crossHair coordinates are relative to the layout-box of camPreview
-        LightPosition pos = new LightPosition(crossHairX, crossHairY, phase, true);
+        PointF crossLayout = new PointF(crossHairX, crossHairY);
+        PointF crossImage = camPreview.translateLayoutToImage(crossLayout);
+        Log.d(TAG, "translate crosshair: {0} -> {1}", crossLayout, crossImage);
+
+        PointF test = camPreview.translateImageToLayout(crossImage);
+        Log.d(TAG, "test: -> " + test);
+        LightPosition pos = new LightPosition(crossImage.x, crossImage.y, phase, true);
 
         String uid = UserInformation.shared.getUserId();
 
@@ -530,7 +519,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         camPreview.zoomOut();
     }
 
-
     /**
      * This class manages the workflow of the {@link TakePictureActivity}.
      */
@@ -563,11 +551,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             // add the image
             owner.snapshots[this.state] = snapshot;
 
-            // After at least one snapshots was taken, we allow the user to submit the snapshots
-            owner.allowSubmit(true);
-
             // show visual feedback, that the snapshot was taken
-            owner.notifySnapshotTaken(this.state, snapshot);
+            owner.notifySnapshotTaken(snapshot);
 
             // decide what to do next
             switch (this.state) {
@@ -589,12 +574,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
 
         void discard() {
-            // submitDiscarded existing snapshots
+            // discard existing snapshots
             Photo[] photos = owner.snapshots;
             photos[0] = photos[1] = null;
-
-            // don't allow continue
-            allowSubmit(false);
 
             reset();
         }

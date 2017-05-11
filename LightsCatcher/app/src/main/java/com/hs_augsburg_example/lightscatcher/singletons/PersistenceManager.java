@@ -21,6 +21,7 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
+import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
@@ -110,6 +111,7 @@ public class PersistenceManager {
         return lights.child(rec.id).setValue(rec);
     }
 
+
     public Task persist(Photo photo) {
         if (photo.id == null)
             throw new IllegalArgumentException("Photo.id was null but is required.");
@@ -190,7 +192,6 @@ public class PersistenceManager {
         listenToImageUploadTask(ctx, uploadTask, ref, file);
         return uploadTask;
     }
-
     @NonNull
     private File saveImageBackup(Context ctx, String imgId, ByteArrayOutputStream baos) throws IOException {
         File imagesDir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
@@ -215,7 +216,6 @@ public class PersistenceManager {
         }
         return file;
     }
-
 
     public void resumePendingUploads(Context ctx) {
         SharedPreferences sessions = ctx.getSharedPreferences(PENDING_UPLOADS, Context.MODE_PRIVATE);

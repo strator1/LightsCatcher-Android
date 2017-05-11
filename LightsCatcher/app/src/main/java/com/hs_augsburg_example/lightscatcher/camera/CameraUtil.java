@@ -11,6 +11,8 @@ import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Size;
 
+import com.hs_augsburg_example.lightscatcher.utils.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,7 +29,7 @@ public class CameraUtil {
      * by other classes (e.g., CameraActivity), and so you probably
      * do not need to call it yourself. But, hey, it's a public
      * method, so call it if you feel like it.
-     *
+     * <p>
      * The method will throw an IllegalStateException if the
      * environment is unsatisfactory, where the exception message
      * will tell you what is wrong.
@@ -36,19 +38,19 @@ public class CameraUtil {
      */
     public static void validateEnvironment(Context ctxt,
                                            boolean failIfNoPermissions) {
-        if (Build.VERSION.SDK_INT<Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             throw new IllegalStateException("App is running on device older than API Level 14");
         }
 
-        PackageManager pm=ctxt.getPackageManager();
+        PackageManager pm = ctxt.getPackageManager();
 
         if (!pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) &&
                 !pm.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             throw new IllegalStateException("App is running on device that lacks a camera");
         }
 
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.M && failIfNoPermissions) {
-            if (ctxt.checkSelfPermission(Manifest.permission.CAMERA)!=
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && failIfNoPermissions) {
+            if (ctxt.checkSelfPermission(Manifest.permission.CAMERA) !=
                     PackageManager.PERMISSION_GRANTED) {
                 throw new IllegalStateException("We do not have the CAMERA permission");
             }
@@ -65,73 +67,74 @@ public class CameraUtil {
      * the current configuration, false otherwise
      */
     public static boolean isSystemBarOnBottom(Context ctxt) {
-        Resources res=ctxt.getResources();
-        Configuration cfg=res.getConfiguration();
-        DisplayMetrics dm=res.getDisplayMetrics();
-        boolean canMove=(dm.widthPixels != dm.heightPixels &&
+        Resources res = ctxt.getResources();
+        Configuration cfg = res.getConfiguration();
+        DisplayMetrics dm = res.getDisplayMetrics();
+        boolean canMove = (dm.widthPixels != dm.heightPixels &&
                 cfg.smallestScreenWidthDp < 600);
 
-        return(!canMove || dm.widthPixels < dm.heightPixels);
+        return (!canMove || dm.widthPixels < dm.heightPixels);
     }
 
     public static Camera.Size getLargestPictureSize(Camera.Parameters descriptor) {
-        Camera.Size result=null;
+        Camera.Size result = null;
 
         for (Camera.Size size : descriptor.getSupportedPictureSizes()) {
             if (result == null) {
-                result=size;
-            }
-            else {
-                int resultArea=result.width * result.height;
-                int newArea=size.width * size.height;
+                result = size;
+            } else {
+                int resultArea = result.width * result.height;
+                int newArea = size.width * size.height;
 
                 if (newArea > resultArea) {
-                    result=size;
+                    result = size;
                 }
             }
         }
 
-        return(result);
+        return (result);
     }
 
     public static Camera.Size getMediumPictureSize(Camera.Parameters descriptor) {
-        Camera.Size result=null;
+        Camera.Size result = null;
 
 
         List<Camera.Size> supportedSizes = descriptor.getSupportedPictureSizes();
-        Camera.Size size1 = getPictureSizeWidthSmaller(2048, supportedSizes);
+        Camera.Size size1 = getPictureSizeWidthSmaller(1280, supportedSizes);
         Collections.reverse(supportedSizes);
-        Camera.Size size2 = getPictureSizeWidthSmaller(2048, supportedSizes);
+        Camera.Size size2 = getPictureSizeWidthSmaller(1280, supportedSizes);
 
         return size1.width >= size2.width ? size1 : size2;
     }
 
     public static Camera.Size getSmallestPictureSize(Camera.Parameters descriptor) {
-        Camera.Size result=null;
+        Camera.Size result = null;
 
         for (Camera.Size size : descriptor.getSupportedPictureSizes()) {
             if (result == null) {
-                result=size;
-            }
-            else {
-                int resultArea=result.width * result.height;
-                int newArea=size.width * size.height;
+                result = size;
+            } else {
+                int resultArea = result.width * result.height;
+                int newArea = size.width * size.height;
 
                 if (newArea < resultArea) {
-                    result=size;
+                    result = size;
                 }
             }
         }
 
-        return(result);
+        return (result);
     }
 
     public static Camera.Size getPictureSizeWidthSmaller(int maxWidth, List<Camera.Size> supportedSizes) {
-        Camera.Size result=null;
-        
+        Camera.Size result = null;
+
         for (Camera.Size size : supportedSizes) {
+            if (Log.ENABLED)
+                Log.d("CAM", "\tpicSize: {0}x{1}; {2}", size.width, size.height, (double) size.height / size.width);
+
             if (result == null) {
-                result=size;
+                result = size;
             }
 
             if (size.width <= maxWidth) {
@@ -149,19 +152,26 @@ public class CameraUtil {
      * width and height are at least as large as the respective requested values, and whose aspect
      * ratio matches with the specified value.
      *
+     * @param aspectRatio The aspect ratio
      * @param choices     The list of sizes that the camera supports for the intended output class
      * @param width       The minimum desired width
      * @param height      The minimum desired height
-     * @param aspectRatio The aspect ratio
+     * @param aspect
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
-    public static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int width, int height, Camera.Size aspectRatio) {
+    public static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int width, int height, final double aspect) {
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Camera.Size> bigEnough = new ArrayList<Camera.Size>();
-        int w = aspectRatio.width;
-        int h = aspectRatio.height;
+
+
+        if (Log.ENABLED)
+            Log.d("CAM", "expecting aspect: {0}, minimum: {1}x{2}; {3}", aspect, width, height, (double) height / width);
         for (Camera.Size option : choices) {
-            if (option.height == option.width * h / w &&
+            if (Log.ENABLED) {
+                double d = (double) option.height / option.width;
+                Log.d("CAM", "\t{0}x{1}; {2}", option.width, option.height, d);
+            }
+            if (option.height == option.width * aspect &&
                     option.width >= width && option.height >= height) {
                 bigEnough.add(option);
             }
@@ -171,7 +181,7 @@ public class CameraUtil {
         if (bigEnough.size() > 0) {
             return Collections.min(bigEnough, new CompareSizesByArea());
         } else {
-//      Log.e(TAG, "Couldn't find any suitable preview size");
+            Log.e("CAM", "Couldn't find any suitable size");
             return Collections.max(choices, new CompareSizesByArea());
         }
     }

@@ -34,7 +34,7 @@ public class LightPosition {
         if (x < 0 || x > 1.0)
             throw new IllegalArgumentException("LightPosition.x was out of valid range. 0.0 <= x <= 1.0");
         if (y < 0 || y > 1.0)
-            throw new IllegalArgumentException("LightPosition.x was out of valid range. 0.0 <= x <= 1.0");
+            throw new IllegalArgumentException("LightPosition.y was out of valid range. 0.0 <= y <= 1.0");
     }
 
     @Exclude

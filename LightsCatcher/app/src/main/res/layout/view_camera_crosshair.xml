@@ -30,11 +30,24 @@
             android:layout_marginLeft="@dimen/activity_horizontal_margin"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
             android:background="#8f00" />
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:layout_alignParentBottom="true"
+            android:background="#8f00" />
+
     </RelativeLayout>
     <RelativeLayout
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:id="@+id/takePicture_greenCross">
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:layout_alignParentTop="true"
+            android:background="#80f0" />
         <View
             android:layout_width="3dp"
             android:layout_height="match_parent"
