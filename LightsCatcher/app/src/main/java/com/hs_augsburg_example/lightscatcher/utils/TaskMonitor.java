@@ -9,31 +9,30 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by quirin on 30.04.17.
  */
 
-public class LightUploadMonitor implements OnSuccessListener, OnFailureListener {
-    private static final String TAG = "LightUploadMonitor";
+public class TaskMonitor implements OnSuccessListener, OnFailureListener {
+    private static final String TAG = "TaskMonitor";
     private static final boolean LOG = Log.ENABLED && true;
 
-    private static LightUploadMonitor mostRecent;
+    private static TaskMonitor mostRecent;
     private static ArrayList<Tuple<String, Task<?>>> pendingTasks = new ArrayList<>();
     private final Context ctx;
 
-    private LightUploadMonitor(Context ctx) {
+    private TaskMonitor(Context ctx) {
         this.ctx = ctx;
     }
 
-    public static LightUploadMonitor getMostRecent() {
+    public static TaskMonitor getMostRecent() {
         return mostRecent;
     }
 
-    public static LightUploadMonitor newInstance(Context ctx) {
-        LightUploadMonitor m = new LightUploadMonitor(ctx);
+    public static TaskMonitor newInstance(Context ctx) {
+        TaskMonitor m = new TaskMonitor(ctx);
         mostRecent = m;
         return m;
     }

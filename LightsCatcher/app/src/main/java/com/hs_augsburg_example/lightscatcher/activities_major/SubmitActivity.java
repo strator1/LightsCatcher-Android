@@ -1,6 +1,5 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
@@ -9,7 +8,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -23,17 +21,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
-import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
-import java.io.IOException;
+import java.util.List;
 
-
+@Deprecated
 public class SubmitActivity extends AppCompatActivity implements OnFailureListener {
     private static final String TAG = "TagLightsActivity";
     private static final boolean LOG = Log.ENABLED && true;
@@ -54,15 +52,14 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
         ActivityRegistry.register(this);
 
         setContentView(R.layout.activity_submit);
-        recordBuilder = Record.latestRecord;
 
+        btnUpload = findViewById(R.id.submit_btn_upload);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
-
         photoTop = initPhotoView(recordBuilder.record.redPhoto, (FrameLayout) findViewById(R.id.submit_frameTop), (FrameLayout) findViewById(R.id.submit_frameBottom));
         photoBottom = initPhotoView(recordBuilder.record.greenPhoto, (FrameLayout) findViewById(R.id.submit_frameBottom), (FrameLayout) findViewById(R.id.submit_frameTop));
-        btnUpload = (View) findViewById(R.id.submit_btn_upload);
 
         mDatabaseRef = FirebaseDatabase.getInstance();
+        recordBuilder = Record.latestRecord;
     }
 
     private SubsamplingScaleImageView initPhotoView(final Photo photo, FrameLayout targetFrame, FrameLayout otherFrame) {
@@ -72,10 +69,10 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
             final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) targetFrame.getChildAt(0);
 
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
-
+            LightPosition pos = photo.lightPositions.getMostRelevant();
             // photoView eats absolute positions
-            float x = (float) (photo.bitMap.getWidth() * photo.lightPos.x);
-            float y = (float) (photo.bitMap.getHeight() * photo.lightPos.y);
+            float x = (float) (photo.bitMap.getWidth() * pos.x);
+            float y = (float) (photo.bitMap.getHeight() * pos.y);
             photoView.setScaleAndCenter(2, new PointF(x, y));
 
             return photoView;
@@ -113,49 +110,49 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
     }
 
     private void uploadPhoto() {
-
-        // read out current light-position from photoview:
-        if (photoTop != null) {
-            Photo ph = recordBuilder.record.redPhoto;
-            PointF center = photoTop.getCenter();
-            ph.lightPos.x = center.x * ph.bitMap.getWidth();
-            ph.lightPos.y = center.y * ph.bitMap.getHeight();
-        }
-        if (photoBottom != null) {
-            Photo ph = recordBuilder.record.greenPhoto;
-            PointF center = photoBottom.getCenter();
-            ph.lightPos.x = center.x * ph.bitMap.getWidth();
-            ph.lightPos.y = center.y * ph.bitMap.getHeight();
-        }
-
-        // Check for valid data
-        Record rec = recordBuilder.commit();
-
-        // save database entry
-        PersistenceManager.shared.persist(rec);
-
-        // give credits
-        UserInformation.shared.increaseUserPoints(rec.points);
-
-        Context ctx = getApplicationContext();
-        // upload red photo
-        if (rec.redPhoto != null) {
-            try {
-                PersistenceManager.shared.persistLightsImage(ctx, rec.redPhoto.id, rec.redPhoto.bitMap);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // upload green photo
-        if (rec.redPhoto != null) {
-            try {
-                PersistenceManager.shared.persistLightsImage(ctx, rec.redPhoto.id, rec.redPhoto.bitMap);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
+//
+//        // read out current light-position from photoview:
+//        if (photoTop != null) {
+//            Photo ph = recordBuilder.record.redPhoto;
+//            PointF center = photoTop.getCenter();
+//            ph.lightPos.x = center.x * ph.bitMap.getWidth();
+//            ph.lightPos.y = center.y * ph.bitMap.getHeight();
+//        }
+//        if (photoBottom != null) {
+//            Photo ph = recordBuilder.record.greenPhoto;
+//            PointF center = photoBottom.getCenter();
+//            ph.lightPos.x = center.x * ph.bitMap.getWidth();
+//            ph.lightPos.y = center.y * ph.bitMap.getHeight();
+//        }
+//
+//        // Check for valid data
+//        Record rec = recordBuilder.commit();
+//
+//        // save database entry
+//        PersistenceManager.shared.persist(rec);
+//
+//        // give credits
+//        UserInformation.shared.increaseUserPoints(rec.points);
+//
+//        Context ctx = getApplicationContext();
+//        // upload red photo
+//        if (rec.redPhoto != null) {
+//            try {
+//                PersistenceManager.shared.uploadLightsImage(ctx, rec.redPhoto);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        // upload green photo
+//        if (rec.redPhoto != null) {
+//            try {
+//                PersistenceManager.shared.uploadLightsImage(ctx, rec.redPhoto.id);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
         Intent intent = new Intent(SubmitActivity.this, FinishActivity.class);
         startActivity(intent);
         finish();
@@ -176,7 +173,7 @@ public class SubmitActivity extends AppCompatActivity implements OnFailureListen
 
 
     public void undoBtnPressed(View view) {
-        // discard this recordBuilder.
+        // submitDiscarded this recordBuilder.
         Record.latestRecord = null;
         this.finish();
     }

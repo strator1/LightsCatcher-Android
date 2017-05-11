@@ -169,4 +169,8 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
         }
         updateScale();
     }
+
+    public Camera getCamera() {
+        return camera;
+    }
 }

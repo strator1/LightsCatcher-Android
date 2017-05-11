@@ -17,6 +17,7 @@ import java.util.UUID;
  * The data-structure representing a snapshot of a traffic-light with ideally both red and green phases from the same perspective. Though the user may capture only one phase.
  */
 @IgnoreExtraProperties
+@Deprecated
 public class Record implements Serializable {
 
     public static Record.Builder latestRecord;

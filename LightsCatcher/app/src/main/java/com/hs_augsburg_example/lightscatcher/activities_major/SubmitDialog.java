@@ -1,6 +1,5 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -16,8 +15,11 @@ import android.view.ViewGroup;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
+import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
+import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
 import com.hs_augsburg_example.lightscatcher.views.Crosshair;
 
 
@@ -27,19 +29,23 @@ import com.hs_augsburg_example.lightscatcher.views.Crosshair;
 
 public class SubmitDialog extends DialogFragment {
     public static final String TAG = "SubmitDialog";
-    private SubmitDialogListener mListener;
+    private SubmitDialogListener mHost;
+    private SubsamplingScaleImageView photoView;
+
 
     public interface SubmitDialogListener {
-        void commit();
 
-        void discard();
+        void submitCommitted(Photo snapshot, TaskMonitor monitor);
+
+        void submitDiscarded();
     }
 
     public static class Builder {
         private final SubmitDialog dialog;
 
-        public Builder(Context ctx) {
+        public Builder(SubmitDialogListener host) {
             this.dialog = new SubmitDialog();
+            dialog.mHost = host;
         }
 
         public SubmitDialog.Builder setPhoto(Photo photo) {
@@ -49,7 +55,11 @@ public class SubmitDialog extends DialogFragment {
 
         public SubmitDialog build() {
             if (dialog.mPhoto == null)
-                throw new IllegalArgumentException("photo is required. Use SubmitDialog.Builder.setPhoto(...) to set a photo)");
+                throw new IllegalArgumentException("photo is required. Use SubmitDialog.Builder.setPhoto(...) to set a photo!");
+
+            if (dialog.mPhoto.bitMap == null)
+                throw new IllegalArgumentException("Photo.bitMap was null but is required!");
+
             return this.dialog;
         }
     }
@@ -61,32 +71,36 @@ public class SubmitDialog extends DialogFragment {
         this.mPhoto = photo;
     }
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        // Verify that the host activity implements the callback interface
-        try {
-            // Instantiate the NoticeDialogListener so we can send events to the host
-            mListener = (SubmitDialogListener) activity;
-        } catch (ClassCastException e) {
-            // The activity doesn't implement the interface, throw exception
-            throw new ClassCastException(activity.toString()
-                    + " must implement SubmitDialogListener");
-        }
-    }
-
     private final DialogInterface.OnClickListener positiveAction = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            if (mListener != null)
-                mListener.commit();
+            Photo photo = mPhoto;
+
+            // read out current light-position from photoview:
+            if (photoView != null) {
+                PointF center = photoView.getCenter();
+                LightPosition pos = photo.lightPositions.getMostRelevant();
+                if (pos != null) {
+                    pos.x = center.x;
+                    pos.y = center.y;
+                }
+            }
+
+            Context appCtx = SubmitDialog.this.getActivity().getApplicationContext();
+            TaskMonitor monitor = PersistenceManager.shared.persistAndUploadImage(appCtx, photo);
+
+            if (mHost != null)
+            {
+                mHost.submitCommitted(photo, monitor);
+            }
         }
     };
     private final DialogInterface.OnClickListener negativeAction = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            if (mListener != null)
-                mListener.discard();
+            if (mHost != null){
+                mHost.submitDiscarded();
+            }
         }
     };
 
@@ -132,10 +146,12 @@ public class SubmitDialog extends DialogFragment {
                 return;
             }
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
+            this.photoView = photoView;
 
+            LightPosition pos = photo.lightPositions.getMostRelevant();
             // photoView eats absolute positions
-            float x = (float) (photo.bitMap.getWidth() * photo.lightPos.x);
-            float y = (float) (photo.bitMap.getHeight() * photo.lightPos.y);
+            float x = (float) (photo.bitMap.getWidth() * pos.x);
+            float y = (float) (photo.bitMap.getHeight() * pos.y);
             photoView.setScaleAndCenter(2, new PointF(x, y));
 
             final Crosshair cross = (Crosshair) view.findViewById(R.id.submit_crossHair);
@@ -145,7 +161,7 @@ public class SubmitDialog extends DialogFragment {
             }
 
             int color;
-            switch (photo.lightPos.phase) {
+            switch (pos.phase) {
                 case RED:
                     color = 0x88FF0000;
                     break;

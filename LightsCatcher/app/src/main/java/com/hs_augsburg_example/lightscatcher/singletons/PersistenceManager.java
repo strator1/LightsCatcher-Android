@@ -21,10 +21,11 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
-import com.hs_augsburg_example.lightscatcher.dataModels.Light;
+import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
+import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,6 +44,7 @@ import static java.lang.String.format;
 
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
+    private static final boolean DISABLE = false;
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
@@ -94,28 +96,62 @@ public class PersistenceManager {
     }
 
     public Task persist(User usr) {
+        if (DISABLE)return null;
         if (usr.uid == null) throw new IllegalArgumentException("User.uid was null.");
         return users.child(usr.uid).setValue(usr);
     }
 
+    @Deprecated
     public Task persist(Record rec) {
+        if (DISABLE)return null;
         if (rec.id == null) throw new IllegalArgumentException("Record.id was null.");
         return lights.child(rec.id).setValue(rec);
     }
 
-    public StorageTask<UploadTask.TaskSnapshot> persistLightsImage(Context ctx, final String imgId, Bitmap bmp) throws IOException {
-        // this is the destination
+    public Task persist(Photo photo) {
+        if (photo.id == null)
+            throw new IllegalArgumentException("Photo.id was null but is required.");
+        if (DISABLE)return null;
+
+        return lights.child(photo.id).setValue(photo);
+    }
+
+    public TaskMonitor persistAndUploadImage(Context ctx, Photo photo) {
+        // utility to track progress and status
+        final TaskMonitor monitor = TaskMonitor.newInstance(ctx);
+        if (DISABLE)return monitor;
+
+        // write to database:
+        Task persist = persist(photo);
+        monitor.addTask("Metadaten gespeichert", persist);
+
+        // give credits to current user:
+        User usr = UserInformation.shared.getUserSnapshot();
+        int newPoints = usr.points + photo.credits;
+        Task updateUser = users.child(usr.uid).child("points").setValue(newPoints);
+        monitor.addTask("Punkte vergeben", updateUser);
+
+        // upload photo to storage:
+        Task uploadTask = uploadLightsImage(ctx, photo);
+        monitor.addTask("Foto hochgeladen", uploadTask);
+
+        return monitor;
+    }
+
+    private StorageTask<UploadTask.TaskSnapshot> uploadLightsImage(Context ctx, Photo photo) {
+        String imgId = photo.id;
+        Bitmap bmp = photo.bitMap;
+
+        // destination of this image in the firebase storage
         StorageReference ref = lights_images.child(imgId);
+
+        // create a bookmark in the shared application settings
+        // in order to remember this task in case the process dies
         try {
-            // create a bookmark in the shared application settings
-            // in order to remember this task in case the process dies
             addUploadBookmark(ctx, ref, null);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        FileOutputStream out = null;
-
 
         // compress image to reduce network-traffic for users
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -125,35 +161,56 @@ public class PersistenceManager {
         UploadTask uploadTask = null;
         try {
             // save the image on the device so it doesn't get lost when the upload gets canceled
-            File imagesDir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
-            file = new File(imagesDir, imgId);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-
-            out = new FileOutputStream(file);
-
-            if (LOG) Log.d(TAG, "writing photo to file: " + file.toURI().toString());
-            baos.writeTo(out);
+            file = saveImageBackup(ctx, imgId, baos);
 
             // now start the upload()
             uploadTask = ref.putFile(Uri.fromFile(file));
 
         } catch (Exception ex) {
             Log.e(TAG, ex.getMessage(), ex);
-            // if photo could not be stored on device, try to upload using memory-data
+
+            // if photo could not be stored on device, try to upload directly from memory
             if (LOG) Log.d(TAG, "uploading from memory");
             uploadTask = ref.putBytes(baos.toByteArray());
 
         } finally {
-            out.close();
-            baos.close();
+            try {
+
+                baos.close();
+            } catch (Exception ex) {
+                Log.e(TAG, ex);
+            }
         }
         // register listeners, they will do important stuff after upload to firebase
         listenToImageUploadTask(ctx, uploadTask, ref, file);
         return uploadTask;
-
     }
+
+    @NonNull
+    private File saveImageBackup(Context ctx, String imgId, ByteArrayOutputStream baos) throws IOException {
+        File imagesDir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
+        File file = new File(imagesDir, imgId);
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(file);
+            if (LOG) Log.d(TAG, "writing photo to file: " + file.toURI().toString());
+            baos.writeTo(out);
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException ex) {
+                    Log.e(TAG, ex);
+                }
+            }
+        }
+        return file;
+    }
+
 
     public void resumePendingUploads(Context ctx) {
         SharedPreferences sessions = ctx.getSharedPreferences(PENDING_UPLOADS, Context.MODE_PRIVATE);
@@ -197,11 +254,12 @@ public class PersistenceManager {
             return null;
         }
 
-        StorageMetadata meta = getJPGMeta();
-        return resumeUploadSession(ctx, ref, file, meta, sessionUri);
+        return resumeUploadSession(ctx, ref, file, sessionUri);
     }
 
-    private UploadTask resumeUploadSession(Context ctx, final StorageReference ref, File file, StorageMetadata meta, String sessionId) {
+    private UploadTask resumeUploadSession(Context ctx, final StorageReference ref, File file, String sessionId) {
+        StorageMetadata meta = getJPGMeta();
+
         // decide whether to
         // 1) restart the upload
         // 2) reuse an existing upload session

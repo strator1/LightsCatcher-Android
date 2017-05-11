@@ -21,17 +21,43 @@ import java.util.UUID;
 @IgnoreExtraProperties
 public class Photo {
 
-@Exclude
-public String id;
+    @Exclude
+    public String id;
 
-    public String imageUrl;
     @Exclude
     public Bitmap bitMap;
+
+
+    /**
+     * The user-id who has taken this photo
+     */
+    public String user;
+
+    /**
+     * Timestamp in miliseconds (from {@link System#currentTimeMillis})
+     */
+    public long createdAt;
+
+    /**
+     * position(s) of the traffic-light(s) relative to image-dimensions
+     */
+    public LightPosition.List lightPositions = new LightPosition.List();
+
+    public int lightsCount;
+
+    /**
+     * Credits for this photo.
+     */
+    public int credits;
+
+    /**
+     * direct web-url to the image-data
+     */
+    public String imageUrl;
+
     public String gyroPosition;
     public String longitude;
     public String latitude;
-    public long createdAt;
-    public LightPosition lightPos;
 
     public Photo() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
@@ -40,7 +66,32 @@ public String id;
     public static Builder buildNew() {
         Photo p = new Photo();
         p.id = UUID.randomUUID().toString().toUpperCase();
+        p.createdAt = System.currentTimeMillis();
         return new Builder(p);
+    }
+
+    /**
+     * Ensures that this {@link Photo} has correct values. Otherwise throws a {@link IllegalArgumentException}
+     */
+    public void validate() {
+        // check required fields.
+        if (user == null)
+            throw new IllegalArgumentException("Photo.user was null but is required.");
+        if (id == null) throw new IllegalArgumentException("Photo.id was null but is required.");
+        if (bitMap == null)
+            throw new IllegalArgumentException("Photo.bitMap was null but is required.");
+        if (createdAt == 0)
+            throw new IllegalArgumentException("Photo.createdAt was not set but is required.");
+        if (credits == 0)
+            throw new IllegalArgumentException("Photo.credits was 0. C'mon, give him some credits.");
+        if (lightPositions.size() == 0)
+            throw new IllegalArgumentException("Photo.lightPositions was empty but is should contain at least one element.");
+        lightsCount = lightPositions.size();
+
+        // check each position
+        for (LightPosition p : lightPositions) {
+            p.validate();
+        }
     }
 
     public static class Builder {
@@ -69,21 +120,24 @@ public String id;
             return this;
         }
 
-        public Builder setLightPos(LightPosition lightPosition) {
-            p.lightPos = lightPosition;
+        public Builder addLightPos(LightPosition lightPosition) {
+            p.lightPositions.add(lightPosition);
             return this;
         }
 
-        public Builder setCreatedAt(Long pCreatedAt) {
-            p.createdAt = pCreatedAt;
-            return this;
-        }
-
-        public Photo commit(){
-            // check required fields.
-            if (p.id == null) Log.e("","Photo.id was not set!");
-            if (p.createdAt == 0) p.createdAt = System.currentTimeMillis();
+        public Photo commit() {
+            p.validate();
             return p;
+        }
+
+        public Builder setCredits(int credits) {
+            p.credits = credits;
+            return this;
+        }
+
+        public Builder setUser(String uid) {
+            p.user = uid;
+            return this;
         }
     }
 

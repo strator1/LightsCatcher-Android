@@ -59,6 +59,7 @@ public class UserInformation extends Observable {
         }
     }
 
+    @Deprecated
     public Task<Void> increaseUserPoints(int points) {
         if (this.usrSnapshot == null) {
             return null;
@@ -69,7 +70,8 @@ public class UserInformation extends Observable {
     }
 
     public String getUserId() {
-        return isLoggedIn() ? mAuth.getCurrentUser().getUid() : null;
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        return currentUser != null ? currentUser.getUid() : null;
     }
 
     public boolean isLoggedIn() {

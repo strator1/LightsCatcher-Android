@@ -17,6 +17,7 @@ import java.util.UUID;
 @Deprecated
 public class PhotoInformation {
 
+    @Deprecated
     public enum LightPhase {
         RED(0), GREEN(1);
         private final int value;
