@@ -44,7 +44,9 @@ import static java.lang.String.format;
 
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
-    private static final boolean DISABLE = false;
+    private static final boolean DATABASE_DISABLE = false;
+    private static final boolean STORAGE_DISABLE = true;
+
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
@@ -96,14 +98,14 @@ public class PersistenceManager {
     }
 
     public Task persist(User usr) {
-        if (DISABLE)return null;
+        if (DATABASE_DISABLE)return null;
         if (usr.uid == null) throw new IllegalArgumentException("User.uid was null.");
         return users.child(usr.uid).setValue(usr);
     }
 
     @Deprecated
     public Task persist(Record rec) {
-        if (DISABLE)return null;
+        if (DATABASE_DISABLE)return null;
         if (rec.id == null) throw new IllegalArgumentException("Record.id was null.");
         return lights.child(rec.id).setValue(rec);
     }
@@ -111,15 +113,17 @@ public class PersistenceManager {
     public Task persist(Photo photo) {
         if (photo.id == null)
             throw new IllegalArgumentException("Photo.id was null but is required.");
-        if (DISABLE)return null;
+        if (DATABASE_DISABLE)return null;
 
         return lights.child(photo.id).setValue(photo);
     }
 
     public TaskMonitor persistAndUploadImage(Context ctx, Photo photo) {
+        photo.validate();
+
         // utility to track progress and status
         final TaskMonitor monitor = TaskMonitor.newInstance(ctx);
-        if (DISABLE)return monitor;
+        if (DATABASE_DISABLE)return monitor;
 
         // write to database:
         Task persist = persist(photo);
@@ -131,6 +135,7 @@ public class PersistenceManager {
         Task updateUser = users.child(usr.uid).child("points").setValue(newPoints);
         monitor.addTask("Punkte vergeben", updateUser);
 
+        if (STORAGE_DISABLE) return monitor;
         // upload photo to storage:
         Task uploadTask = uploadLightsImage(ctx, photo);
         monitor.addTask("Foto hochgeladen", uploadTask);

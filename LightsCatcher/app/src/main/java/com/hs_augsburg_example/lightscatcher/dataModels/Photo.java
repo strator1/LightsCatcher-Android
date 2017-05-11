@@ -2,16 +2,12 @@ package com.hs_augsburg_example.lightscatcher.dataModels;
 
 import android.graphics.Bitmap;
 import android.location.Location;
-import android.util.Log;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
-import com.hs_augsburg_example.lightscatcher.singletons.LightInformation;
-import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
-import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.App;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -27,16 +23,20 @@ public class Photo {
     @Exclude
     public Bitmap bitMap;
 
-
     /**
      * The user-id who has taken this photo
      */
     public String user;
 
     /**
-     * Timestamp in miliseconds (from {@link System#currentTimeMillis})
+     * Timestamp in milliseconds (from {@link System#currentTimeMillis})
      */
     public long createdAt;
+
+    /**
+     * Timestamp - human readable
+     */
+    public String timeStamp;
 
     /**
      * position(s) of the traffic-light(s) relative to image-dimensions
@@ -55,9 +55,15 @@ public class Photo {
      */
     public String imageUrl;
 
+    /**
+     * A unique code for this app-version. Useful to identify the source of malformed data.
+     */
+    public String fingerPrint;
+
     public String gyroPosition;
     public String longitude;
     public String latitude;
+
 
     public Photo() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
@@ -67,26 +73,35 @@ public class Photo {
         Photo p = new Photo();
         p.id = UUID.randomUUID().toString().toUpperCase();
         p.createdAt = System.currentTimeMillis();
+        p.timeStamp = new Date(p.createdAt).toGMTString();
+        p.fingerPrint = App.getFingerprint();
         return new Builder(p);
     }
 
     /**
-     * Ensures that this {@link Photo} has correct values. Otherwise throws a {@link IllegalArgumentException}
+     * Ensures that this {@link Photo} has correct values. Otherwise throws a {@link IllegalStateException}
      */
     public void validate() {
         // check required fields.
         if (user == null)
-            throw new IllegalArgumentException("Photo.user was null but is required.");
-        if (id == null) throw new IllegalArgumentException("Photo.id was null but is required.");
+            throw new IllegalStateException("Photo.user was null but is required.");
+        if (id == null)
+            throw new IllegalStateException("Photo.id was null but is required.");
         if (bitMap == null)
-            throw new IllegalArgumentException("Photo.bitMap was null but is required.");
+            throw new IllegalStateException("Photo.bitMap was null but is required.");
         if (createdAt == 0)
-            throw new IllegalArgumentException("Photo.createdAt was not set but is required.");
+            throw new IllegalStateException("Photo.createdAt was not set but is required.");
+        if (timeStamp == null)
+            throw new IllegalStateException("Photo.timeStamp was null but is required.");
         if (credits == 0)
-            throw new IllegalArgumentException("Photo.credits was 0. C'mon, give him some credits.");
+            throw new IllegalStateException("Photo.credits was 0. C'mon, give him some credits.");
         if (lightPositions.size() == 0)
-            throw new IllegalArgumentException("Photo.lightPositions was empty but is should contain at least one element.");
-        lightsCount = lightPositions.size();
+            throw new IllegalStateException("Photo.lightPositions was empty but is should contain at least one element.");
+        if (lightPositions.size() != lightsCount)
+            throw new IllegalStateException("Photo.lightsCount did not match the size of the list.");
+        if (fingerPrint == null) {
+            throw new IllegalStateException("Photo.fingerPrint was null but is required.");
+        }
 
         // check each position
         for (LightPosition p : lightPositions) {
@@ -122,6 +137,7 @@ public class Photo {
 
         public Builder addLightPos(LightPosition lightPosition) {
             p.lightPositions.add(lightPosition);
+            p.lightsCount++;
             return this;
         }
 

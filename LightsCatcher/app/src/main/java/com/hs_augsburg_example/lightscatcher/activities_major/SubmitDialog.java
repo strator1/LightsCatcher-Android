@@ -81,16 +81,15 @@ public class SubmitDialog extends DialogFragment {
                 PointF center = photoView.getCenter();
                 LightPosition pos = photo.lightPositions.getMostRelevant();
                 if (pos != null) {
-                    pos.x = center.x;
-                    pos.y = center.y;
+                    pos.x = center.x / photo.bitMap.getWidth();
+                    pos.y = center.y / photo.bitMap.getHeight();
                 }
             }
 
             Context appCtx = SubmitDialog.this.getActivity().getApplicationContext();
             TaskMonitor monitor = PersistenceManager.shared.persistAndUploadImage(appCtx, photo);
 
-            if (mHost != null)
-            {
+            if (mHost != null) {
                 mHost.submitCommitted(photo, monitor);
             }
         }
@@ -98,7 +97,7 @@ public class SubmitDialog extends DialogFragment {
     private final DialogInterface.OnClickListener negativeAction = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            if (mHost != null){
+            if (mHost != null) {
                 mHost.submitDiscarded();
             }
         }
@@ -161,7 +160,7 @@ public class SubmitDialog extends DialogFragment {
             }
 
             int color;
-            switch (pos.phase) {
+            switch (pos.getPhase()) {
                 case RED:
                     color = 0x88FF0000;
                     break;
