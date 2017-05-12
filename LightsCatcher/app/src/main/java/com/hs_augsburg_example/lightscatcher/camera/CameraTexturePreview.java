@@ -30,7 +30,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
     private Camera camera;
     private float mScale = 1.0f;
     private float maxScale = 6.0f;
-    private float minScale = 0.0f;
+    private float minScale = 1.0f;
     private ScaleGestureDetector mScaleDetector;
     private Point mSurfaceSize;
     private PointF mPivotR;

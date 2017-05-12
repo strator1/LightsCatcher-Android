@@ -5,12 +5,15 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.PointF;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
@@ -22,15 +25,25 @@ import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
 import com.hs_augsburg_example.lightscatcher.views.Crosshair;
 
+import java.text.DecimalFormat;
+
+import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_CENTER;
+import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_INSIDE;
+
 
 /**
  * Created by quirin on 09.05.17.
+ * <p>
+ * based on http://stackoverflow.com/questions/4661459/dialog-problem-requestfeature-must-be-called-before-adding-content#4661526
  */
 
 public class SubmitDialog extends DialogFragment {
     public static final String TAG = "SubmitDialog";
-    private SubmitDialogListener mHost;
+    private static final boolean LOG = true && Log.ENABLED;
+    private SubmitDialogListener mListener;
     private SubsamplingScaleImageView photoView;
+    private LightPosition mCurrentPos;
+    private Crosshair centerCross;
 
 
     public interface SubmitDialogListener {
@@ -45,7 +58,7 @@ public class SubmitDialog extends DialogFragment {
 
         public Builder(SubmitDialogListener host) {
             this.dialog = new SubmitDialog();
-            dialog.mHost = host;
+            dialog.mListener = host;
         }
 
         public SubmitDialog.Builder setPhoto(Photo photo) {
@@ -69,6 +82,7 @@ public class SubmitDialog extends DialogFragment {
 
     public void setData(Photo photo) {
         this.mPhoto = photo;
+        this.mCurrentPos = photo.lightPositions.getMostRelevant();
     }
 
     private final DialogInterface.OnClickListener positiveAction = new DialogInterface.OnClickListener() {
@@ -89,22 +103,31 @@ public class SubmitDialog extends DialogFragment {
             Context appCtx = SubmitDialog.this.getActivity().getApplicationContext();
             TaskMonitor monitor = PersistenceManager.shared.persistAndUploadImage(appCtx, photo);
 
-            if (mHost != null) {
-                mHost.submitCommitted(photo, monitor);
+            if (mListener != null) {
+                mListener.submitCommitted(photo, monitor);
             }
         }
     };
     private final DialogInterface.OnClickListener negativeAction = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            if (mHost != null) {
-                mHost.submitDiscarded();
+            if (mListener != null) {
+                mListener.submitDiscarded();
             }
         }
     };
 
 
-    //based on http://stackoverflow.com/questions/4661459/dialog-problem-requestfeature-must-be-called-before-adding-content#4661526
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        if (LOG) Log.d(TAG, "onDismiss");
+        super.onDismiss(dialog);
+
+        if (mListener != null) {
+            mListener.submitDiscarded();
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -125,7 +148,7 @@ public class SubmitDialog extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         View view = getLayout(LayoutInflater.from(getContext()), mContainer);
 
-        initPhotoView(view);
+        initView(view);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
                 .setTitle("Markieren")
@@ -133,44 +156,70 @@ public class SubmitDialog extends DialogFragment {
                 .setPositiveButton("Absenden", positiveAction)
                 .setView(view);
 
-        return builder.create();
+        AlertDialog alertDialog = builder.create();
+        return alertDialog;
     }
 
-    void initPhotoView(View view) {
-        Photo photo = mPhoto;
+    void initView(View root) {
+        final Photo photo = mPhoto;
         if (photo != null) {
-            final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) view.findViewById(R.id.submit_photoView);
+            final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) root.findViewById(R.id.submit_photoView);
             if (photoView == null) {
                 Log.e(TAG, "missing layout-element: R.id.submit_photoView");
                 return;
             }
+            photoView.setPanLimit(PAN_LIMIT_CENTER);
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
             this.photoView = photoView;
 
             LightPosition pos = photo.lightPositions.getMostRelevant();
             // photoView eats absolute positions
-            float x = (float) (photo.bitMap.getWidth() * pos.x);
-            float y = (float) (photo.bitMap.getHeight() * pos.y);
-            photoView.setScaleAndCenter(2, new PointF(x, y));
+            final float w = photo.bitMap.getWidth();
+            final float h = photo.bitMap.getHeight();
+            float x = (float) (w * pos.x);
+            float y = (float) (h * pos.y);
+//            photoView.setScaleAndCenter(2, new PointF(x, y));
 
-            final Crosshair cross = (Crosshair) view.findViewById(R.id.submit_crossHair);
-            if (cross == null) {
+            centerCross = (Crosshair) root.findViewById(R.id.submit_crossHair);
+            if (centerCross == null) {
                 Log.e(TAG, "missing layout-element: R.id.submit_crossHair");
                 return;
             }
+            updatePhase();
 
-            int color;
-            switch (pos.getPhase()) {
-                case RED:
-                    color = 0x88FF0000;
-                    break;
-                case GREEN:
-                    color = 0x8800ff00;
-                    break;
-                default:
-                    color = 0x88000000;
-            }
-            cross.setCrossColor(color);
+            final TextView txtCenter = (TextView) root.findViewById(R.id.submit_txt_center);
+            photoView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
+                @Override
+                public void onScaleChanged(float v, int i) {
+
+                }
+
+                @Override
+                public void onCenterChanged(PointF pointF, int i) {
+                    DecimalFormat d = new DecimalFormat("#");
+                    DecimalFormat f = new DecimalFormat("#.##");
+                    txtCenter.setText(d.format(pointF.x) + ";" + d.format(pointF.y) + "  " + f.format(pointF.x / w) + ";" + f.format(pointF.y / h));
+                }
+            });
         }
     }
+
+    void updatePhase() {
+        LightPosition pos = mCurrentPos;
+        if (pos == null) return;
+
+        int color;
+        switch (pos.getPhase()) {
+            case RED:
+                color = 0x88FF0000;
+                break;
+            case GREEN:
+                color = 0x8800ff00;
+                break;
+            default:
+                color = 0x88000000;
+        }
+        centerCross.setCrossColor(color);
+    }
+
 }

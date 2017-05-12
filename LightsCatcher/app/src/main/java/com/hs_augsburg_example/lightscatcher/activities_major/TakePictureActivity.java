@@ -22,7 +22,9 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
@@ -128,12 +130,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         shrink = AnimationUtils.loadAnimation(this, R.anim.phaseselect_shrink);
         grow = AnimationUtils.loadAnimation(this, R.anim.phaseselect_grow);
 
-//        CompoundButton.OnCheckedChangeListener onCheckedChangeListener = new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//
-//            }
-//        };
+
         CompoundButton.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -146,7 +143,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         for (int phase = 0; phase < 2; phase++) {
 
             CompoundButton b = (CompoundButton) findViewById(ids[phase]);
-//            b.setOnCheckedChangeListener(onCheckedChangeListener);
             b.setOnClickListener(onClickListener);
             try {
                 this.badges[phase] = createBadge(b);
@@ -165,8 +161,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
 
         camPreview = new CameraTexturePreview(this.getApplicationContext());
-        camPreview.setPivotRelative(new PointF(crossHairX, crossHairY));
-        camPreview.setPivotRelative(new PointF(crossHairX, crossHairY));
         rl.addView(camPreview, 0);
         rl.post(new Runnable() {
             @Override
@@ -349,7 +343,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         float x = MiscUtils.randomFloat(random, CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
         float y = MiscUtils.randomFloat(random, CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
 
-        setCrosshairView(.5f, .5f);
+        setCrosshairView(x, y);
     }
 
     private void setCrosshairView(float x, float y) {
@@ -379,6 +373,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         } else {
             crosshairView.setLayoutParams(params);
         }
+
+        // set pivoting, important for zoom and camera-focus
+        camPreview.setPivotRelative(new PointF(x,y));
 
         //remember posiction of the cross
         this.crossHairX = x;
@@ -413,15 +410,13 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private Camera getCameraInstance() {
         if (camera != null) {
             return camera;
-            /*camera.release();
-            camera = null;*/
         }
 
         try {
             camera = Camera.open(); // attempt to get a Camera instance
         } catch (Exception e) {
             // Camera is not available (in use or does not exist)
-            e.printStackTrace();
+            Log.e(TAG, e);
         }
         camera.setDisplayOrientation(90);
         return camera; // returns null if camera is unavailable
@@ -483,6 +478,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     }
 
     private final SubmitDialog.SubmitDialogListener submitListener = new SubmitDialog.SubmitDialogListener() {
+        private final static String TAG = "SubmitDialogListener";
 
         @Override
         public void submitCommitted(Photo snapshot, TaskMonitor monitor) {

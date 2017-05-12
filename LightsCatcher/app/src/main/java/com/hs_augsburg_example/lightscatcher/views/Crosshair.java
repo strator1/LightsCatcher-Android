@@ -43,8 +43,8 @@ public class Crosshair extends FrameLayout {
         ver = new View(this.getContext());
         float d = ctx.getResources().getDisplayMetrics().density;
 
-        this.addView(hor,new FrameLayout.LayoutParams((int)(50*d), (int)(5*d), Gravity.CENTER));
-        this.addView(ver,new FrameLayout.LayoutParams((int)(5*d), (int)(50*d), Gravity.CENTER));
+        this.addView(hor,new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, (int)(5*d), Gravity.CENTER));
+        this.addView(ver,new FrameLayout.LayoutParams((int)(5*d), LayoutParams.MATCH_PARENT, Gravity.CENTER));
     }
 
     private void applyAttributes(Context context, AttributeSet attrs) {
