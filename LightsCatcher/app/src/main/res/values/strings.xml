@@ -143,6 +143,6 @@
     <string name="ERROR_USER_DISABLED">Dieser Account wurde deaktiviert.</string>
     <string name="ERROR_WRONG_PASSWORD">Falsches Passwort.</string>
     <string name="ERROR_USER_NOT_FOUND">Unbekannte Email-Adresse. Bitte registriere dich zuerst.</string>
-
+    <string name="title_activity_help">Hilfe</string>
     <string name="toast_snapshotNotTaken">Bitte erst mindestens ein Photo schießen!</string>
 </resources>

@@ -6,6 +6,9 @@
         android:id="@+id/datenschutz"
         android:title="Datenschutzerklärung" />
     <item
+        android:id="@+id/help"
+        android:title="Hilfe" />
+    <item
         android:id="@+id/terms_of_use"
         android:title="Nutzungsbedingungen" />
     <item
