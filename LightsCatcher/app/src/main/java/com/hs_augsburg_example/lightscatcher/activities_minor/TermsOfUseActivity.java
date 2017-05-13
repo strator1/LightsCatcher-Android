@@ -18,8 +18,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class TermsOfUseActivity extends AppCompatActivity {
+
     private WebView webview;
-    private StringBuilder text = new StringBuilder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +27,8 @@ public class TermsOfUseActivity extends AppCompatActivity {
         setContentView(R.layout.activity_terms_of_use);
         setupActionBar();
 
-        writeTextIntoWebView();
+        webview = (WebView) findViewById(R.id.webview_tou);
+        webview.loadUrl("file:///android_asset/terms_of_use.html");
     }
 
     private void setupActionBar() {
@@ -35,31 +36,6 @@ public class TermsOfUseActivity extends AppCompatActivity {
         if (actionBar != null) {
             // Show the Up button in the action bar.
             actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
-
-    private void writeTextIntoWebView() {
-        webview = (WebView) findViewById(R.id.webview_tou);
-
-        AssetManager assetManager = getAssets();
-        InputStream stream = null;
-
-        try
-        {
-            stream = assetManager.open("terms_of_use.html");
-            BufferedReader r = new BufferedReader(new InputStreamReader(stream));
-            StringBuilder total = new StringBuilder();
-            String line;
-            while ((line = r.readLine()) != null)
-            {
-                total.append(line);
-            }
-            webview.loadDataWithBaseURL("file:///android_asset/", total.toString(), null, "utf-8", null);
-        }
-        catch (IOException e)
-        {
-            Toast.makeText(getApplicationContext(),"Fehler beim Lesen der Datei!",Toast.LENGTH_LONG).show();
-            e.printStackTrace();
         }
     }
 
