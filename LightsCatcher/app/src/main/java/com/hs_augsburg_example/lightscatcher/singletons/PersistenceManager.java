@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -27,12 +28,13 @@ import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Observable;
-import java.util.Set;
+import java.util.Observer;
 
 import static java.lang.String.format;
 
@@ -48,16 +50,15 @@ public class PersistenceManager {
     public static final PersistenceManager shared = new PersistenceManager();
 
     //destination folder of lights database-entries
-    static final String DATA_MODEL_VERSION = "v1_0";
+    static final String DATA_MODEL_VERSION = "v1_0_testing";
 
     // path where the images are stored temporarily on the device
-    private static final String INTERNAL_IMG_PATH = "lights_images";
-
-    // shared settings key for upload-bookmarks
-    private static final String PENDING_UPLOADS = "pendingUploads";
+    @VisibleForTesting
+    public static final String INTERNAL_IMG_PATH = "lights_images";
 
     //Supervises the state of the connection to the Firebase-database
     public final ConnectedListener connectedListener;
+    public Observer connectedObserver;
 
     private final FirebaseDatabase db;
     private final DatabaseReference root;
@@ -65,6 +66,7 @@ public class PersistenceManager {
     private final DatabaseReference lights;
 
     private final StorageReference lights_images;
+    public final BackupStorage backupStorage;
 
     public static void init() {
         // just to get the static constructor called.
@@ -76,11 +78,29 @@ public class PersistenceManager {
         root = db.getReference();
         users = root.child("users");
         lights = root.child("lights/" + DATA_MODEL_VERSION);
-        lights_images = FirebaseStorage.getInstance().getReference("lights_images/");
+        lights_images = FirebaseStorage.getInstance().getReference(DATA_MODEL_VERSION);
 
 
         connectedListener = new ConnectedListener();
         db.getReference(".info/connected").addValueEventListener(connectedListener);
+        backupStorage = new BackupStorage();
+    }
+
+    public void startResume(final Context ctx) {
+        if (connectedListener != null)
+            return; // already listening
+
+        connectedObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (LOG)
+                    Log.d(TAG, "connectedObserver.update, connected: " + connectedListener.isConnected);
+                if (connectedListener.isConnected)
+                    resumePendingUploads(ctx);
+            }
+        };
+        connectedListener.addObserver(connectedObserver);
+        resumePendingUploads(ctx);
     }
 
     public List<UploadTask> getPendingImageUploads() {
@@ -92,267 +112,180 @@ public class PersistenceManager {
         return users.child(usr.uid).setValue(usr);
     }
 
-    /*
-    public Task persist(Record rec) {
-        if (rec.id == null) throw new IllegalArgumentException("Record.id was null.");
-        return lights.child(rec.id).setValue(rec);
-    }
-    */
-
     public Task persist(Light light, String uid) {
         if (uid == null) throw new IllegalArgumentException("uid cannot be null");
         return lights.child(uid).setValue(light);
     }
 
-    public StorageTask<UploadTask.TaskSnapshot> persistLightsImage(Context ctx, final String imgId, Bitmap bmp) throws IOException {
-
+    public UploadTask persistLightsImage(Context ctx, final String imgId, Bitmap bmp) {
         // this is the destination
         StorageReference ref = lights_images.child(imgId);
-        try {
-            // create a bookmark in the shared application settings
-            // in order to remember this task in case the process dies
-            addUploadBookmark(ctx, ref, null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        FileOutputStream out = null;
-
 
         // compress image to reduce network-traffic for users
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, 40, baos);
 
-        File file = null;
-        UploadTask uploadTask = null;
-        try {
-            // save the image on the device so it doesn't get lost when the upload gets canceled
-            File imagesDir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
-            file = new File(imagesDir, imgId);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-
-            out = new FileOutputStream(file);
-
-            if (LOG) Log.d(TAG, "writing photo to file: " + file.toURI().toString());
-            baos.writeTo(out);
-
-            // now start the upload()
-            uploadTask = ref.putFile(Uri.fromFile(file));
-
-        } catch (Exception ex) {
-            Log.e(TAG, ex.getMessage(), ex);
-            // if photo could not be stored on device, try to upload using memory-data
-            if (LOG) Log.d(TAG, "uploading from memory");
-            uploadTask = ref.putBytes(baos.toByteArray());
-
-        } finally {
-            out.close();
-            baos.close();
-        }
-        // register listeners, they will do important stuff after upload to firebase
-        listenToImageUploadTask(ctx, uploadTask, ref, file);
-        return uploadTask;
-
-    }
-
-    public void resumePendingUploads(Context ctx) {
-        SharedPreferences sessions = ctx.getSharedPreferences(PENDING_UPLOADS, Context.MODE_PRIVATE);
-        Set<? extends Map.Entry<String, ?>> set = sessions.getAll().entrySet();
-        if (set.size() == 0) {
-            if (LOG) Log.d(TAG, "no pending uploads found");
-        } else {
-            for (Map.Entry<String, ?> p : set) {
-                String storageUri = p.getKey();
-                String sessionUri = (String) p.getValue();
-
-                if (LOG)
-                    Log.d(TAG, format("Found pending upload to '%1$s'; sessionId: '%2$s'", storageUri, sessionUri));
-
-                UploadTask uploadTask = null;
+        // save the image on the device so it doesn't get lost in case the upload fails for any reason
+        // with this we get a second chance to restart the upload
+        synchronized (backupStorage) {
+            try {
+                backupStorage.put(ctx, imgId, baos);
+            } catch (Exception ex) {
+                Log.e(TAG, ex);
+            } finally {
                 try {
-                    uploadTask = resumeUploadSession(storageUri, sessionUri, ctx);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                if (uploadTask == null) {
-                    if (LOG) Log.d(TAG, "Failed to resume upload.");
+                    baos.close();
+                } catch (IOException e) {
+                    Log.e(TAG, e);
                 }
             }
+            byte[] imageBytes = baos.toByteArray();
+            return uploadImageInternal(ctx, ref, imageBytes);
         }
     }
 
-    private UploadTask resumeUploadSession(String storagePath, String sessionUri, Context ctx) {
-        StorageReference ref = FirebaseStorage.getInstance().getReference(storagePath);
+    /**
+     * Tries to revoke all pending uploads, if there are any backup-files on this device
+     *
+     * @param ctx
+     * @return all newly started upload tasks
+     */
+    public UploadTask[] resumePendingUploads(Context ctx) {
+        List<UploadTask> result = new ArrayList<>(1);
+        synchronized (this.backupStorage) {
+            // HOW IT WORKS IN GENERAL:
+            // every time an upload is initiated the image-data is not just uploaded
+            // but also stored in the internal app storage on the device.
 
-        String imgId = ref.getName();
+            File[] files = backupStorage.list(ctx);
+            for (File file : files) {
+                if (LOG) Log.d(TAG, "found backup image: " + file.toString());
+                String imageId = file.getName();
+                StorageReference ref = lights_images.child(imageId);
 
-        File file = new File(ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE), imgId);
-        if (!file.exists()) {
-            if (LOG)
-                Log.d(TAG, "cannot restore upload, image-file is missing. expected path: " + file.toString());
-
-            // no chance to resume the upload when there's no image file.
-            // remove the bookmark because this should not be tried again
-            removeUploadBookmark(ctx, storagePath);
-            return null;
+                if (shouldStartNewUpload(ref)) {
+                    result.add(uploadImageInternal(ctx, ref, file));
+                }
+            }
+            UploadTask[] array = new UploadTask[result.size()];
+            result.toArray(array);
+            return array;
         }
-
-        StorageMetadata meta = getJPGMeta();
-        return resumeUploadSession(ctx, ref, file, meta, sessionUri);
     }
 
-    private UploadTask resumeUploadSession(Context ctx, final StorageReference ref, File file, StorageMetadata meta, String sessionId) {
-        // decide whether to
-        // 1) restart the upload
-        // 2) reuse an existing upload session
-        // 3) do nothing because uploads are already in progress.
+    /**
+     * Indicates whether you should start an upload task or not, because an upload to the given ref is in progress
+     *
+     * @return true if no upload is currently active or if all active upload-tasks have failed. false if there is an active task in progress
+     */
+    private boolean shouldStartNewUpload(StorageReference ref) {
         List<UploadTask> active = ref.getActiveUploadTasks();
-        UploadTask uploadTask;
+
         switch (active.size()) {
             case 0:
-                if (sessionId == null) {
-                    if (LOG)
-                        Log.d(TAG, "restarting UploadTask to storage location " + ref.toString());
-                    // no upload-session available. we have to (re-)start the upload task.
-                    // this may occur when the process terminated and no network-connection could be established before
-                    uploadTask = ref.putFile(Uri.fromFile(file), meta);
-                    listenToImageUploadTask(ctx, uploadTask, ref, file);
-                } else {
-                    // upload started before but process was terminated
-                    if (LOG)
-                        Log.d(TAG, "resuming UploadTask to storage location " + ref.toString());
-                    uploadTask = ref.putFile(Uri.fromFile(file), meta, Uri.parse(sessionId));
-                    listenToImageUploadTask(ctx, uploadTask, ref, file);
-                }
-                break;
+                if (LOG)
+                    Log.d(TAG, "should start because there are no active tasks" + ref.toString());
+                return true;
             case 1:
                 if (LOG)
-                    Log.d(TAG, "found existing UploadTasks to storage location " + ref.toString());
-                uploadTask = active.get(0);
-                if (LOG)
-                    Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s", uploadTask.toString(), uploadTask.isInProgress(), uploadTask.isCanceled()));
-
+                    Log.d(TAG, "found 1 active UploadTask to storage location " + ref.toString());
+                UploadTask uploadTask = active.get(0);
                 if (uploadTask.isInProgress()) {
+                    if (LOG)
+                        Log.d(TAG, "active task was in Progress, let's hope it will succeed anytime");
                     //this is just fine, task will hopefully be finished soon
-                    if (LOG) Log.d(TAG, "existing task is running");
-                    break;
+                    return false;
                 } else if (uploadTask.isPaused()) {
                     if (LOG) Log.d(TAG, "existing task is paused, resuming");
-                    uploadTask.resume();
+                    boolean resumed = uploadTask.resume();
+                    return !resumed;
                 } else if (uploadTask.isCanceled()) {
                     Exception e = uploadTask.getException();
                     if (LOG)
-                        Log.e(TAG, "existing task is canceled, restarting; exception: " + (e == null ? "null" : e.getMessage()));
-
-                    uploadTask = ref.putFile(Uri.fromFile(file), meta);
-                    listenToImageUploadTask(ctx, uploadTask, ref, file);
+                        Log.e(TAG, "existing task was canceled, restarting; exception: " + (e == null ? "null" : e.getMessage()));
+                    return true;
+                } else {
+                    if (LOG)
+                        Log.e(TAG, "not sure about existing upload task, request a restart to make sure it is uploaded");
+                    try {
+                        uploadTask.cancel();
+                    } catch (Exception e) {
+                        Log.e(TAG, e);
+                    }
+                    return true;
                 }
-                break;
             default:
                 // this should not happen usually
                 if (LOG)
                     Log.d(TAG, format("found %1$s existing UploadTasks to storage location '%2$s'", active.size(), ref.toString()));
 
+                boolean shouldStart = true;
                 for (UploadTask task : active) {
                     if (LOG)
                         Log.d(TAG, format("\t$=%1$s; inProgress: %2$s; canceled: %3$s; exception: %4$s", task.toString(), task.isInProgress(), task.isCanceled(), task.getException().toString()));
+                    if (task.isInProgress()) shouldStart = false;
                 }
-                uploadTask = active.get(0);
-                break;
+                return shouldStart;
         }
+    }
+
+    private UploadTask uploadImageInternal(Context ctx, StorageReference ref, File file) {
+        UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
+        listenToImageUploadTask(ctx, uploadTask);
         return uploadTask;
     }
 
-    private void listenToImageUploadTask(final Context ctx, final UploadTask task, final StorageReference ref, final File file) {
-        final boolean[] saved = {false};
+    private UploadTask uploadImageInternal(Context ctx, StorageReference ref, byte[] imageData) {
+        UploadTask uploadTask = ref.putBytes(imageData);
+        listenToImageUploadTask(ctx, uploadTask);
+        return uploadTask;
+    }
+
+
+    private void listenToImageUploadTask(final Context ctx, final UploadTask task) {
         task.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                 // this may not get called in case of bad network connection
-                if (LOG) Log.d(TAG, "onProgress from " + taskSnapshot.getStorage().toString());
-
-                if (!saved[0]) {
-                    Uri sessionUri = taskSnapshot.getUploadSessionUri();
-                    if (sessionUri != null) {
-                        // A persisted session has begun with the server.
-                        // Now we know the sessionUri, which we can use to resume the upload
-                        // amend the uploadBookmark
-                        addUploadBookmark(ctx, ref, sessionUri);
-                        saved[0] = true;
-                    } else {
-                        Log.e(TAG, "UploadSessionUri was null onProgress");
-                    }
-                    // this should be called only once
-                }
+                if (LOG)
+                    Log.d(TAG, "onProgress during upload to {0}, bytes transferred: {1} of {2}", taskSnapshot.getStorage().getPath(), taskSnapshot.getBytesTransferred(), taskSnapshot.getTotalByteCount());
             }
         });
         task.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                if (LOG) Log.d(TAG, "onSuccess from " + taskSnapshot.getStorage().getPath());
+                if (LOG)
+                    Log.d(TAG, "onSuccess during upload to " + taskSnapshot.getStorage().getPath());
+                String imgId = taskSnapshot.getStorage().getName();
 
                 // upload finished,
-                // remove the bookmark
                 try {
-                    removeUploadBookmark(ctx, taskSnapshot.getStorage().getPath());
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-
-                // delete image data on the device if it's there
-                if (file != null) {
-                    try {
-                        if (LOG) Log.d(TAG, "delete file " + file.toURI());
-                        file.deleteOnExit();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-
-                // and add the image url to the database
-                // this assumes that the key of lights elements in the database matches the storage-id of the image
-                try {
-                    String imgId = taskSnapshot.getStorage().getName();
+                    // pass the image-url to the database
                     String url = taskSnapshot.getDownloadUrl().toString();
+                    if (LOG) Log.d(TAG, "set .imageUrl: " + url);
                     lights.child(imgId + "/imageUrl").setValue(url);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    Log.e(TAG, ex);
+                }
+
+                try {
+                    // remove backup-file from the device
+                    backupStorage.pop(ctx, imgId);
+                } catch (Exception ex) {
+                    Log.e(TAG, ex);
                 }
             }
+
+
         });
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                if (LOG) Log.d(TAG, "onFailure from " + task.getSnapshot().getStorage().toString());
-                e.printStackTrace();
+                if (LOG)
+                    Log.d(TAG, "onFailure during upload to " + task.getSnapshot().getStorage().getPath());
+                Log.e(TAG, e);
             }
         });
-    }
-
-    private void addUploadBookmark(Context ctx, StorageReference ref, Uri sessionUri) {
-        SharedPreferences sessions = ctx.getSharedPreferences(PENDING_UPLOADS, Context.MODE_PRIVATE);
-        SharedPreferences.Editor edit = sessions.edit();
-        edit.putString(ref.getPath(), sessionUri == null ? null : sessionUri.toString());
-        edit.apply();
-        if (LOG) Log.d(TAG, "add upload bookmark: " + ref.toString());
-    }
-
-    private void removeUploadBookmark(Context ctx, String storageRef) {
-        SharedPreferences sessions = ctx.getSharedPreferences(PENDING_UPLOADS, Context.MODE_PRIVATE);
-        SharedPreferences.Editor edit = sessions.edit();
-        edit.remove(storageRef);
-        edit.apply();
-        if (LOG) Log.d(TAG, "remove upload bookmark: " + storageRef);
-    }
-
-
-    private StorageMetadata getJPGMeta() {
-        return new StorageMetadata.Builder()
-                .setContentType("image/jpg")
-                .build();
-
     }
 
     public class ConnectedListener extends Observable implements ValueEventListener {
@@ -381,4 +314,79 @@ public class PersistenceManager {
         }
     }
 
+    public class BackupStorage extends Observable {
+        @NonNull
+        private File getImageBackupFile(Context ctx, String imgId) {
+            return new File(ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE), imgId);
+        }
+
+        public File[] list(Context ctx) {
+            synchronized (this) {
+                // let's see if there are any files to upload:
+                File dir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
+                if (!dir.exists()) {
+                    if (LOG) Log.d(TAG, "INTERNAL_IMG_PATH does not exist");
+                    return new File[0];
+                }
+
+                if (LOG) Log.d(TAG, "Found backup files: " + dir.listFiles().length);
+                return dir.listFiles();
+            }
+        }
+
+        public void clean(Context ctx) {
+            synchronized (this) {
+                // let's see if there are any files to upload:
+                File dir = ctx.getDir(INTERNAL_IMG_PATH, Context.MODE_PRIVATE);
+                if (!dir.exists()) {
+                    if (LOG) Log.d(TAG, "INTERNAL_IMG_PATH does not exist");
+                    return;
+                }
+
+                if (LOG) Log.d(TAG, "Found backup files: " + dir.listFiles().length);
+                for (File f : dir.listFiles()) {
+                    f.delete();
+                }
+                this.setChanged();
+                this.notifyObservers();
+            }
+        }
+
+        private void pop(Context ctx, String imgId) {
+            synchronized (this) {
+                File file = getImageBackupFile(ctx, imgId);
+                if (file.exists()) {
+                    if (LOG) Log.d(TAG, "delete file " + file.toURI());
+                    boolean deleted = file.delete();
+                    if (!deleted) Log.e(TAG, "backup-file was not deleted");
+                } else {
+                    Log.e(TAG, "tried to delete backup-file but it does not exist at: " + file.getAbsolutePath());
+                }
+                this.setChanged();
+                this.notifyObservers();
+            }
+        }
+
+        private void put(Context ctx, String filename, ByteArrayOutputStream baos) throws IOException {
+            synchronized (this) {
+                File file = getImageBackupFile(ctx, filename);
+                if (file.exists() || file.createNewFile()) {
+                    // file exists or was created
+                    FileOutputStream out = null;
+                    try {
+                        out = new FileOutputStream(file);
+                        if (LOG) Log.d(TAG, "writing photo to file: " + file.getAbsolutePath());
+                        baos.writeTo(out);
+                    } finally {
+                        if (out != null)
+                            out.close();
+                    }
+                } else {
+                    Log.e(TAG, "backup-file does not exist and could not be created");
+                }
+                this.setChanged();
+                this.notifyObservers();
+            }
+        }
+    }
 }

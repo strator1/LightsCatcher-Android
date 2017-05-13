@@ -26,6 +26,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
+import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.FinishActivity;
 import com.hs_augsburg_example.lightscatcher.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
@@ -219,13 +220,9 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         final String imageId = UUID.randomUUID().toString().toUpperCase();
         PersistenceManager.shared.persist(light, imageId);
 
-        StorageTask uploadTask = null;
-        try {
-            uploadTask = PersistenceManager.shared.persistLightsImage(this.getApplicationContext(), imageId, image);
-        } catch (IOException e) {
-            Toast.makeText(getApplicationContext(), "Während dem Upload ist ein Fehler aufgetreten :(", Toast.LENGTH_LONG).show();
-            Log.e(TAG, "Exception beim Upload: " + e.getMessage(), e);
-        }
+        UploadTask uploadTask = null;
+        uploadTask = PersistenceManager.shared.persistLightsImage(this.getApplicationContext(), imageId, image);
+
 
         UserInformation.shared.increaseUserPoints(1);
 

@@ -67,8 +67,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         super.onCreate(savedInstanceState);
         ActivityRegistry.register(this);
 
-        //Has to be called before using Firebase
-        //PersistenceManager.init();
 
         // GUI-stuff
         setContentView(R.layout.activity_home);
@@ -91,6 +89,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         });
 
+        // start resume backup files
+        try {
+            PersistenceManager.shared.startResume(this.getApplicationContext());
+        } catch (Exception ex) {
+            Log.e(TAG, ex);
+        }
 
         // show loading animation:
         setRefreshAnimation(true);
@@ -252,14 +256,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void onOnlineStatusChanged(boolean connected) {
-        if (connected) {
-            // try to resume unfinished upload tasks
-            try {
-                PersistenceManager.shared.resumePendingUploads(getApplicationContext());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         updateOnlineStatus(connected);
     }
 
