@@ -52,11 +52,11 @@
     <!-- Strings related to TakePictureActivity -->
     <string name="title_activity_take_picture">TakePictureActivity</string>
     <string name="take_picture_activity_title_info"> "Erste Hilfe" </string>
-    <string name="take_picture_activity_txt_info"> "Bringe die momentan relevante Ampel ins Fadenkreuz und drücke den Auslöser. \n\n"Das Fadenkreuz wird jedes Mal zufällig auf dem Bildschirm platziert, um unterschiedliche Perspektiven auf die Ampel zu bekommen."</string>
+    <string name="take_picture_activity_txt_info"> "Bringe die momentan relevante Fußgängerampel ins Fadenkreuz und drücke den Auslöser. \n\n"Das Fadenkreuz wird jedes Mal zufällig auf dem Bildschirm platziert, um unterschiedliche Perspektiven auf die Ampel zu bekommen."</string>
     <string name="take_picture_activity_button_info"> "Verstanden" </string>
 
     <!--Tag Lights Activity-->
-    <string name="tag_lights_activity_help">Markiere per Tap auf den Bildschirm neben der fotografierten alle anderen Ampeln, die auf dem Bild zu sehen sind.</string>
+    <string name="tag_lights_activity_help">Markiere per Tap auf den Bildschirm neben der fotografierten alle anderen Fußgängerampeln, die auf dem Bild zu sehen sind.</string>
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
 
