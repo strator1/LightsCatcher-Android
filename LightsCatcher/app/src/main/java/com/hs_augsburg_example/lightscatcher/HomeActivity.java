@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,6 +52,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private View layoutOnline;
     private SwipeRefreshLayout swipeLayout;
     private LinearLayout warning;
+    private Button txtUploadCountOff;
+    private Button txtUploadCount;
 
     //FIELDS:
     private Query sortedUsers = null;
@@ -59,6 +62,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private ValueEventListener listenerForCurrentRanking;
     private Observer loginObserver;
     private Observer connectionObserver;
+    private Observer uploadListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +81,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         this.layoutOffline = findViewById(R.id.home_layout_offline);
         this.layoutOnline = findViewById(R.id.home_layout_online);
         this.warning = (LinearLayout) findViewById(R.id.home_layout_warning);
+        this.txtUploadCount = (Button) findViewById(R.id.home_txt_uploads);
+
         final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -177,11 +183,20 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public void update(Observable o, Object arg) {
                 if (LOG) Log.d(TAG, "connectionObserver.update");
-                onOnlineStatusChanged();
+                updateOnlineStatus();
             }
         };
         PersistenceManager.shared.connectedListener.addObserver(connectionObserver);
 
+        //listen to pending uploads
+        this.uploadListener = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (LOG) Log.d(TAG, "uploadListener.update");
+                updateUploadCount();
+            }
+        };
+        PersistenceManager.shared.backupStorage.addObserver(uploadListener);
 
         // Listen to the whole userslist to calculate the rank of the current user
         // this might cause a lot of network-traffic when there are many users.
@@ -217,7 +232,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (LOG) Log.d(TAG, "onResume");
 
         super.onResume();
-        this.onOnlineStatusChanged();
+        this.updateOnlineStatus();
+        this.updateUploadCount();
     }
 
     @Override
@@ -232,7 +248,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // detach all listeners from FireBase
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
-
+        if (uploadListener != null)
+            PersistenceManager.shared.backupStorage.deleteObserver(uploadListener);
         if (connectionObserver != null)
             PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
 
@@ -248,15 +265,22 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         super.onDestroy();
         if (adapter != null) adapter.cleanup();
-
     }
 
-    private void onOnlineStatusChanged() {
-        onOnlineStatusChanged(PersistenceManager.shared.connectedListener.isConnected());
+
+    private void updateUploadCount() {
+        int count = PersistenceManager.shared.backupStorage.list(this.getApplicationContext()).length;
+        if (count > 0) {
+            txtUploadCount.setVisibility(View.VISIBLE);
+            txtUploadCount.setText(getResources().getQuantityString(R.plurals.home_txt_uploadCount, count,count));
+        } else {
+            txtUploadCount.setVisibility(View.GONE);
+            txtUploadCount.setText("");
+        }
     }
 
-    private void onOnlineStatusChanged(boolean connected) {
-        updateOnlineStatus(connected);
+    private void updateOnlineStatus() {
+        updateOnlineStatus(PersistenceManager.shared.connectedListener.isConnected());
     }
 
     private void updateOnlineStatus(boolean connected) {
@@ -323,11 +347,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
      */
     @Override
     public void onRefresh() {
-        onOnlineStatusChanged();
-
         //show loading animation during loading
         setRefreshAnimation(true);
-        // update the view
+
+        // update user interface
+        updateOnlineStatus();
+        updateUploadCount();
         this.adapter.notifyDataSetChanged();
         this.updateUI_UserData();
         // this does not update the current user's rank. let's hope that {@link listenerForCurrentRanking} works properly
@@ -354,6 +379,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         dialogBuilder.setPositiveButton("Verstanden", null);
 
         dialogBuilder.create().show();
+    }
+
+    public void uploadCountClick(View view) {
+        PersistenceManager.shared.resumePendingUploads(this.getApplicationContext());
     }
 
     /**

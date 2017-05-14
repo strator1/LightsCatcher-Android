@@ -142,5 +142,11 @@
     <string name="ERROR_USER_DISABLED">Dieser Account wurde deaktiviert.</string>
     <string name="ERROR_WRONG_PASSWORD">Falsches Passwort.</string>
     <string name="ERROR_USER_NOT_FOUND">Unbekannter Benutzername.</string>
+    <plurals name="home_txt_uploadCount">
+        <item quantity="one">%d ausstehender Upload.\nHier tippen</item>
+        <item quantity="other">%d ausstehende Uploads.\nHier tippen</item>
+    </plurals>
+
+    <string name="home_offlineHint">Du bist Offline.\nTippe hier für\nweitere Infos</string>
 
 </resources>

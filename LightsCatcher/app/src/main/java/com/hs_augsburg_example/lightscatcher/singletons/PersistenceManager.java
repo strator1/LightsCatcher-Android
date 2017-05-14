@@ -388,5 +388,11 @@ public class PersistenceManager {
                 this.notifyObservers();
             }
         }
+
+        @Override
+        public void notifyObservers() {
+            super.notifyObservers();
+            if(LOG)Log.d(TAG,"BackupStorage.notifyObservers, observers: " + this.countObservers());
+        }
     }
 }
