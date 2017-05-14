@@ -2,9 +2,9 @@ package com.hs_augsburg_example.lightscatcher.activities_minor;
 
 import android.content.Intent;
 import android.content.res.AssetManager;
-import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.view.MenuItem;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -17,18 +17,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class TermsOfUseActivity extends AppCompatActivity {
+public class HelpActivity extends AppCompatActivity {
 
     private WebView webview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_terms_of_use);
+        setContentView(R.layout.activity_help);
         setupActionBar();
 
-        webview = (WebView) findViewById(R.id.webview_tou);
-        webview.loadUrl("file:///android_asset/terms_of_use.html");
+        webview = (WebView) findViewById(R.id.webview_help);
+        webview.loadUrl("file:///android_asset/help.html");
     }
 
     private void setupActionBar() {
@@ -51,4 +51,6 @@ public class TermsOfUseActivity extends AppCompatActivity {
         }
         return true;
     }
+
+
 }

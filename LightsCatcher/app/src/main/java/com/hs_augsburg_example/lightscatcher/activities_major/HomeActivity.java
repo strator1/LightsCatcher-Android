@@ -25,6 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.hs_augsburg_example.lightscatcher.activities_minor.DatenschutzActivity;
+import com.hs_augsburg_example.lightscatcher.activities_minor.HelpActivity;
 import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.activities_minor.TermsOfUseActivity;
@@ -288,6 +289,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             case R.id.datenschutz:
                 Intent intentDatenschutz = new Intent(HomeActivity.this, DatenschutzActivity.class);
                 startActivity(intentDatenschutz);
+                return true;
+            case R.id.help:
+                Intent intentHelp = new Intent(HomeActivity.this, HelpActivity.class);
+                startActivity(intentHelp);
                 return true;
             case R.id.terms_of_use:
                 Intent intentTermsOfUse = new Intent(HomeActivity.this, TermsOfUseActivity.class);
