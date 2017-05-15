@@ -25,7 +25,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.FinishActivity;
 import com.hs_augsburg_example.lightscatcher.LoginActivity;
@@ -40,7 +39,6 @@ import com.hs_augsburg_example.lightscatcher.utils.LightUploadMonitor;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -176,7 +174,7 @@ public class TagLightsActivity extends AppCompatActivity implements View.OnTouch
         for (LightInformation pos : insertedViews) {
             pos.convertToAbsoluteXY(imageView, image);
         }
-        if (PersistenceManager.shared.connectedListener.isConnected()) {
+        if (PersistenceManager.shared.connectedMonitor.isConnected()) {
 
         }
         setUiBusy(true);

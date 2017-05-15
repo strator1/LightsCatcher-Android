@@ -8,6 +8,10 @@ import android.view.SurfaceView;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.io.IOException;
+import java.util.List;
+
+import static android.hardware.Camera.Parameters.FOCUS_MODE_AUTO;
+import static android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE;
 
 /**
  * Created by patrickvalenta on 08.04.17.
@@ -74,7 +78,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             startPreview(w, h);
 
         } catch (Exception e) {
-            if (LOG)Log.e(TAG, "Error starting camera preview: " + e.getMessage());
+            if (LOG) Log.e(TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
 
@@ -95,7 +99,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
         parameters.setPictureSize(mPictureSize.width, mPictureSize.height);
 
-        if (LOG)Log.d(TAG,"PICTURE SIZE: " + mPictureSize.width + ", " + mPictureSize.height);
+        if (LOG) Log.d(TAG, "PICTURE SIZE: " + mPictureSize.width + ", " + mPictureSize.height);
+
+        List<String> supportedFocusModes = parameters.getSupportedFocusModes();
+        if (supportedFocusModes.contains(FOCUS_MODE_CONTINUOUS_PICTURE))
+            parameters.setFocusMode(FOCUS_MODE_CONTINUOUS_PICTURE);
+        else if (supportedFocusModes.contains(FOCUS_MODE_AUTO))
+            parameters.setFocusMode(FOCUS_MODE_AUTO);
 
         mCamera.setParameters(parameters);
         mCamera.startPreview();

@@ -51,7 +51,7 @@ public class PendingUploadsTest extends PersistenceManagerTest {
     @Test
     public void resumePendingUploads() throws InterruptedException {
 
-        UploadTask[] result = PersistenceManager.shared.resumePendingUploads(appContext);
+        UploadTask[] result = PersistenceManager.shared.retryPendingUploads(appContext);
         super.registerStorageTask(result);
 
         // upload running now
@@ -62,12 +62,12 @@ public class PendingUploadsTest extends PersistenceManagerTest {
 
     @Test
     public void resumePendingUploadsMulti() throws InterruptedException {
-        UploadTask[] result = PersistenceManager.shared.resumePendingUploads(appContext);
+        UploadTask[] result = PersistenceManager.shared.retryPendingUploads(appContext);
         super.registerStorageTask(result);
         assertTrue(result.length == 1);
 
         // should not start a second time
-        result = PersistenceManager.shared.resumePendingUploads(appContext);
+        result = PersistenceManager.shared.retryPendingUploads(appContext);
         super.registerStorageTask(result);
 
         assertTrue(result.length == 0);
@@ -75,7 +75,7 @@ public class PendingUploadsTest extends PersistenceManagerTest {
         // test thread safety
         for (int i = 0; i < 500; i++) {
             Thread.sleep(10);
-            result = PersistenceManager.shared.resumePendingUploads(appContext);
+            result = PersistenceManager.shared.retryPendingUploads(appContext);
             super.registerStorageTask(result);
             assertTrue(result.length == 0);
         }

@@ -8,7 +8,7 @@ public class ActivityRegistry {
 
     private static List<Activity> activitiesList;
 
-    // add activity to activitiesList
+    // reportStarted activity to activitiesList
     public static void register(Activity activity) {
         if (activitiesList == null) {
             activitiesList = new ArrayList<Activity>();

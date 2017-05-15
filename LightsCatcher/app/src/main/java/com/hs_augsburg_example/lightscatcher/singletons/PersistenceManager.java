@@ -1,13 +1,13 @@
 package com.hs_augsburg_example.lightscatcher.singletons;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -18,9 +18,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.dataModels.Light;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
@@ -28,7 +26,6 @@ import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,8 +54,9 @@ public class PersistenceManager {
     public static final String INTERNAL_IMG_PATH = "lights_images";
 
     //Supervises the state of the connection to the Firebase-database
-    public final ConnectedListener connectedListener;
-    public Observer connectedObserver;
+    public final ConnectedMonitor connectedMonitor;
+    public final UploadMonitor uploadMonitor;
+    private Observer autoRetryActivator;
 
     private final FirebaseDatabase db;
     private final DatabaseReference root;
@@ -80,27 +78,32 @@ public class PersistenceManager {
         lights = root.child("lights/" + DATA_MODEL_VERSION);
         lights_images = FirebaseStorage.getInstance().getReference(DATA_MODEL_VERSION);
 
-
-        connectedListener = new ConnectedListener();
-        db.getReference(".info/connected").addValueEventListener(connectedListener);
+        uploadMonitor = new UploadMonitor();
+        connectedMonitor = new ConnectedMonitor();
+        db.getReference(".info/connected").addValueEventListener(connectedMonitor);
         backupStorage = new BackupStorage();
     }
 
-    public void startResume(final Context ctx) {
-        if (connectedListener != null)
+    /**
+     * Starts listening to connection changes, and  when the device comes online, automatically uploads all pending image-files that are back-upped.
+     *
+     * @param ctx
+     */
+    public void startAutoRetry(final Context ctx) {
+        if (autoRetryActivator != null)
             return; // already listening
 
-        connectedObserver = new Observer() {
+        // every time connection could be established we retry to upload backup-pictures
+        autoRetryActivator = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
                 if (LOG)
-                    Log.d(TAG, "connectedObserver.update, connected: " + connectedListener.isConnected);
-                if (connectedListener.isConnected)
-                    resumePendingUploads(ctx);
+                    Log.d(TAG, "autoRetryActivator.update, connected: " + connectedMonitor.isConnected);
+                if (connectedMonitor.isConnected)
+                    retryPendingUploads(ctx);
             }
         };
-        connectedListener.addObserver(connectedObserver);
-        resumePendingUploads(ctx);
+        connectedMonitor.addObserver(autoRetryActivator);
     }
 
     public List<UploadTask> getPendingImageUploads() {
@@ -139,19 +142,29 @@ public class PersistenceManager {
                     Log.e(TAG, e);
                 }
             }
+            if (!connectedMonitor.isConnected) {
+                if (LOG) Log.d(TAG, "skipping storage-upload because offline");
+                return null;
+            }
             byte[] imageBytes = baos.toByteArray();
             return uploadImageInternal(ctx, ref, imageBytes);
         }
     }
 
     /**
-     * Tries to revoke all pending uploads, if there are any backup-files on this device
+     * Tries to restart all pending uploads, if there are any backup-files on this device
      *
      * @param ctx
      * @return all newly started upload tasks
      */
-    public UploadTask[] resumePendingUploads(Context ctx) {
+    public UploadTask[] retryPendingUploads(Context ctx) {
         List<UploadTask> result = new ArrayList<>(1);
+
+        if (!connectedMonitor.isConnected) {
+            if (LOG) Log.d(TAG, "skipping retry because offline");
+            return new UploadTask[0];
+        }
+
         synchronized (this.backupStorage) {
             // HOW IT WORKS IN GENERAL:
             // every time an upload is initiated the image-data is not just uploaded
@@ -243,12 +256,27 @@ public class PersistenceManager {
 
 
     private void listenToImageUploadTask(final Context ctx, final UploadTask task) {
+        if (LOG) Log.d(TAG, "listenToImageUploadTask");
+        final boolean[] sendSignal = {true};
         task.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                // this may not get called in case of bad network connection
                 if (LOG)
                     Log.d(TAG, "onProgress during upload to {0}, bytes transferred: {1} of {2}", taskSnapshot.getStorage().getPath(), taskSnapshot.getBytesTransferred(), taskSnapshot.getTotalByteCount());
+
+                // send signal that uploads are in progress
+                if (sendSignal[0]) {
+                    uploadMonitor.reportStarted(task);
+                    sendSignal[0] = false;
+                }
+            }
+        });
+        task.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                if (LOG)
+                    Log.d(TAG, "onComplete during upload to " + task.getResult().getStorage().getPath());
+                uploadMonitor.reportCompleted((UploadTask) task);
             }
         });
         task.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -269,7 +297,7 @@ public class PersistenceManager {
                 }
 
                 try {
-                    // remove backup-file from the device
+                    // reportCompleted backup-file from the device
                     backupStorage.pop(ctx, imgId);
                 } catch (Exception ex) {
                     Log.e(TAG, ex);
@@ -288,7 +316,7 @@ public class PersistenceManager {
         });
     }
 
-    public class ConnectedListener extends Observable implements ValueEventListener {
+    public class ConnectedMonitor extends Observable implements ValueEventListener {
         private boolean isConnected;
 
         public boolean isConnected() {
@@ -311,6 +339,35 @@ public class PersistenceManager {
                 Log.d(TAG, ".info/connected listener was cancelled: " + databaseError.getMessage());
             this.setChanged();
             this.notifyObservers();
+        }
+    }
+
+    public class UploadMonitor extends Observable {
+        int counter = 0;
+
+        public synchronized int countActiveTasks() {
+            return counter;
+        }
+
+        public synchronized void reportStarted(UploadTask task) {
+            if (LOG) Log.d(TAG, "UploadMonitor.reportStarted");
+            counter++;
+            this.setChanged();
+            this.notifyObservers();
+        }
+
+        public synchronized void reportCompleted(UploadTask task) {
+            if (LOG) Log.d(TAG, "UploadMonitor.reportCompleted");
+            counter--;
+            this.setChanged();
+            this.notifyObservers();
+        }
+
+        @Override
+        public void notifyObservers() {
+            if (LOG)
+                Log.d(TAG, "UploadMonitor.notifyObservers, observers: " + this.countObservers());
+            super.notifyObservers();
         }
     }
 
@@ -391,8 +448,9 @@ public class PersistenceManager {
 
         @Override
         public void notifyObservers() {
+            if (LOG)
+                Log.d(TAG, "BackupStorage.notifyObservers, observers: " + this.countObservers());
             super.notifyObservers();
-            if(LOG)Log.d(TAG,"BackupStorage.notifyObservers, observers: " + this.countObservers());
         }
     }
 }
