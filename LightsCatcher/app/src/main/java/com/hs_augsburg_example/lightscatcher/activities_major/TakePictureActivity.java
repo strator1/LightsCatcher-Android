@@ -238,22 +238,29 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onPause() {
-        if (LOG) Log.d(TAG, "onPause");
+            if (LOG) Log.d(TAG, "onPause");
         super.onPause();
-
-        if (camPreview != null) {
-            camPreview.releaseCamera();
-            camera = null;
-        }
 
         locationService.stopListening();
         mSensorManager.unregisterListener(motionService.getEventListener());
     }
 
     @Override
+    protected void onStop() {
+        if (LOG) Log.d(TAG, "onStop");
+        super.onStop();
+
+        if (camPreview != null) {
+            camPreview.releaseCamera();
+            camera = null;
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         if (LOG) Log.d(TAG, "onDestroy");
         super.onDestroy();
+
         locationService.stopListening();
         mSensorManager.unregisterListener(motionService.getEventListener());
     }
@@ -496,7 +503,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         public void completed() {
             // prepare camera for next picture
-            camera.stopPreview();
             camera.startPreview();
         }
 

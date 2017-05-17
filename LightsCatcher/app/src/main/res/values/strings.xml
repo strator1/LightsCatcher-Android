@@ -144,7 +144,7 @@
     <string name="ERROR_WRONG_PASSWORD">Falsches Passwort.</string>
     <string name="ERROR_USER_NOT_FOUND">Unbekannte Email-Adresse. Bitte registriere dich zuerst.</string>
     <string name="title_activity_help">Hilfe</string>
-    <string name="toast_snapshotNotTaken">Bitte erst mindestens ein Photo schießen!</string>
+    <string name="toast_snapshotNotTaken">Bitte erst mindestens ein Foto schießen!</string>
     <plurals name="home_txt_uploadCount">
         <item quantity="one">%d ausstehender Upload.</item>
         <item quantity="other">%d ausstehende Uploads.</item>
