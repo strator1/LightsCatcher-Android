@@ -16,6 +16,7 @@ import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * Created by quirin on 01.05.17.
@@ -107,7 +108,20 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
 //        params.setPictureSize(640,480);
 
         //params.getSupportedFocusModes();
-        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        boolean continuousFocus = false;
+        boolean autoFocus = false;
+        if (LOG) Log.d(TAG, "supported focusmodes:");
+        List<String> supportedFocusModes = params.getSupportedFocusModes();
+        for (String mode :
+                supportedFocusModes) {
+            if (LOG) Log.d(TAG, '\t' + mode);
+            if (mode == Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            }
+            else if (mode == Camera.Parameters.FLASH_MODE_AUTO) {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+            }
+        }
 
         cam.setParameters(params);
 

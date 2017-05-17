@@ -23,6 +23,8 @@ import java.util.List;
  */
 
 public class CameraUtil {
+    private static final String TAG = "CameraUtil";
+
     /**
      * Tests the app and the device to confirm that the code
      * in this library should work. This is called automatically
@@ -165,11 +167,11 @@ public class CameraUtil {
 
 
         if (Log.ENABLED)
-            Log.d("CAM", "expecting aspect: {0}, minimum: {1}x{2}; {3}", aspect, width, height, (double) height / width);
+            Log.d(TAG, "expecting aspect: {0}, minimum: {1}x{2}; {3}", aspect, width, height, (double) height / width);
         for (Camera.Size option : choices) {
             if (Log.ENABLED) {
                 double d = (double) option.height / option.width;
-                Log.d("CAM", "\t{0}x{1}; {2}", option.width, option.height, d);
+                Log.d(TAG, "\t{0}x{1}; {2}", option.width, option.height, d);
             }
             if (option.height == option.width * aspect &&
                     option.width >= width && option.height >= height) {
