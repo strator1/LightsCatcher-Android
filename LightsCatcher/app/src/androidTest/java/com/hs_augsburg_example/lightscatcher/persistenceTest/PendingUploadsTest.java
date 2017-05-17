@@ -7,6 +7,7 @@ import android.util.Log;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +47,7 @@ public class PendingUploadsTest extends PersistenceManagerTest {
         outputStreamWriter.write("Congratulations! You have found a useless test-file. :)");
         outputStreamWriter.close();
 
+        Thread.sleep(1000);
     }
 
     @Test
@@ -57,7 +59,7 @@ public class PendingUploadsTest extends PersistenceManagerTest {
         // upload running now
         Thread.sleep(5000);
 
-        assertTrue(result.length == 1);
+        assertEquals(1, result.length);
     }
 
     @Test
@@ -79,5 +81,11 @@ public class PendingUploadsTest extends PersistenceManagerTest {
             super.registerStorageTask(result);
             assertTrue(result.length == 0);
         }
+    }
+
+    @After
+    @Override
+    public void teardown() throws InterruptedException {
+        super.teardown();
     }
 }

@@ -7,6 +7,7 @@ import android.util.Log;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +28,17 @@ import static junit.framework.Assert.assertTrue;
 public class UploadImageTest extends PersistenceManagerTest {
     private static final String TAG = "UploadImageTest";
 
+    private static Bitmap randomBitmap(int w, int h) {
+        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8);
+        Random rnd = new Random();
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+                bmp.setPixel(x, y, rnd.nextInt());
+            }
+        }
+        return bmp;
+    }
+
     private String testFile;
     private Bitmap bmp;
 
@@ -39,32 +51,27 @@ public class UploadImageTest extends PersistenceManagerTest {
         bmp = randomBitmap(32, 32);
     }
 
-    private Bitmap randomBitmap(int w, int h) {
-        Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8);
-        Random rnd = new Random();
-        for (int x = 0; x < w; x++) {
-            for (int y = 0; y < h; y++) {
-                bmp.setPixel(x, y, rnd.nextInt());
-            }
-        }
-        return bmp;
-    }
-
     @Test
     public void persistLightsImageAndUpload() {
         assertTrue(PersistenceManager.shared.backupStorage.list(appContext).length == 0);
 
-        final int[] updated = new int[]{0};
+        final int[] backupUpdated = new int[]{0};
         PersistenceManager.shared.backupStorage.addObserver(new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                updated[0] = PersistenceManager.shared.backupStorage.list(appContext).length;
+                backupUpdated[0] = PersistenceManager.shared.backupStorage.list(appContext).length;
             }
         });
 
         UploadTask task = PersistenceManager.shared.persistLightsImage(appContext, testFile, bmp);
         super.registerStorageTask(task);
-        assertTrue(updated[0] == 1);
+        assertTrue(backupUpdated[0] == 1);
+    }
+
+    @After
+    @Override
+    public void teardown() throws InterruptedException {
+        super.teardown();
     }
 
 }

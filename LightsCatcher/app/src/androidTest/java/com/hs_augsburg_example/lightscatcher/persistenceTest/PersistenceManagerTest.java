@@ -67,17 +67,13 @@ class PersistenceManagerTest {
             task.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                    if (task.isSuccessful()){
-                        Log.d(TAG, "removing storage " + task.getResult().getStorage());
-                        //task.getResult().getStorage().delete();
-                    }
-                    else{
-                        Log.e(TAG, "upload task not successful: " + task.getResult().getStorage(), task.getException());
-                    }
+                    Log.d(TAG, "removing storage " + task.getResult().getStorage());
+                    task.getResult().getStorage().delete();
                 }
             });
         }
-        Thread.sleep(4000);
+        // wait until all uploads complete
+        Thread.sleep(5000);
     }
 
 }
