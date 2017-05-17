@@ -4,16 +4,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,23 +46,30 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private static final String TAG = "HomeActivity";
     private static final boolean LOG = Log.ENABLED && true;
 
-
     // GUI:
     private TextView txtUserName;
     private TextView txtUserRank;
     private TextView txtUserScore;
-    private View layoutOffline;
-    private View layoutOnline;
     private SwipeRefreshLayout swipeLayout;
     private LinearLayout warning;
+    private TextView btnBackupCount;
+    private TextView btnUploadStatus;
+    private TextView txtConnection;
+    private ImageView imgConnection;
 
-    //FIELDS:
+    // PRIVATE:
     private Query sortedUsers = null;
     private Query top10 = null;
     private FirebaseRecyclerAdapter<User, UserHolder> adapter = null;
     private ValueEventListener listenerForCurrentRanking;
     private Observer loginObserver;
     private Observer connectionObserver;
+    private Observer backupListener;
+    private Observer uploadListener;
+
+    /* =======================================
+     * ACTIVITY-LIFE-CYCLE:
+     * -------------------------------------*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +78,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         super.onCreate(savedInstanceState);
         ActivityRegistry.register(this);
 
-        //Has to be called before using Firebase
-        //PersistenceManager.init();
 
         // GUI-stuff
         setContentView(R.layout.activity_home);
@@ -80,9 +85,11 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         this.txtUserRank = (TextView) findViewById(R.id.home_txt_rank);
         this.txtUserScore = (TextView) findViewById(R.id.home_txt_score);
         this.swipeLayout = (SwipeRefreshLayout) findViewById(R.id.home_refreshLayout);
-        this.layoutOffline = findViewById(R.id.home_layout_offline);
-        this.layoutOnline = findViewById(R.id.home_layout_online);
         this.warning = (LinearLayout) findViewById(R.id.home_layout_warning);
+        this.btnBackupCount = (TextView) findViewById(R.id.home_txt_backupCount);
+        this.btnUploadStatus = (Button) findViewById(R.id.home_btn_clickForUpload);
+        this.txtConnection = (TextView) findViewById(R.id.home_txt_connection);
+        this.imgConnection = (ImageView) findViewById(R.id.home_img_connection);
         final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.list_userRanking);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -95,6 +102,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         });
 
+        // start resume backup files
+        try {
+            PersistenceManager.shared.startAutoRetry(this.getApplicationContext());
+        } catch (Exception ex) {
+            Log.e(TAG, ex);
+        }
 
         // show loading animation:
         setRefreshAnimation(true);
@@ -145,16 +158,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
-    private void setRefreshAnimation(final boolean b) {
-        if (swipeLayout.isRefreshing())
-            swipeLayout.post(new Runnable() {
-                @Override
-                public void run() {
-                    swipeLayout.setRefreshing(b);
-                }
-            });
-    }
-
     @Override
     protected void onStart() {
         if (LOG) Log.d(TAG, "onStart");
@@ -169,19 +172,36 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         };
         UserInformation.shared.addObserver(loginObserver);
-        this.updateUI_UserData();
-
 
         // listen to connection state:
         this.connectionObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
                 if (LOG) Log.d(TAG, "connectionObserver.update");
-                onOnlineStatusChanged();
+                updateOnlineStatus();
             }
         };
-        PersistenceManager.shared.connectedListener.addObserver(connectionObserver);
+        PersistenceManager.shared.connectedMonitor.addObserver(connectionObserver);
 
+        //listen to pending uploads
+        this.backupListener = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (LOG) Log.d(TAG, "backupListener.update");
+                updateBackupCount();
+            }
+        };
+        PersistenceManager.shared.backupStorage.addObserver(backupListener);
+
+        // called when upload tasks are scheduled
+        this.uploadListener = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (LOG) Log.d(TAG, "backupListener.update");
+                updateUploadStatus();
+            }
+        };
+        PersistenceManager.shared.uploadMonitor.addObserver(uploadListener);
 
         // Listen to the whole userslist to calculate the rank of the current user
         // this might cause a lot of network-traffic when there are many users.
@@ -216,8 +236,12 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     protected void onResume() {
         if (LOG) Log.d(TAG, "onResume");
 
+        this.updateUI_UserData();
+        this.updateOnlineStatus();
+        this.updateBackupCount();
+        this.updateUploadStatus();
+
         super.onResume();
-        this.onOnlineStatusChanged();
     }
 
     @Override
@@ -226,17 +250,38 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         super.onPause();
     }
 
+    /**
+     * Called when swiping the ranking-list
+     */
+    @Override
+    public void onRefresh() {
+        //show loading animation during loading
+        setRefreshAnimation(true);
+
+        // update user interface
+        updateOnlineStatus();
+        updateBackupCount();
+        this.adapter.notifyDataSetChanged();
+        this.updateUI_UserData();
+        // this does not update the current user's rank. let's hope that {@link listenerForCurrentRanking} works properly
+
+        //stop loading animation
+        setRefreshAnimation(false);
+    }
+
     @Override
     protected void onStop() {
         if (LOG) Log.d(TAG, "onStop");
 
-        // detach all listeners from FireBase
+        // detach listeners from firebase and other services:
         if (sortedUsers != null) sortedUsers.removeEventListener(listenerForCurrentRanking);
 
+        if (backupListener != null)
+            PersistenceManager.shared.backupStorage.deleteObserver(backupListener);
         if (connectionObserver != null)
-            PersistenceManager.shared.connectedListener.deleteObserver(connectionObserver);
-
-        // and other services:
+            PersistenceManager.shared.connectedMonitor.deleteObserver(connectionObserver);
+        if (uploadListener != null)
+            PersistenceManager.shared.uploadMonitor.deleteObserver(uploadListener);
         if (loginObserver != null) UserInformation.shared.deleteObserver(loginObserver);
 
         super.onStop();
@@ -248,33 +293,75 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         super.onDestroy();
         if (adapter != null) adapter.cleanup();
-
     }
 
-    private void onOnlineStatusChanged() {
-        onOnlineStatusChanged(PersistenceManager.shared.connectedListener.isConnected());
-    }
+    /* =======================================
+     * UPDATE VIEWS:
+     * -------------------------------------*/
 
-    private void onOnlineStatusChanged(boolean connected) {
-        if (connected) {
-            // try to resume unfinished upload tasks
-            try {
-                PersistenceManager.shared.resumePendingUploads(getApplicationContext());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        updateOnlineStatus(connected);
+    private void updateOnlineStatus() {
+        updateOnlineStatus(PersistenceManager.shared.connectedMonitor.isConnected());
     }
 
     private void updateOnlineStatus(boolean connected) {
         int vis = connected ? View.GONE : View.VISIBLE;
-        int vis_invert = connected ? View.VISIBLE : View.GONE;
         warning.setVisibility(vis);
-        layoutOffline.setVisibility(vis);
-        layoutOnline.setVisibility(vis_invert);
+
+        txtConnection.setText(connected ? "Online" : "Offline");
+        imgConnection.setImageResource(connected ? R.mipmap.ic_yes : R.mipmap.ic_no);
     }
 
+    private void updateBackupCount() {
+        int count = PersistenceManager.shared.backupStorage.list(this.getApplicationContext()).length;
+        if (count > 0) {
+            btnBackupCount.setVisibility(View.VISIBLE);
+            btnBackupCount.setText(getResources().getQuantityString(R.plurals.home_txt_uploadCount, count, count));
+            btnUploadStatus.setVisibility(View.VISIBLE);
+        } else {
+            btnBackupCount.setVisibility(View.GONE);
+            btnBackupCount.setText("");
+            btnUploadStatus.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateUploadStatus() {
+        int activeCount = PersistenceManager.shared.uploadMonitor.countActiveTasks();
+        boolean isActive = activeCount > 0;
+
+        String txt = isActive ? getString(R.string.home_txt_uploading) : getString(R.string.home_txt_clickForUpload);
+        btnUploadStatus.setText(txt);
+
+    }
+
+    private void updateUI_UserRank(int rank) {
+        txtUserRank.setText(getString(R.string.home_txt_rank, Integer.toString(rank)));
+    }
+
+    private void updateUI_UserData() {
+        User usr = UserInformation.shared.getUserSnapshot();
+        if (usr != null) {
+            txtUserName.setText(usr.name);
+            txtUserScore.setText(getString(R.string.home_txt_score, Integer.toString(usr.points)));
+            // NOTE: the user's rank is updated by {@link listenerForCurrentRanking}
+        } else {
+            txtUserName.setText("-");
+            txtUserScore.setText(getString(R.string.home_txt_score, "N.A."));
+        }
+    }
+
+    private void setRefreshAnimation(final boolean b) {
+        if (swipeLayout.isRefreshing())
+            swipeLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeLayout.setRefreshing(b);
+                }
+            });
+    }
+
+    /* =======================================
+     * EVENT-HANDLERS:
+     * -------------------------------------*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -309,63 +396,19 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
     }
 
-    private void updateUI_UserRank(int rank) {
-        txtUserRank.setText(getString(R.string.home_txt_rank, Integer.toString(rank)));
-    }
-
-    private void updateUI_UserData() {
-        User usr = UserInformation.shared.getUserSnapshot();
-        if (usr != null) {
-            txtUserName.setText(usr.name);
-            txtUserScore.setText(getString(R.string.home_txt_score, Integer.toString(usr.points)));
-            // NOTE: the user's rank is updated by {@link listenerForCurrentRanking}
-        } else {
-            txtUserName.setText("-");
-            txtUserScore.setText(getString(R.string.home_txt_score, "N.A."));
-        }
-    }
-
-    private void navigateToCamera() {
-        Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
-        startActivity(intent);
-    }
-
-    /**
-     * Called when swiping the ranking-list
-     */
-    @Override
-    public void onRefresh() {
-        onOnlineStatusChanged();
-
-        //show loading animation during loading
-        setRefreshAnimation(true);
-        // update the view
-        this.adapter.notifyDataSetChanged();
-        this.updateUI_UserData();
-        // this does not update the current user's rank. let's hope that {@link listenerForCurrentRanking} works properly
-
-        //stop loading animation
-        setRefreshAnimation(false);
-    }
-
     @Override
     public void onBackPressed() {
         ActivityRegistry.finishAll();
         super.onBackPressed();
     }
 
-    public void onOfflineInfoClicked(View view) {
+    public void startUpload_Click(View view) {
+        PersistenceManager.shared.retryPendingUploads(this.getApplicationContext());
+    }
 
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-
-        View dlgView = inflater.inflate(R.layout.content_offline_helpdialog, null);
-        dialogBuilder.setView(dlgView);
-        dialogBuilder.setTitle("Info zum Offline Modus");
-
-        dialogBuilder.setPositiveButton("Verstanden", null);
-
-        dialogBuilder.create().show();
+    private void navigateToCamera() {
+        Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
+        startActivity(intent);
     }
 
     /**

@@ -132,8 +132,8 @@
     <string name="title_settings_menu">Einstellungen</string>
     <string name="submit_btn_upload">Bild hochladen</string>
     <string name="submit_txt_mark">markieren</string>
+    <string name="home_txt_connection">Verbindung:</string>
     <string name="fotografieren">%1$s fotografieren</string>
-    <string name="home_txt_status">Verbindung:</string>
     <string name="privacy_link">Datenschutzerklärung</string>
     <string name="title_activity_terms_of_use">Nutzungsbedingungen</string>
     <string name="signUp_txt_pwRepeat">Passwort wiederholen</string>
@@ -145,4 +145,11 @@
     <string name="ERROR_USER_NOT_FOUND">Unbekannte Email-Adresse. Bitte registriere dich zuerst.</string>
     <string name="title_activity_help">Hilfe</string>
     <string name="toast_snapshotNotTaken">Bitte erst mindestens ein Photo schießen!</string>
+    <plurals name="home_txt_uploadCount">
+        <item quantity="one">%d ausstehender Upload.</item>
+        <item quantity="other">%d ausstehende Uploads.</item>
+    </plurals>
+    <string name="home_txt_uploading">Upload läuft...</string>
+    <string name="home_txt_clickForUpload">Hier tippen, wenn\ndu wieder online bist.</string>
+
 </resources>

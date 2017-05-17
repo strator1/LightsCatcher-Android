@@ -19,6 +19,8 @@ public class App extends Application {
     @Override
     public void onCreate() {
         if (Log.ENABLED) Log.d("App", "onCreate");
+
+        //Has to be called before using Firebase
         PersistenceManager.init();
         UserInformation.init();
 

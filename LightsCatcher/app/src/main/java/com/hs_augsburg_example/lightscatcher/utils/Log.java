@@ -21,6 +21,10 @@ public class Log {
         android.util.Log.d(tag, MessageFormat.format(format, params));
     }
 
+    public static void e(String tag, Throwable ex) {
+        android.util.Log.e(tag, "ERROR:", ex);
+    }
+
     public static void e(String tag, String s) {
         android.util.Log.e(tag, s);
     }
