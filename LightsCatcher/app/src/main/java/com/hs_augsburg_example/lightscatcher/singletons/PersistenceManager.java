@@ -345,6 +345,9 @@ public class PersistenceManager {
     public class UploadMonitor extends Observable {
         int counter = 0;
 
+        synchronized void reset(){
+            counter = 0;
+        }
         public synchronized int countActiveTasks() {
             return counter;
         }
@@ -409,18 +412,21 @@ public class PersistenceManager {
             }
         }
 
-        private void pop(Context ctx, String imgId) {
+        private boolean pop(Context ctx, String imgId) {
             synchronized (this) {
+                boolean deleted;
                 File file = getImageBackupFile(ctx, imgId);
                 if (file.exists()) {
                     if (LOG) Log.d(TAG, "delete file " + file.toURI());
-                    boolean deleted = file.delete();
+                    deleted = file.delete();
                     if (!deleted) Log.e(TAG, "backup-file was not deleted");
                 } else {
                     Log.e(TAG, "tried to delete backup-file but it does not exist at: " + file.getAbsolutePath());
+                    deleted = false;
                 }
                 this.setChanged();
                 this.notifyObservers();
+                return deleted;
             }
         }
 

@@ -300,33 +300,45 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void updateOnlineStatus(boolean connected) {
-        int vis = connected ? View.GONE : View.VISIBLE;
-        warning.setVisibility(vis);
+        try {
+            int vis = connected ? View.GONE : View.VISIBLE;
+            warning.setVisibility(vis);
 
-        txtConnection.setText(connected ? "Online" : "Offline");
-        imgConnection.setImageResource(connected ? R.mipmap.ic_yes : R.mipmap.ic_no);
+            txtConnection.setText(connected ? "Online" : "Offline");
+            imgConnection.setImageResource(connected ? R.mipmap.ic_yes : R.mipmap.ic_no);
+        } catch (Exception ex) {
+            Log.e(TAG, ex);
+        }
     }
 
     private void updateBackupCount() {
-        int count = PersistenceManager.shared.backupStorage.list(this.getApplicationContext()).length;
-        if (count > 0) {
-            btnBackupCount.setVisibility(View.VISIBLE);
-            btnBackupCount.setText(getResources().getQuantityString(R.plurals.home_txt_uploadCount, count, count));
-            btnUploadStatus.setVisibility(View.VISIBLE);
-        } else {
-            btnBackupCount.setVisibility(View.GONE);
-            btnBackupCount.setText("");
-            btnUploadStatus.setVisibility(View.GONE);
+        try {
+
+            int count = PersistenceManager.shared.backupStorage.list(this.getApplicationContext()).length;
+            if (count > 0) {
+                btnBackupCount.setVisibility(View.VISIBLE);
+                btnBackupCount.setText(getResources().getQuantityString(R.plurals.home_txt_uploadCount, count, count));
+                btnUploadStatus.setVisibility(View.VISIBLE);
+            } else {
+                btnBackupCount.setVisibility(View.GONE);
+                btnBackupCount.setText("");
+                btnUploadStatus.setVisibility(View.GONE);
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, ex);
         }
     }
 
     private void updateUploadStatus() {
-        int activeCount = PersistenceManager.shared.uploadMonitor.countActiveTasks();
-        boolean isActive = activeCount > 0;
+        try {
+            int activeCount = PersistenceManager.shared.uploadMonitor.countActiveTasks();
+            boolean isActive = activeCount > 0;
 
-        String txt = isActive ? getString(R.string.home_txt_uploading) : getString(R.string.home_txt_clickForUpload);
-        btnUploadStatus.setText(txt);
-
+            String txt = isActive ? getString(R.string.home_txt_uploading) : getString(R.string.home_txt_clickForUpload);
+            btnUploadStatus.setText(txt);
+        } catch (Exception ex) {
+            Log.e(TAG, ex);
+        }
     }
 
     private void updateUI_UserRank(int rank) {
