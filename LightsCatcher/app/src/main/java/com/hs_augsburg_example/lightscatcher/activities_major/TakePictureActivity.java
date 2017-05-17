@@ -567,10 +567,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     private AlertDialog pictureHelpDialog;
 
-    public void onDiscardButtonClick(View view) {
-        this.stateMachine.discard();
-    }
-
     public void zoomIn_Click(View view) {
         camPreview.zoomIn();
     }
