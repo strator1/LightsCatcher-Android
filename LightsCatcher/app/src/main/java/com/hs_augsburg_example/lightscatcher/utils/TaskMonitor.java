@@ -38,8 +38,10 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
     }
 
     public Task<?> addTask(String description, Task<?> t) {
-        t.addOnSuccessListener(this);
-        t.addOnFailureListener(this);
+        if (t != null) {
+            t.addOnSuccessListener(this);
+            t.addOnFailureListener(this);
+        }
         pendingTasks.add(new Tuple<String, Task<?>>(description, t));
         return t;
     }
@@ -52,14 +54,18 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
         Toast.makeText(ctx, "Upload erfolgreich :)", Toast.LENGTH_LONG).show();
     }
 
+    public Tuple<String, Task<?>>[] list() {
+        Tuple<String, Task<?>>[] array = new Tuple[pendingTasks.size()];
+        pendingTasks.toArray(array);
+        return array;
+    }
 
     @Override
     public void onSuccess(Object o) {
         synchronized (this) {
             boolean all = pendingTasks.size() > 0;
-            for (Tuple<String, Task<?>> t : this.pendingTasks) {
-                if(LOG) Log.d(TAG, System.currentTimeMillis() + ": " + t.v1 + ": " + t.v2.isSuccessful());
-                if (!t.v2.isSuccessful()) {
+            for (Tuple<String, Task<?>> t : pendingTasks) {
+                if (t.v2 != null && !t.v2.isSuccessful()) {
                     all = false;
                     break;
                 }
@@ -72,7 +78,7 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
     @Override
     public void onFailure(@NonNull Exception e) {
         Toast.makeText(ctx, "Beim Upload ist leider ein Fehler aufgetreten :(", Toast.LENGTH_LONG).show();
-        if(LOG) Log.e(TAG,e.getMessage(),e);
+        if (LOG) Log.e(TAG, e.getMessage(), e);
     }
 
     public static class Tuple<T1, T2> {

@@ -6,6 +6,7 @@ import android.location.Location;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.hs_augsburg_example.lightscatcher.App;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 
 import java.util.Date;
 import java.util.UUID;
@@ -130,6 +131,13 @@ public class Photo {
             return this;
         }
 
+        public Builder setLocation(double longitude, double latitude) {
+            p.longitude = Double.toString(longitude);
+            p.latitude = Double.toString(latitude);
+
+            return this;
+        }
+
         public Builder setGyro(float pitch) {
             p.gyroPosition = Float.toString(pitch);
             return this;
@@ -153,6 +161,11 @@ public class Photo {
 
         public Builder setUser(String uid) {
             p.user = uid;
+            return this;
+        }
+
+        public Builder setCurrentUser() {
+            this.setUser(UserInformation.shared.getUserId());
             return this;
         }
     }

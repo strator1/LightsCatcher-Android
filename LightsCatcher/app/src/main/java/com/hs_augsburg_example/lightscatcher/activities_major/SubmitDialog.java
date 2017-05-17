@@ -5,10 +5,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.PointF;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +26,6 @@ import com.hs_augsburg_example.lightscatcher.views.Crosshair;
 import java.text.DecimalFormat;
 
 import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_CENTER;
-import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_INSIDE;
 
 
 /**
@@ -101,7 +98,7 @@ public class SubmitDialog extends DialogFragment {
             }
 
             Context appCtx = SubmitDialog.this.getActivity().getApplicationContext();
-            TaskMonitor monitor = PersistenceManager.shared.persistAndUploadImage(appCtx, photo);
+            TaskMonitor monitor = PersistenceManager.shared.persistDataAndUploadPicture(appCtx, photo);
 
             if (mListener != null) {
                 mListener.submitCommitted(photo, monitor);

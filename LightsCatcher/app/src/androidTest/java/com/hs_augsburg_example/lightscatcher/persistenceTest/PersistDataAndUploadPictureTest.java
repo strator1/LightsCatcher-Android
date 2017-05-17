@@ -22,6 +22,7 @@ import java.util.Observer;
 import java.util.Random;
 import java.util.UUID;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 /**
@@ -29,7 +30,7 @@ import static junit.framework.Assert.assertTrue;
  */
 
 @RunWith(AndroidJUnit4.class)
-public class persistDataAndUploadPictureTest extends PersistenceManagerTest {
+public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
     private static final String TAG = "UploadPictureTest";
     private Photo data;
 
@@ -49,8 +50,8 @@ public class persistDataAndUploadPictureTest extends PersistenceManagerTest {
                 .setCurrentUser()
                 .setBitmap(randomBitmap(32, 32))
                 .setGyro(3.2f)
-                .setLocation(.5,.5)
-                .addLightPos(new LightPosition(10.4, 8.7, LightPhase.GREEN, true))
+                .setLocation(10.4, 8.7)
+                .addLightPos(new LightPosition(.5, .5, LightPhase.GREEN, true))
                 .setCredits(3)
                 .commit();
     }
@@ -63,30 +64,46 @@ public class persistDataAndUploadPictureTest extends PersistenceManagerTest {
     public void setup() throws InterruptedException, IOException {
         Log.d(TAG, "setup");
         super.setup();
-        testFile = UUID.randomUUID().toString().toUpperCase();
-        bmp = randomBitmap(32, 32);
         this.data = testData();
     }
 
     @Test
-    public void persistDataAndUploadPicture() {
+    public void persistDataAndUploadPicture() throws InterruptedException {
+        Log.d(TAG, "persistDataAndUploadPicture");
         assertTrue(PersistenceManager.shared.backupStorage.list(appContext).length == 0);
 
-        final int[] backupUpdated = new int[]{0};
+        final int[] backupFiles = new int[]{-1};
         PersistenceManager.shared.backupStorage.addObserver(new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                backupUpdated[0] = PersistenceManager.shared.backupStorage.list(appContext).length;
+                if (backupFiles[0] == -1)// set only once at the start
+                    backupFiles[0] = PersistenceManager.shared.backupStorage.list(appContext).length;
+            }
+        });
+
+        final int[] uploadCount = new int[]{-1};
+        PersistenceManager.shared.uploadMonitor.addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                if (uploadCount [0] == -1)// set only once at the start
+                    uploadCount[0] = PersistenceManager.shared.uploadMonitor.countActiveTasks();
             }
         });
 
         TaskMonitor tasks = PersistenceManager.shared.persistDataAndUploadPicture(appContext, data);
-        for (TaskMonitor.Tuple task:
-             tasks.list()) {
-            super.registerFirebaseTask((Task<?>)task.v2);
+
+        // see if backup file was created
+        assertEquals(1, backupFiles[0]);
+
+        // see if upload count was updated
+        assertEquals(1, uploadCount[0]);
+
+        for (TaskMonitor.Tuple task : tasks.list()) {
+            super.registerFirebaseTask((Task<?>) task.v2);
         }
 
-        assertTrue(backupUpdated[0] == 1);
+        Thread.sleep(2000);
+
     }
 
     @After

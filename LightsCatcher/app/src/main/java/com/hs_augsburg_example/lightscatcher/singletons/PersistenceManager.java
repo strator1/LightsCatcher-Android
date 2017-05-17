@@ -44,9 +44,6 @@ import static java.lang.String.format;
 
 @SuppressWarnings("VisibleForTests")
 public class PersistenceManager {
-    private static final boolean DATABASE_DISABLE = false;
-    private static final boolean STORAGE_DISABLE = true;
-
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
@@ -59,7 +56,8 @@ public class PersistenceManager {
     private final String USERS_DATA_PATH = "users";
 
     //destination for lights images
-    private final String LIGTS_STORAGE_PATH = "lights_images/" + DATA_MODEL_VERSION;
+//    private final String LIGTS_STORAGE_PATH = "lights_images/" + DATA_MODEL_VERSION;
+    private final String LIGTS_STORAGE_PATH = DATA_MODEL_VERSION;
 
     // path where the images are stored temporarily on the device
     @VisibleForTesting
@@ -123,14 +121,12 @@ public class PersistenceManager {
     }
 
     public Task persist(User usr) {
-        if (DATABASE_DISABLE)return null;
         if (usr.uid == null) throw new IllegalArgumentException("User.uid was null.");
         return users.child(usr.uid).setValue(usr);
     }
 
     @Deprecated
     public Task persist(Record rec) {
-        if (DATABASE_DISABLE)return null;
         if (rec.id == null) throw new IllegalArgumentException("Record.id was null.");
         return lights.child(rec.id).setValue(rec);
     }
@@ -139,17 +135,15 @@ public class PersistenceManager {
     public Task persist(Photo photo) {
         if (photo.id == null)
             throw new IllegalArgumentException("Photo.id was null but is required.");
-        if (DATABASE_DISABLE)return null;
 
         return lights.child(photo.id).setValue(photo);
     }
 
-    public TaskMonitor persistAndUploadPicture(Context ctx, Photo photo) {
+    public TaskMonitor persistDataAndUploadPicture(Context ctx, Photo photo) {
         photo.validate();
 
         // utility to track progress and status
         final TaskMonitor monitor = TaskMonitor.newInstance(ctx);
-        if (DATABASE_DISABLE)return monitor;
 
         // write to database:
         Task persist = persist(photo);
@@ -161,7 +155,6 @@ public class PersistenceManager {
         Task updateUser = users.child(usr.uid).child("points").setValue(newPoints);
         monitor.addTask("Punkte vergeben", updateUser);
 
-        if (STORAGE_DISABLE) return monitor;
         // upload photo to storage:
         UploadTask uploadTask = uploadPicture(ctx, photo.id, photo.bitMap);
         monitor.addTask("Foto hochgeladen", uploadTask);
@@ -207,6 +200,7 @@ public class PersistenceManager {
      * @return all newly started upload tasks
      */
     public UploadTask[] retryPendingUploads(Context ctx) {
+        if (LOG)Log.d(TAG,"retryPendingUploads");
         List<UploadTask> result = new ArrayList<>(1);
 
         if (!connectedMonitor.isConnected) {
