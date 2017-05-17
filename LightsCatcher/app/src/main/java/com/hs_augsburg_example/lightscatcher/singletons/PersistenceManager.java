@@ -48,6 +48,7 @@ public class PersistenceManager {
 
     //destination folder of lights database-entries
     static final String DATA_MODEL_VERSION = "v1_0";
+//    static final String DATA_MODEL_VERSION = "v1_0_testing";
 
     // path where the images are stored temporarily on the device
     @VisibleForTesting
@@ -77,6 +78,7 @@ public class PersistenceManager {
         users = root.child("users");
         lights = root.child("lights/" + DATA_MODEL_VERSION);
         lights_images = FirebaseStorage.getInstance().getReference("lights_images");
+//        lights_images = FirebaseStorage.getInstance().getReference(DATA_MODEL_VERSION);
 
         uploadMonitor = new UploadMonitor();
         connectedMonitor = new ConnectedMonitor();

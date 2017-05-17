@@ -7,8 +7,8 @@ android {
         applicationId "com.hs_augsburg_example.lightscatcher"
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 4
-        versionName "1.1.1"
+        versionCode 5
+        versionName "1.1.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -34,6 +34,7 @@ dependencies {
     compile 'com.google.firebase:firebase-storage:10.2.0'
     compile 'com.google.firebase:firebase-auth:10.2.0'
     compile 'com.firebaseui:firebase-ui-database:1.2.0'
+
     testCompile 'junit:junit:4.12'
 }
 
