@@ -154,11 +154,10 @@ public class CameraUtil {
      * width and height are at least as large as the respective requested values, and whose aspect
      * ratio matches with the specified value.
      *
-     * @param aspectRatio The aspect ratio
+     * @param aspect The aspect ratio
      * @param choices     The list of sizes that the camera supports for the intended output class
      * @param width       The minimum desired width
      * @param height      The minimum desired height
-     * @param aspect
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
     public static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int width, int height, final double aspect) {

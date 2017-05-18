@@ -84,11 +84,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
 
     void initCamera(Camera cam, SurfaceTexture surfaceTexture) {
 
-        try {
-            camera.setPreviewTexture(surfaceTexture);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
         this.camera = cam;
         this.mSurface = surfaceTexture;
 
@@ -103,28 +99,32 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
         if (LOG) Log.d(TAG, "choose previewSize: {0}x{1}", mPreviewSize.width, mPreviewSize.height);
 
         params.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-//        params.setPreviewSize(320, 240);
+//        params.setPreviewSize(1056,864);
         params.setPictureSize(mPictureSize.width, mPictureSize.height);
 //        params.setPictureSize(640,480);
 
-        //params.getSupportedFocusModes();
-        boolean continuousFocus = false;
-        boolean autoFocus = false;
-        if (LOG) Log.d(TAG, "supported focusmodes:");
         List<String> supportedFocusModes = params.getSupportedFocusModes();
-        for (String mode :
-                supportedFocusModes) {
+
+        if (LOG) Log.d(TAG, "supported focusmodes:");
+        forLoop:
+        for (String mode : supportedFocusModes) {
             if (LOG) Log.d(TAG, '\t' + mode);
-            if (mode == Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            }
-            else if (mode == Camera.Parameters.FLASH_MODE_AUTO) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+            switch (mode) {
+                case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                    break forLoop;
+                case Camera.Parameters.FOCUS_MODE_AUTO:
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                    break; // don't leave for loop because we might get the better continuous-picture-mode in next iterations
             }
         }
 
         cam.setParameters(params);
-
+        try {
+            camera.setPreviewTexture(surfaceTexture);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setCamera(Camera camera) {
