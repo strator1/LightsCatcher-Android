@@ -14,7 +14,8 @@
     <RelativeLayout
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:id="@+id/takePicture_redCross">
+        android:id="@+id/takePicture_redCross"
+        android:visibility="invisible">
         <View
             android:layout_width="3dp"
             android:layout_height="match_parent"
@@ -35,19 +36,20 @@
             android:layout_width="wrap_content"
             android:layout_height="1dp"
             android:layout_alignParentBottom="true"
-            android:background="#8f00" />
+            android:background="@color/colorAccent" />
 
     </RelativeLayout>
     <RelativeLayout
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:id="@+id/takePicture_greenCross">
+        android:id="@+id/takePicture_greenCross"
+        android:visibility="invisible">
 
         <View
             android:layout_width="wrap_content"
             android:layout_height="1dp"
             android:layout_alignParentTop="true"
-            android:background="#80f0" />
+            android:background="@color/colorAccent" />
         <View
             android:layout_width="3dp"
             android:layout_height="match_parent"

@@ -29,17 +29,25 @@
     <LinearLayout
         android:layout_width="50dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="90dp"
         android:orientation="vertical"
-        app:layout_constraintRight_toRightOf="parent">
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_above="@+id/take_picture_bottom_area"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="2dp">
 
         <Button
+            android:id="@+id/button2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/btn_border"
             android:onClick="zoomIn_Click"
-            android:text="+" />
+            android:text="+"
+            android:textColor="#eee"
+            android:shadowColor="@android:color/black"
+            android:shadowRadius="5"
+            android:shadowDx="1"
+            android:shadowDy="1"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -57,11 +65,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="zoomOut_Click"
-            android:text="-" />
+            android:background="@drawable/btn_border"
+            android:text="-"
+            android:textColor="#eee"
+            android:shadowColor="@android:color/black"
+            android:shadowRadius="5"
+            android:shadowDx="1"
+            android:shadowDy="1"/>
 
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/take_picture_bottom_area"
         android:layout_width="match_parent"
         android:layout_height="90dp"
@@ -74,18 +88,17 @@
         <RadioGroup
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="left|center_vertical"
-            android:layout_marginLeft="10dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
             android:orientation="horizontal">
-
 
             <RadioButton
                 android:id="@+id/takePicture_redSelect"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginBottom="18dp"
-                android:layout_marginLeft="18dp"
-                android:layout_marginRight="5dp"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginBottom="15dp"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="3dp"
                 android:layout_marginTop="18dp"
                 android:background="@drawable/phase_toggle_red"
                 android:button="@android:color/transparent"
@@ -94,16 +107,27 @@
 
             <RadioButton
                 android:id="@+id/takePicture_greenSelect"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginBottom="18dp"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="18dp"
-                android:layout_marginTop="18dp"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginBottom="15dp"
+                android:layout_marginLeft="3dp"
+                android:layout_marginRight="3dp"
+                android:layout_marginTop="15dp"
                 android:background="@drawable/phase_toggle_green"
                 android:button="@android:color/transparent"
                 android:gravity="center" />
 
+            <RadioButton
+                android:id="@+id/takePicture_offSelect"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginBottom="15dp"
+                android:layout_marginLeft="3dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginTop="15dp"
+                android:background="@drawable/phase_toggle_off"
+                android:button="@android:color/transparent"
+                android:gravity="center" />
 
         </RadioGroup>
 
@@ -111,28 +135,43 @@
             android:id="@+id/take_picture_btn"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_gravity="bottom|end"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="20dp"
+            android:layout_gravity="center"
             android:foregroundGravity="center"
             android:onClick="onCaptureButtonPressed"
             app:srcCompat="@android:drawable/ic_menu_camera" />
 
+
+
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="right|center_vertical">
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_margin="8dp">
 
             <Button
                 android:id="@+id/takePicture_exitBtn"
                 style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="55dp"
                 android:layout_height="55dp"
-                android:layout_gravity="center"
-                android:layout_margin="5dp"
+
                 android:background="@drawable/ic_forward"
+                android:gravity="center_horizontal"
                 android:onClick="onExitButtonClick" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fertig!"
+                android:textColor="#ccc"/>
         </LinearLayout>
 
 
-    </LinearLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

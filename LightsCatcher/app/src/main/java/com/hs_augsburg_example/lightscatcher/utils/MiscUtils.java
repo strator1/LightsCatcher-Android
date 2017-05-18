@@ -2,6 +2,7 @@ package com.hs_augsburg_example.lightscatcher.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.util.DisplayMetrics;
 
 import java.util.Random;
 
@@ -31,5 +32,14 @@ public class MiscUtils {
                 matrix, true);
     }
 
+    /**
+     * calculates device-independent dimensions in actual pixels
+     * @param value
+     * @param density
+     * @return
+     */
+    public static int dp(int value, float density) {
+        return (int) (value * density);
+    }
 
 }

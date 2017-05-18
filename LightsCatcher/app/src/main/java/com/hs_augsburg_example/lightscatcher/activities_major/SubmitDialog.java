@@ -16,7 +16,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
@@ -193,7 +192,7 @@ public class SubmitDialog extends DialogFragment {
                 Log.e(TAG, "missing layout-element: R.id.submit_crossHair");
                 return;
             }
-            updatePhase();
+            setTargetPosition(photo.lightPositions.getMostRelevant());
 
             final TextView txtCenter = (TextView) root.findViewById(R.id.submit_txt_center);
             photoView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
@@ -222,25 +221,19 @@ public class SubmitDialog extends DialogFragment {
         final Animation shrink = AnimationUtils.loadAnimation(this.getContext(), R.anim.phaseselect_shrink);
         final Animation grow = AnimationUtils.loadAnimation(this.getContext(), R.anim.phaseselect_grow);
 
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LightPhase phase = (LightPhase) v.getTag();
-                // set data
-                if (mPhoto != null && mCurrentPos != null) {
-                    mCurrentPos.setPhase(phase);
-                }
-
-                // update UI
-                updatePhase(phase);
-            }
-        });
         btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 Log.d(TAG, buttonView.getTag() + ": " + String.valueOf(buttonView.isChecked()));
-
                 if (isChecked) {
+                    LightPhase phase = (LightPhase) buttonView.getTag();
+                    // set data
+                    if (mPhoto != null && mCurrentPos != null) {
+                        mCurrentPos.setPhase(phase);
+                    }
+
+                    // update UI
+                    updatePhase(phase);
                     buttonView.startAnimation(grow);
                 } else {
                     buttonView.startAnimation(shrink);
@@ -250,11 +243,15 @@ public class SubmitDialog extends DialogFragment {
         return btn;
     }
 
-    void updatePhase() {
-        LightPosition pos = mCurrentPos;
-        if (pos == null) return;
-        updatePhase(pos.getPhase());
+    private void setTargetPosition(LightPosition pos) {
+        mCurrentPos = pos;
+        setPhase(pos.phase);
     }
+
+    private void setPhase(int phase) {
+        phaseButtons[phase].setChecked(true);
+    }
+
 
     void updatePhase(LightPhase phase) {
 

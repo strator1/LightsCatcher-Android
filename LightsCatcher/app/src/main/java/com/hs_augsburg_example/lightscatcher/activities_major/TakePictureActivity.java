@@ -22,9 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
@@ -55,8 +53,8 @@ import java.util.List;
 import java.util.Random;
 
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
-import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.GREEN;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.RED;
+import static com.hs_augsburg_example.lightscatcher.utils.MiscUtils.dp;
 
 /**
  * Activity to capture a traffic light. Up to 2 pictures can be taken in a row, one for each state of the traffic light.
@@ -70,8 +68,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private static final int REQUEST_ALL = REQUEST_CAMERA | REQUEST_LOCATION;
 
     static final int STATE_INIT = -1;
-    public static final int STATE_RED = 0;
-    public static final int STATE_GREEN = 1;
+    public static final int STATE_RED = LightPhase.RED.value;
+    public static final int STATE_GREEN = LightPhase.GREEN.value;
+    private static final int STATE_OFF = LightPhase.OFF.value;
 
     // crosshair constraints (center-coordinates relative to layoutContainer)
     public static final float CROSSHAIR_X_MIN = .3f;
@@ -83,13 +82,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     private float crossHairX;
     private float crossHairY;
-    private float crossHairWidth;
+    private float crossHairCenterToLight;
 
-    private View[] cross = new View[2];
-
-
-    private CompoundButton[] phaseSelect = new CompoundButton[2];
-    private BadgeDrawable[] badges = new BadgeDrawable[2];
     private Button exitButton;
     private TextView txtCaption;
     private RelativeLayout rl;
@@ -99,7 +93,10 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     // use STATE_GREEN or STATE_RED as index to access the corresponding snapshot
     // so index 0 is for red-snapshot, index 1 for green
-    private final Photo[] snapshots = new Photo[2];
+    private View[] cross = new View[3];
+    private CompoundButton[] phaseSelect = new CompoundButton[3];
+    private BadgeDrawable[] badges = new BadgeDrawable[3];
+    private final Photo[] snapshots = new Photo[3];
 
     private SensorManager mSensorManager;
     private Sensor accelerometer;
@@ -109,6 +106,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     private final TakePictureStateMachine stateMachine = new TakePictureStateMachine(this);
     private boolean locationPermission;
+    private LightPhase latestPhase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,19 +123,24 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         txtCaption = (TextView) findViewById(R.id.takePicture_caption);
 
 
-        int[] ids = new int[]{R.id.takePicture_redSelect, R.id.takePicture_greenSelect,};
-        for (int phase = 0; phase < 2; phase++) {
+        int[] ids = new int[]{
+                R.id.takePicture_redSelect,
+                R.id.takePicture_greenSelect,
+                R.id.takePicture_offSelect,
+        };
+        for (int phase = 0; phase < 3; phase++) {
 
             // state-button animation:
             final Animation shrink = AnimationUtils.loadAnimation(this, R.anim.phaseselect_shrink);
             final Animation grow = AnimationUtils.loadAnimation(this, R.anim.phaseselect_grow);
 
             CompoundButton b = (CompoundButton) findViewById(ids[phase]);
+            b.setTag(LightPhase.fromValue(phase));
             b.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int phase = MiscUtils.indexOf(phaseSelect, v);
-                    if (!stateMachine.switchPhase(LightPhase.fromValue(phase)))
+                    LightPhase phase = (LightPhase) v.getTag();
+                    if (!stateMachine.switchPhase(phase))
                         v.startAnimation(grow);
                 }
             });
@@ -301,7 +304,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
         bmp = MiscUtils.rotateImage(bmp, 90);
 
-        final LightPhase phase = stateMachine.state == STATE_RED ? RED : GREEN;
+        final LightPhase phase = LightPhase.fromValue(stateMachine.state);
 
         Location loc = null;
         if (locationService != null && locationService.canGetLocation())
@@ -312,10 +315,21 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             gyro = motionService.getPitch();
 
 
-        //TODO: fix lightPosition: consider the size of the corsair
         // if this is a red picture the light is a little above
         // if it's a green picture it's bellow the crossHair center
-        PointF crossLayout = new PointF(crossHairX, crossHairY);
+        float shiftY = 0;
+        switch (phase) {
+            case RED:
+                shiftY = -crossHairCenterToLight;
+                break;
+            case GREEN:
+                shiftY = crossHairCenterToLight;
+                break;
+            case OFF:
+                shiftY = 0;
+                break;
+        }
+        PointF crossLayout = new PointF(crossHairX, crossHairY + shiftY / camPreview.getZoom());
         PointF crossImage = camPreview.translateLayoutToImage(crossLayout);
         Log.d(TAG, "translate crosshair: {0} -> {1}", crossLayout, crossImage);
 
@@ -370,12 +384,12 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         float density = getApplicationContext().getResources().getDisplayMetrics().density;
 
-        int viewHeight = (int) (50 * density) * 2;
-        int viewWidth = (int) (50 * density);
+        int viewHeight = dp(50 * 2, density);
+        int viewWidth = dp(50, density);
 
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewWidth, viewHeight);
-        params.leftMargin = (int) (parentRect.width() * x - viewWidth / 2);
-        params.topMargin = (int) (parentRect.height() * y - viewHeight / 2);
+        params.leftMargin = (int) (parentRect.width() * x - (float) viewWidth / 2);
+        params.topMargin = (int) (parentRect.height() * y - (float) viewHeight / 2);
 
         if (crosshairView == null) {
             LayoutInflater inflater = this.getLayoutInflater();
@@ -384,6 +398,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
             this.cross[STATE_RED] = crosshairView.findViewById(R.id.takePicture_redCross);
             this.cross[STATE_GREEN] = crosshairView.findViewById(R.id.takePicture_greenCross);
+            this.cross[STATE_OFF] = new View(this);
         } else {
             crosshairView.setLayoutParams(params);
         }
@@ -391,11 +406,12 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         // set pivoting, important for zoom and camera-focus
         camPreview.setPivotRelative(new PointF(x, y));
 
-        //remember posiction of the cross
+        //remember position of the cross
         this.crossHairX = x;
         this.crossHairY = y;
-        // size relative to parent_width
-        this.crossHairWidth = (float) viewWidth / parentRect.width();
+
+        // distance between light-position (colored cross) and center of the crosshair-border (coordinates specified by parameters x and y)
+        this.crossHairCenterToLight = (float) viewHeight / parentRect.height() / 4;
     }
 
 
@@ -444,14 +460,15 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
      */
     private void notifyNextPhase(LightPhase lightphase) {
         int phase = lightphase.value;
-        int otherPhase = LightPhase.toggle(lightphase).value;
 
         this.phaseSelect[phase].setChecked(true);
-        phaseSelect[otherPhase].setChecked(false);
         cross[phase].setVisibility(View.VISIBLE);
-        cross[otherPhase].setVisibility(View.INVISIBLE);
         txtCaption.setText(getString(R.string.fotografieren, lightphase.getGermanText()));
-
+        if (latestPhase != null) {
+            phaseSelect[latestPhase.value].setChecked(false);
+            cross[latestPhase.value].setVisibility(View.INVISIBLE);
+        }
+        this.latestPhase = lightphase;
     }
 
     /**
@@ -553,7 +570,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     }
 
     public void onExitButtonClick(View view) {
-        stateMachine.goToSubmit();
+        stateMachine.leave();
     }
 
     public void onInfoButtonPressed(View view) {
@@ -614,23 +631,20 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             // show visual feedback, that the snapshot was taken
             owner.notifySnapshotTaken(snapshot);
 
-            // decide what to do next
-            switch (this.state) {
-                case STATE_RED:
-                    this.switchPhase(GREEN);
-                    break;
-                case STATE_GREEN:
-                    goToSubmit();
-            }
+//            // decide what to do next
+//            switch (this.state) {
+//                case STATE_RED:
+//                    this.switchPhase(GREEN);
+//                    break;
+//                case STATE_GREEN:
+//                    leave();
+//            }
         }
 
-        void goToSubmit() {
-            if (owner.snapshots[STATE_RED] == null && owner.snapshots[STATE_GREEN] == null) {
-                // no snapshots were taken at all
-                Toast.makeText(TakePictureActivity.this.getApplicationContext(), R.string.toast_snapshotNotTaken, Toast.LENGTH_SHORT).show();
-            } else {
-                this.owner.leave();
-            }
+        void leave() {
+
+            this.owner.leave();
+
         }
 
         void discard() {

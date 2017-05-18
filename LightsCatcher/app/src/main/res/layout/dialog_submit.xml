@@ -2,21 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
+    android:orientation="vertical">
 
-    <TextView
-    android:id="@+id/submit_txt_center"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    />
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_weight="1"
-        >
+        android:layout_weight="1">
 
         <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
             android:id="@+id/submit_photoView"
@@ -27,18 +20,17 @@
             android:id="@+id/submit_crossHair"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            />
 
     </FrameLayout>
 
     <LinearLayout
-        android:layout_marginLeft="5dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:orientation="horizontal"
-        android:gravity="bottom"
-        >
+        android:layout_gravity="bottom"
+        android:layout_marginLeft="5dp"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
@@ -50,8 +42,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:orientation="horizontal"
-            android:layout_margin="3dp">
+            android:layout_margin="3dp"
+            android:orientation="horizontal">
 
 
             <RadioButton
@@ -64,8 +56,7 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/phase_toggle_red"
                 android:button="@android:color/transparent"
-                android:gravity="center"
-                android:tag="RED"/>
+                android:gravity="center" />
 
 
             <RadioButton
@@ -78,8 +69,7 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/phase_toggle_green"
                 android:button="@android:color/transparent"
-                android:gravity="center"
-                android:tag="GREEN"/>
+                android:gravity="center" />
 
             <RadioButton
                 android:id="@+id/submit_offSelect"
@@ -91,9 +81,12 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/phase_toggle_off"
                 android:button="@android:color/transparent"
-                android:gravity="center"
-                android:tag="OFF"/>
+                android:gravity="center" />
         </RadioGroup>
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/submit_txt_center"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
 </LinearLayout>

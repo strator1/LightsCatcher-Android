@@ -261,4 +261,8 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
         // relative layout:
         return new PointF((float) (x / mPreviewSize.width), (float) (y / mPreviewSize.height));
     }
+
+    public float getZoom() {
+        return mScale;
+    }
 }

@@ -22,14 +22,14 @@ public enum LightPhase {
     public static LightPhase fromValue(int value) {
         return array[value];
     }
-    public String getGermanText(){
+    public String   getGermanText(){
         switch (value) {
             case 0:
                 return "Rot-Phase";
             case 1:
                 return "Grün-Phase";
             default:
-                return Integer.toString(value);
+                return "Ampel";
         }
     }
 
