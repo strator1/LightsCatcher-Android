@@ -108,8 +108,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private MotionService motionService;
 
     private final TakePictureStateMachine stateMachine = new TakePictureStateMachine(this);
-    private Animation grow;
-    private Animation shrink;
     private boolean locationPermission;
 
     @Override
@@ -126,24 +124,33 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         exitButton = (Button) findViewById(R.id.takePicture_exitBtn);
         txtCaption = (TextView) findViewById(R.id.takePicture_caption);
 
-        // state-button animation:
-        shrink = AnimationUtils.loadAnimation(this, R.anim.phaseselect_shrink);
-        grow = AnimationUtils.loadAnimation(this, R.anim.phaseselect_grow);
 
-
-        CompoundButton.OnClickListener onClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int phase = MiscUtils.indexOf(phaseSelect, v);
-                if (!stateMachine.switchPhase(LightPhase.fromValue(phase)))
-                    v.startAnimation(grow);
-            }
-        };
         int[] ids = new int[]{R.id.takePicture_redSelect, R.id.takePicture_greenSelect,};
         for (int phase = 0; phase < 2; phase++) {
 
+            // state-button animation:
+            final Animation shrink = AnimationUtils.loadAnimation(this, R.anim.phaseselect_shrink);
+            final Animation grow = AnimationUtils.loadAnimation(this, R.anim.phaseselect_grow);
+
             CompoundButton b = (CompoundButton) findViewById(ids[phase]);
-            b.setOnClickListener(onClickListener);
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int phase = MiscUtils.indexOf(phaseSelect, v);
+                    if (!stateMachine.switchPhase(LightPhase.fromValue(phase)))
+                        v.startAnimation(grow);
+                }
+            });
+            b.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        buttonView.startAnimation(grow);
+                    } else {
+                        buttonView.startAnimation(shrink);
+                    }
+                }
+            });
             try {
                 this.badges[phase] = createBadge(b);
             } catch (Exception ex) {
@@ -238,7 +245,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onPause() {
-            if (LOG) Log.d(TAG, "onPause");
+        if (LOG) Log.d(TAG, "onPause");
         super.onPause();
 
         locationService.stopListening();
@@ -382,7 +389,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
 
         // set pivoting, important for zoom and camera-focus
-        camPreview.setPivotRelative(new PointF(x,y));
+        camPreview.setPivotRelative(new PointF(x, y));
 
         //remember posiction of the cross
         this.crossHairX = x;
@@ -444,8 +451,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         cross[phase].setVisibility(View.VISIBLE);
         cross[otherPhase].setVisibility(View.INVISIBLE);
         txtCaption.setText(getString(R.string.fotografieren, lightphase.getGermanText()));
-        phaseSelect[phase].startAnimation(grow);
-        phaseSelect[otherPhase].startAnimation(shrink);
+
     }
 
     /**
@@ -466,8 +472,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private void notifyReset() {
         badges[0].setCount(0);
         badges[1].setCount(0);
-
-        phaseSelect[0].startAnimation(grow);
     }
 
     private void leave() {

@@ -4,20 +4,19 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     >
-    <!--android:layout_marginBottom="20dp"-->
-    <!--android:layout_marginLeft="5dp"-->
-    <!--android:layout_marginRight="5dp"-->
-    <!--android:layout_marginTop="20dp"-->
 
     <TextView
-        android:id="@+id/submit_txt_center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        />
+    android:id="@+id/submit_txt_center"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    />
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="1"
+        >
 
         <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
             android:id="@+id/submit_photoView"
@@ -31,5 +30,70 @@
             android:layout_gravity="center" />
 
     </FrameLayout>
+
+    <LinearLayout
+        android:layout_marginLeft="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Ampelphase:" />
+
+        <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal"
+            android:layout_margin="3dp">
+
+
+            <RadioButton
+                android:id="@+id/submit_redSelect"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/phase_toggle_red"
+                android:button="@android:color/transparent"
+                android:gravity="center"
+                android:tag="RED"/>
+
+
+            <RadioButton
+                android:id="@+id/submit_greenSelect"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/phase_toggle_green"
+                android:button="@android:color/transparent"
+                android:gravity="center"
+                android:tag="GREEN"/>
+
+            <RadioButton
+                android:id="@+id/submit_offSelect"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/phase_toggle_off"
+                android:button="@android:color/transparent"
+                android:gravity="center"
+                android:tag="OFF"/>
+        </RadioGroup>
+    </LinearLayout>
 
 </LinearLayout>

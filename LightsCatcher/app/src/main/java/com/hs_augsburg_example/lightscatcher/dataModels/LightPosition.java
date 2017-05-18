@@ -42,6 +42,10 @@ public class LightPosition {
         return LightPhase.fromValue(this.phase);
     }
 
+    public void setPhase(LightPhase phase) {
+        this.phase = phase.value;
+    }
+
     /**
      * This List makes sure that the most relevant {@link LightPosition} is always at index 0
      */

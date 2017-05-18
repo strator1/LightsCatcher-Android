@@ -11,11 +11,17 @@ import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.CompoundButton;
+import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.hs_augsburg_example.lightscatcher.R;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
@@ -41,7 +47,7 @@ public class SubmitDialog extends DialogFragment {
     private SubsamplingScaleImageView photoView;
     private LightPosition mCurrentPos;
     private Crosshair centerCross;
-
+    private RadioButton[] phaseButtons = new RadioButton[3];
 
     public interface SubmitDialogListener {
 
@@ -148,7 +154,7 @@ public class SubmitDialog extends DialogFragment {
         initView(view);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
-                .setTitle("Markieren")
+                .setTitle("Licht Markieren:")
                 .setNegativeButton("Verwerfen", negativeAction)
                 .setPositiveButton("Absenden", positiveAction)
                 .setView(view);
@@ -159,6 +165,11 @@ public class SubmitDialog extends DialogFragment {
 
     void initView(View root) {
         final Photo photo = mPhoto;
+
+        phaseButtons[0] = initButton(root, R.id.submit_redSelect, LightPhase.RED);
+        phaseButtons[1] = initButton(root, R.id.submit_greenSelect, LightPhase.GREEN);
+        phaseButtons[2] = initButton(root, R.id.submit_offSelect, LightPhase.OFF);
+
         if (photo != null) {
             final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) root.findViewById(R.id.submit_photoView);
             if (photoView == null) {
@@ -175,7 +186,7 @@ public class SubmitDialog extends DialogFragment {
             final float h = photo.bitMap.getHeight();
             float x = (float) (w * pos.x);
             float y = (float) (h * pos.y);
-//            photoView.setScaleAndCenter(2, new PointF(x, y));
+            photoView.setScaleAndCenter(2, new PointF(x, y));
 
             centerCross = (Crosshair) root.findViewById(R.id.submit_crossHair);
             if (centerCross == null) {
@@ -198,15 +209,57 @@ public class SubmitDialog extends DialogFragment {
                     txtCenter.setText(d.format(pointF.x) + ";" + d.format(pointF.y) + "  " + f.format(pointF.x / w) + ";" + f.format(pointF.y / h));
                 }
             });
+
+
         }
+    }
+
+    RadioButton initButton(View root, int btnId, LightPhase phase) {
+        RadioButton btn = (RadioButton) root.findViewById(btnId);
+        btn.setTag(phase);
+
+        // state-button animation:
+        final Animation shrink = AnimationUtils.loadAnimation(this.getContext(), R.anim.phaseselect_shrink);
+        final Animation grow = AnimationUtils.loadAnimation(this.getContext(), R.anim.phaseselect_grow);
+
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LightPhase phase = (LightPhase) v.getTag();
+                // set data
+                if (mPhoto != null && mCurrentPos != null) {
+                    mCurrentPos.setPhase(phase);
+                }
+
+                // update UI
+                updatePhase(phase);
+            }
+        });
+        btn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                Log.d(TAG, buttonView.getTag() + ": " + String.valueOf(buttonView.isChecked()));
+
+                if (isChecked) {
+                    buttonView.startAnimation(grow);
+                } else {
+                    buttonView.startAnimation(shrink);
+                }
+            }
+        });
+        return btn;
     }
 
     void updatePhase() {
         LightPosition pos = mCurrentPos;
         if (pos == null) return;
+        updatePhase(pos.getPhase());
+    }
+
+    void updatePhase(LightPhase phase) {
 
         int color;
-        switch (pos.getPhase()) {
+        switch (phase) {
             case RED:
                 color = 0x88FF0000;
                 break;

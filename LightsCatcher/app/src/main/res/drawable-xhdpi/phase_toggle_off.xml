@@ -7,13 +7,13 @@
                     <stroke
                         android:width="2dp"
                         android:color="#fa2" />
-                    <solid android:color="#ee2222" />
+                    <solid android:color="#222" />
                 </shape>
 
             </item>
             <item android:state_checked="false">
                 <shape android:shape="oval">
-                    <solid android:color="#a33" />
+                    <solid android:color="#444" />
                 </shape>
             </item>
         </selector>
