@@ -25,16 +25,15 @@
         android:textSize="20dp"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <LinearLayout
         android:layout_width="50dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintRight_toRightOf="parent"
         android:layout_above="@+id/take_picture_bottom_area"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_margin="2dp">
+        android:layout_alignParentRight="true"
+        android:layout_margin="3dp"
+        android:orientation="vertical"
+        app:layout_constraintRight_toRightOf="parent">
 
         <Button
             android:id="@+id/button2"
@@ -42,12 +41,12 @@
             android:layout_height="wrap_content"
             android:background="@drawable/btn_border"
             android:onClick="zoomIn_Click"
-            android:text="+"
-            android:textColor="#eee"
             android:shadowColor="@android:color/black"
-            android:shadowRadius="5"
             android:shadowDx="1"
-            android:shadowDy="1"/>
+            android:shadowDy="1"
+            android:shadowRadius="5"
+            android:text="+"
+            android:textColor="#eee" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -64,14 +63,14 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="zoomOut_Click"
             android:background="@drawable/btn_border"
-            android:text="-"
-            android:textColor="#eee"
+            android:onClick="zoomOut_Click"
             android:shadowColor="@android:color/black"
-            android:shadowRadius="5"
             android:shadowDx="1"
-            android:shadowDy="1"/>
+            android:shadowDy="1"
+            android:shadowRadius="5"
+            android:text="-"
+            android:textColor="#eee" />
 
     </LinearLayout>
 
@@ -104,7 +103,6 @@
                 android:button="@android:color/transparent"
                 android:gravity="center" />
 
-
             <RadioButton
                 android:id="@+id/takePicture_greenSelect"
                 android:layout_width="35dp"
@@ -136,41 +134,56 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_centerInParent="true"
-            android:layout_marginLeft="20dp"
             android:layout_gravity="center"
+            android:layout_marginLeft="20dp"
             android:foregroundGravity="center"
             android:onClick="onCaptureButtonPressed"
             app:srcCompat="@android:drawable/ic_menu_camera" />
-
-
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:layout_margin="8dp">
+            android:layout_centerVertical="true">
 
-            <Button
-                android:id="@+id/takePicture_exitBtn"
+            <ImageButton
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_margin="3dp"
                 style="@style/Widget.AppCompat.Button.Borderless"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
+                android:background="@null"
+                android:onClick="gamble_Click"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_gamble" />
 
-                android:background="@drawable/ic_forward"
-                android:gravity="center_horizontal"
-                android:onClick="onExitButtonClick" />
 
-            <TextView
+            <LinearLayout
+                android:id="@+id/takePicture_exitLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Fertig!"
-                android:textColor="#ccc"/>
-        </LinearLayout>
 
+                android:layout_margin="8dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/takePicture_exitBtn"
+                    style="@style/Widget.AppCompat.Button.Borderless"
+                    android:layout_width="55dp"
+                    android:layout_height="55dp"
+                    android:background="@drawable/ic_forward"
+                    android:gravity="center_horizontal"
+                    android:onClick="onExitButtonClick" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Fertig!"
+                    android:textColor="#ccc" />
+            </LinearLayout>
+
+        </LinearLayout>
 
     </RelativeLayout>
 

@@ -122,7 +122,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         exitButton = (Button) findViewById(R.id.takePicture_exitBtn);
         txtCaption = (TextView) findViewById(R.id.takePicture_caption);
 
-
         int[] ids = new int[]{
                 R.id.takePicture_redSelect,
                 R.id.takePicture_greenSelect,
@@ -176,9 +175,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             @Override
             public void run() {
                 // this has to wait until the layout-process has finished for the first time:
-                // generate crosshair position
-                // center coordinates, relative to parent_view)
-
                 setRandomCrosshairView();
                 stateMachine.switchPhase(RED);
             }
@@ -459,6 +455,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
      * @param lightphase The desired phase.
      */
     private void notifyNextPhase(LightPhase lightphase) {
+
         int phase = lightphase.value;
 
         this.phaseSelect[phase].setChecked(true);
@@ -491,6 +488,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         badges[1].setCount(0);
     }
 
+
     private void leave() {
         this.finish();
         Intent intent = new Intent(TakePictureActivity.this, FinishActivity.class);
@@ -513,18 +511,19 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             if (LOG) Log.d(TAG, "submitCommitted");
 
             stateMachine.snapshotCommitted(snapshot);
-            completed();
+            dialogCompleted();
         }
 
         @Override
         public void submitDiscarded() {
             if (LOG) Log.d(TAG, "submitDiscarded");
-            completed();
+            dialogCompleted();
         }
 
-        public void completed() {
+        public void dialogCompleted() {
             // prepare camera for next picture
             camera.startPreview();
+            setRandomCrosshairView();
         }
 
     };
@@ -596,6 +595,10 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         camPreview.zoomOut();
     }
 
+    public void gamble_Click(View view) {
+        setRandomCrosshairView();
+    }
+
     /**
      * This class manages the workflow of the {@link TakePictureActivity}.
      */
@@ -631,14 +634,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             // show visual feedback, that the snapshot was taken
             owner.notifySnapshotTaken(snapshot);
 
-//            // decide what to do next
-//            switch (this.state) {
-//                case STATE_RED:
-//                    this.switchPhase(GREEN);
-//                    break;
-//                case STATE_GREEN:
-//                    leave();
-//            }
         }
 
         void leave() {
