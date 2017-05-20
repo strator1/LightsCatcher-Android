@@ -146,10 +146,10 @@
     <string name="title_activity_help">Hilfe</string>
     <string name="toast_snapshotNotTaken">Bitte erst mindestens ein Foto schießen!</string>
     <plurals name="home_txt_uploadCount">
-        <item quantity="one">%d ausstehender Upload.</item>
-        <item quantity="other">%d ausstehende Uploads.</item>
+        <item quantity="one">%d ausstehender Upload</item>
+        <item quantity="other">%d ausstehende Uploads</item>
     </plurals>
     <string name="home_txt_uploading">Upload läuft...</string>
-    <string name="home_txt_clickForUpload">Hier tippen, wenn\ndu wieder online bist.</string>
+    <string name="home_txt_clickForUpload">Hier tippen, wenn\nDu wieder online bist.</string>
 
 </resources>
