@@ -35,11 +35,6 @@ public class Photo {
     public long createdAt;
 
     /**
-     * Timestamp - human readable
-     */
-    public String timeStamp;
-
-    /**
      * position(s) of the traffic-light(s) relative to image-dimensions
      */
     public LightPosition.List lightPositions = new LightPosition.List();
@@ -57,14 +52,22 @@ public class Photo {
     public String imageUrl;
 
     /**
-     * A unique code for this app-version. Useful to identify the source of malformed data.
+     * A unique code for this device. Useful to identify the source of malformed data.
      */
     public String fingerPrint;
+
+    /**
+     * version of LightsCatcher app
+     */
+    public int appVersionCode;
 
     public String gyroPosition;
     public String longitude;
     public String latitude;
+    public String group;
 
+    @Exclude
+    public LightGroup groupRef;
 
     public Photo() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
@@ -74,14 +77,15 @@ public class Photo {
         Photo p = new Photo();
         p.id = UUID.randomUUID().toString().toUpperCase();
         p.createdAt = System.currentTimeMillis();
-        p.timeStamp = new Date(p.createdAt).toGMTString();
         p.fingerPrint = App.getFingerprint();
+        p.appVersionCode = App.getVersionCode();
         return new Builder(p);
     }
 
     /**
      * Ensures that this {@link Photo} has correct values. Otherwise throws a {@link IllegalStateException}
      */
+    @Exclude
     public void validate() {
         // check required fields.
         if (user == null)
@@ -92,17 +96,12 @@ public class Photo {
             throw new IllegalStateException("Photo.bitMap was null but is required.");
         if (createdAt == 0)
             throw new IllegalStateException("Photo.createdAt was not set but is required.");
-        if (timeStamp == null)
-            throw new IllegalStateException("Photo.timeStamp was null but is required.");
         if (credits == 0)
             throw new IllegalStateException("Photo.credits was 0. C'mon, give him some credits.");
         if (lightPositions.size() == 0)
             throw new IllegalStateException("Photo.lightPositions was empty but is should contain at least one element.");
         if (lightPositions.size() != lightsCount)
             throw new IllegalStateException("Photo.lightsCount did not match the size of the list.");
-        if (fingerPrint == null) {
-            throw new IllegalStateException("Photo.fingerPrint was null but is required.");
-        }
 
         // check each position
         for (LightPosition p : lightPositions) {
@@ -168,6 +167,7 @@ public class Photo {
             this.setUser(UserInformation.shared.getUserId());
             return this;
         }
+
     }
 
 }

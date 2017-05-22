@@ -9,9 +9,10 @@ import android.content.SharedPreferences;
 
 public class UserPreference {
 
-    final static String IS_FIRST_CAPTURE_KEY = "firstPic";
-    final static String IS_FIRST_TAGGIN_KEY = "firstTag";
-    final static String IS_USER_BANNED = "isUserBanned";
+    public final static String IS_FIRST_CAPTURE_KEY = "firstPic";
+    public final static String IS_FIRST_TAGGIN_KEY = "firstTag";
+    public final static String IS_USER_BANNED = "isUserBanned";
+
 
     public static boolean isFirstCapture(Context ctx) {
         SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
@@ -51,5 +52,16 @@ public class UserPreference {
 
         editor.putBoolean(IS_USER_BANNED, true).apply();
         return true;
+    }
+
+    public static boolean shouldShowAlert(Context ctx, DialogKey key) {
+        SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        return preferences.getBoolean(key.val, true);
+    }
+
+    public static void neverShowAgain(Context ctx, DialogKey key, boolean neverShowAgain) {
+        SharedPreferences preferences = ctx.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(key.val, !neverShowAgain).apply();
     }
 }

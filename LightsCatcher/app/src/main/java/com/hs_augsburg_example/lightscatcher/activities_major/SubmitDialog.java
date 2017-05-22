@@ -46,7 +46,6 @@ public class SubmitDialog extends DialogFragment {
     private SubsamplingScaleImageView photoView;
     private LightPosition mCurrentPos;
     private Crosshair centerCross;
-    private RadioButton[] phaseButtons = new RadioButton[3];
 
     public interface SubmitDialogListener {
 
@@ -165,10 +164,6 @@ public class SubmitDialog extends DialogFragment {
     void initView(View root) {
         final Photo photo = mPhoto;
 
-        phaseButtons[0] = initButton(root, R.id.submit_redSelect, LightPhase.RED);
-        phaseButtons[1] = initButton(root, R.id.submit_greenSelect, LightPhase.GREEN);
-        phaseButtons[2] = initButton(root, R.id.submit_offSelect, LightPhase.OFF);
-
         if (photo != null) {
             final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) root.findViewById(R.id.submit_photoView);
             if (photoView == null) {
@@ -176,6 +171,8 @@ public class SubmitDialog extends DialogFragment {
                 return;
             }
             photoView.setPanLimit(PAN_LIMIT_CENTER);
+            photoView.setMinScale(1f);
+            photoView.setMaxScale(3f);
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
             this.photoView = photoView;
 
@@ -193,22 +190,6 @@ public class SubmitDialog extends DialogFragment {
                 return;
             }
             setTargetPosition(photo.lightPositions.getMostRelevant());
-
-            final TextView txtCenter = (TextView) root.findViewById(R.id.submit_txt_center);
-            photoView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
-                @Override
-                public void onScaleChanged(float v, int i) {
-
-                }
-
-                @Override
-                public void onCenterChanged(PointF pointF, int i) {
-                    DecimalFormat d = new DecimalFormat("#");
-                    DecimalFormat f = new DecimalFormat("#.##");
-                    txtCenter.setText(d.format(pointF.x) + ";" + d.format(pointF.y) + "  " + f.format(pointF.x / w) + ";" + f.format(pointF.y / h));
-                }
-            });
-
 
         }
     }
@@ -245,11 +226,7 @@ public class SubmitDialog extends DialogFragment {
 
     private void setTargetPosition(LightPosition pos) {
         mCurrentPos = pos;
-        setPhase(pos.phase);
-    }
-
-    private void setPhase(int phase) {
-        phaseButtons[phase].setChecked(true);
+        updatePhase(pos.getPhase());
     }
 
 

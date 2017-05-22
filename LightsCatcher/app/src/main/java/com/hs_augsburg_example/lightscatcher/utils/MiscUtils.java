@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.util.DisplayMetrics;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -11,7 +12,7 @@ import java.util.Random;
  */
 
 public class MiscUtils {
-    public static float randomFloat(Random random,float min, float max) {
+    public static float randomFloat(Random random, float min, float max) {
         final double d = max - min;
         return (float) (min + d * random.nextDouble());
     }
@@ -34,12 +35,21 @@ public class MiscUtils {
 
     /**
      * calculates device-independent dimensions in actual pixels
+     *
      * @param value
      * @param density
      * @return
      */
     public static int dp(int value, float density) {
         return (int) (value * density);
+    }
+
+    public static <T> ArrayList<T> newArrayList(T... params) {
+        ArrayList<T> objects = new ArrayList<>();
+        for (T elem : params) {
+            objects.add(elem);
+        }
+        return objects;
     }
 
 }

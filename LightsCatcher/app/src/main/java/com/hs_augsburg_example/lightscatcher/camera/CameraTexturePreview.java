@@ -18,6 +18,10 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
 
+import static android.hardware.Camera.Parameters.FOCUS_MODE_AUTO;
+import static android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE;
+import static com.hs_augsburg_example.lightscatcher.utils.MiscUtils.newArrayList;
+
 /**
  * Created by quirin on 01.05.17.
  */
@@ -34,7 +38,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
     private float minScale = 1.0f;
     private ScaleGestureDetector mScaleDetector;
     private Point mSurfaceSize;
-    private PointF mPivotR;
+    private PointF mPivot;
     private Camera.Size mPictureSize;
     private Camera.Size mPreviewSize;
     private SurfaceTexture mSurface;
@@ -48,9 +52,19 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
     }
 
     public void setPivotRelative(PointF pivot) {
-        mPivotR = pivot;
+        mPivot = pivot;
     }
 
+//
+//    @Override
+//    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//        if (mPreviewSize == null) {
+//            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+//        } else {
+//            // it's necessary to swap height and width
+//            setMeasuredDimension(mPreviewSize.height, mPreviewSize.width);
+//        }
+//    }
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -90,41 +104,55 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
 
         Camera.Parameters params = cam.getParameters();
 
-        double aspect = (double) mSurfaceSize.x / mSurfaceSize.y;
-        mPictureSize = CameraUtil.chooseOptimalSize(params.getSupportedPictureSizes(), 1920, 1080, aspect);
+
+        mPictureSize = CameraUtil.chooseOptimalSize(params.getSupportedPictureSizes(), 2048, 1152, 2048, 2048);
         if (LOG) Log.d(TAG, "choose pictureSize: {0}x{1}", mPictureSize.width, mPictureSize.height);
 
-        aspect = (double) mPictureSize.height / mPictureSize.width;
-        mPreviewSize = CameraUtil.chooseOptimalSize(params.getSupportedPreviewSizes(), mSurfaceSize.y, mSurfaceSize.x, aspect);
+        mPreviewSize = CameraUtil.chooseOptimalSize(params.getSupportedPreviewSizes(), mSurfaceSize.x, mSurfaceSize.y, mSurfaceSize.x, mSurfaceSize.y);
         if (LOG) Log.d(TAG, "choose previewSize: {0}x{1}", mPreviewSize.width, mPreviewSize.height);
 
         params.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-//        params.setPreviewSize(1056,864);
         params.setPictureSize(mPictureSize.width, mPictureSize.height);
-//        params.setPictureSize(640,480);
 
         List<String> supportedFocusModes = params.getSupportedFocusModes();
 
-        if (LOG) Log.d(TAG, "supported focusmodes:");
-        forLoop:
-        for (String mode : supportedFocusModes) {
-            if (LOG) Log.d(TAG, '\t' + mode);
-            switch (mode) {
-                case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
-                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                    break forLoop;
-                case Camera.Parameters.FOCUS_MODE_AUTO:
-                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-                    break; // don't leave for loop because we might get the better continuous-picture-mode in next iterations
+        if (LOG) {
+            Log.d(TAG, "supported focusmodes:");
+            for (String mode : supportedFocusModes) {
+                if (LOG) Log.d(TAG, '\t' + mode);
             }
         }
+        if (supportedFocusModes.contains(FOCUS_MODE_AUTO))
+            params.setFocusMode(FOCUS_MODE_AUTO);
+        if (supportedFocusModes.contains(FOCUS_MODE_CONTINUOUS_PICTURE))
+            params.setFocusMode(FOCUS_MODE_CONTINUOUS_PICTURE);
 
-        cam.setParameters(params);
+
+
+//        if (params.getMaxNumFocusAreas() > 0) {
+//            Camera.Area focusArea = calculateFocusArea(mPivot);
+//            params.setFocusAreas(newArrayList(focusArea));
+//        }
+
         try {
             camera.setPreviewTexture(surfaceTexture);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        cam.setParameters(params);
+        this.invalidate();
+    }
+
+    private Camera.Area calculateFocusArea(PointF pivot) {
+        final int w = 100;
+        final int h = 200;
+
+
+        int left = (int) (pivot.x * 2000 - 1000 - w / 2);
+        int top = (int) (pivot.y * 2000 - 1000 - h / 2);
+        int right = left + w;
+        int bottom = top + h;
+        return new Camera.Area(new Rect(left, top, right, bottom), 1000);
     }
 
     public void setCamera(Camera camera) {
@@ -163,7 +191,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
 
         // calculate transformation matrix
         Matrix matrix = new Matrix();
-        matrix.setScale(mScale, mScale, mSurfaceSize.x * mPivotR.x, mSurfaceSize.y * mPivotR.y);
+        matrix.setScale(mScale, mScale, mSurfaceSize.x * mPivot.x, mSurfaceSize.y * mPivot.y);
         this.setTransform(matrix);
     }
 

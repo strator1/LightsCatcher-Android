@@ -20,9 +20,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.hs_augsburg_example.lightscatcher.dataModels.Light;
+import com.hs_augsburg_example.lightscatcher.dataModels.LightGroup;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
-import com.hs_augsburg_example.lightscatcher.dataModels.Record;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
@@ -47,12 +46,17 @@ public class PersistenceManager {
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
+    public static final boolean DATABASE = false;
+    public static final boolean STORAGE = false;
+
+
     public static final PersistenceManager shared = new PersistenceManager();
 
     static final String DATA_MODEL_VERSION = "v1_2_testing";
 
     //destination folder of lights database-entries
     private final String LIGHTS_DATA_PATH = "lights/" + DATA_MODEL_VERSION;
+    private final String LIGHTS_GROUP_PATH = "lightgroups";
     private final String USERS_DATA_PATH = "users";
 
     //destination for lights images
@@ -67,11 +71,12 @@ public class PersistenceManager {
     public final ConnectedMonitor connectedMonitor;
     public final UploadMonitor uploadMonitor;
     private Observer autoRetryActivator;
-
     private final FirebaseDatabase db;
+
     private final DatabaseReference root;
     private final DatabaseReference users;
     private final DatabaseReference lights;
+    private final DatabaseReference lights_groups;
 
     private final StorageReference lights_images;
     public final BackupStorage backupStorage;
@@ -86,6 +91,7 @@ public class PersistenceManager {
         root = db.getReference();
         users = root.child(USERS_DATA_PATH);
         lights = root.child(LIGHTS_DATA_PATH);
+        lights_groups = root.child(LIGHTS_GROUP_PATH);
         lights_images = FirebaseStorage.getInstance().getReference(LIGTS_STORAGE_PATH);
 
         uploadMonitor = new UploadMonitor();
@@ -122,28 +128,49 @@ public class PersistenceManager {
 
     public Task persist(User usr) {
         if (usr.uid == null) throw new IllegalArgumentException("User.uid was null.");
+        if (!DATABASE) return null;
         return users.child(usr.uid).setValue(usr);
     }
-
-    @Deprecated
-    public Task persist(Record rec) {
-        if (rec.id == null) throw new IllegalArgumentException("Record.id was null.");
-        return lights.child(rec.id).setValue(rec);
-    }
-
 
     public Task persist(Photo photo) {
         if (photo.id == null)
             throw new IllegalArgumentException("Photo.id was null but is required.");
+        if (!DATABASE) return null;
+        if (photo.groupRef != null && photo.groupRef.size() > 1)
+            try {
+                persist(photo.groupRef);
+            } catch (Exception ex) {
+                Log.e(TAG, ex);
+            }
+            else
+                if (LOG) Log.d(TAG,"skipping group with size <= 1");
 
         return lights.child(photo.id).setValue(photo);
     }
 
+    private Task persist(LightGroup group) {
+        if (LOG) Log.d(TAG,"persist LightGroup: size:" + group.size());
+
+        return lights_groups.child(group.id).setValue(group).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (LOG) Log.d(TAG, "lights_groups.onComplete");
+                if (task.getException() != null) {
+                    Log.e(TAG, task.getException());
+                }
+            }
+        });
+    }
+
     public TaskMonitor persistDataAndUploadPicture(Context ctx, Photo photo) {
         photo.validate();
-
+        if (!DATABASE) return null;
         // utility to track progress and status
         final TaskMonitor monitor = TaskMonitor.newInstance(ctx);
+
+        // upload photo to storage:
+        UploadTask uploadTask = uploadPicture(ctx, photo.id, photo.bitMap);
+        monitor.addTask("Foto hochgeladen", uploadTask);
 
         // write to database:
         Task persist = persist(photo);
@@ -155,14 +182,12 @@ public class PersistenceManager {
         Task updateUser = users.child(usr.uid).child("points").setValue(newPoints);
         monitor.addTask("Punkte vergeben", updateUser);
 
-        // upload photo to storage:
-        UploadTask uploadTask = uploadPicture(ctx, photo.id, photo.bitMap);
-        monitor.addTask("Foto hochgeladen", uploadTask);
 
         return monitor;
     }
 
     public UploadTask uploadPicture(Context ctx, final String imgId, Bitmap bmp) {
+        if (!STORAGE) return null;
         // this is the destination
         StorageReference ref = lights_images.child(imgId);
 
@@ -200,7 +225,8 @@ public class PersistenceManager {
      * @return all newly started upload tasks
      */
     public UploadTask[] retryPendingUploads(Context ctx) {
-        if (LOG)Log.d(TAG,"retryPendingUploads");
+        if (LOG) Log.d(TAG, "retryPendingUploads");
+        if (!STORAGE) return null;
         List<UploadTask> result = new ArrayList<>(1);
 
         if (!connectedMonitor.isConnected) {
@@ -230,7 +256,7 @@ public class PersistenceManager {
     }
 
     /**
-     * Indicates whether you should start an upload task or not, because an upload to the given ref is in progress
+     * Indicates whether  you should start an upload task or not, because an upload to the given ref is in progress
      *
      * @return true if no upload is currently active or if all active upload-tasks have failed. false if there is an active task in progress
      */
@@ -296,7 +322,6 @@ public class PersistenceManager {
         listenToImageUploadTask(ctx, uploadTask);
         return uploadTask;
     }
-
 
     private void listenToImageUploadTask(final Context ctx, final UploadTask task) {
         if (LOG) Log.d(TAG, "listenToImageUploadTask");
@@ -386,9 +411,10 @@ public class PersistenceManager {
     public class UploadMonitor extends Observable {
         int counter = 0;
 
-        synchronized void reset(){
+        synchronized void reset() {
             counter = 0;
         }
+
         public synchronized int countActiveTasks() {
             return counter;
         }

@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/take_picture_rl"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <!--android:padding="20dp">-->
+    android:layout_height="match_parent"
+    android:layout_gravity="center">
 
 
     <TextView
@@ -89,16 +89,14 @@
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:padding="10dp">
 
             <RadioButton
                 android:id="@+id/takePicture_redSelect"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:layout_marginBottom="15dp"
-                android:layout_marginLeft="15dp"
-                android:layout_marginRight="3dp"
-                android:layout_marginTop="18dp"
+                android:layout_margin="5dp"
                 android:background="@drawable/phase_toggle_red"
                 android:button="@android:color/transparent"
                 android:gravity="center" />
@@ -107,10 +105,7 @@
                 android:id="@+id/takePicture_greenSelect"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:layout_marginBottom="15dp"
-                android:layout_marginLeft="3dp"
-                android:layout_marginRight="3dp"
-                android:layout_marginTop="15dp"
+                android:layout_margin="5dp"
                 android:background="@drawable/phase_toggle_green"
                 android:button="@android:color/transparent"
                 android:gravity="center" />
@@ -119,10 +114,7 @@
                 android:id="@+id/takePicture_offSelect"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:layout_marginBottom="15dp"
-                android:layout_marginLeft="3dp"
-                android:layout_marginRight="15dp"
-                android:layout_marginTop="15dp"
+                android:layout_margin="5dp"
                 android:background="@drawable/phase_toggle_off"
                 android:button="@android:color/transparent"
                 android:gravity="center" />
@@ -130,7 +122,7 @@
         </RadioGroup>
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/take_picture_btn"
+            android:id="@+id/takePicture_btn_capture"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_centerInParent="true"
@@ -147,15 +139,15 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true">
 
-            <ImageButton
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                style="@style/Widget.AppCompat.Button.Borderless"
-                android:background="@null"
-                android:onClick="gamble_Click"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_gamble" />
+            <!--<ImageButton-->
+                <!--android:layout_width="50dp"-->
+                <!--android:layout_height="50dp"-->
+                <!--android:layout_margin="3dp"-->
+                <!--style="@style/Widget.AppCompat.Button.Borderless"-->
+                <!--android:background="@null"-->
+                <!--android:onClick="gamble_Click"-->
+                <!--android:layout_gravity="center"-->
+                <!--android:src="@drawable/ic_gamble" />-->
 
 
             <LinearLayout

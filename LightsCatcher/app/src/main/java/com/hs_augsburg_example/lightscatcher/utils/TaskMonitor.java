@@ -19,7 +19,6 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
     private static final String TAG = "TaskMonitor";
     private static final boolean LOG = Log.ENABLED && true;
 
-    private static TaskMonitor mostRecent;
     private static ArrayList<Tuple<String, Task<?>>> pendingTasks = new ArrayList<>();
     private final Context ctx;
 
@@ -27,13 +26,9 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
         this.ctx = ctx;
     }
 
-    public static TaskMonitor getMostRecent() {
-        return mostRecent;
-    }
 
     public static TaskMonitor newInstance(Context ctx) {
         TaskMonitor m = new TaskMonitor(ctx);
-        mostRecent = m;
         return m;
     }
 

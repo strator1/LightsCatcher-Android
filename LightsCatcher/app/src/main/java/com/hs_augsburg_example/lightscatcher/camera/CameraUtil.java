@@ -24,6 +24,7 @@ import java.util.List;
 
 public class CameraUtil {
     private static final String TAG = "CameraUtil";
+    private static final int MAX_PICTURE_SIZE = 2048;
 
     /**
      * Tests the app and the device to confirm that the code
@@ -132,9 +133,6 @@ public class CameraUtil {
         Camera.Size result = null;
 
         for (Camera.Size size : supportedSizes) {
-            if (Log.ENABLED)
-                Log.d("CAM", "\tpicSize: {0}x{1}; {2}", size.width, size.height, (double) size.height / size.width);
-
             if (result == null) {
                 result = size;
             }
@@ -147,45 +145,73 @@ public class CameraUtil {
         return result;
     }
 
-    // based on https://github.com/googlesamples/android-Camera2Basic/blob/master/Application/src/main/java/com/example/android/camera2basic/Camera2BasicFragment.java
-
     /**
-     * Given {@code choices} of {@code Size}s supported by a camera, chooses the smallest one whose
-     * width and height are at least as large as the respective requested values, and whose aspect
-     * ratio matches with the specified value.
+     * Given {@code choices} of {@code Size}s supported by a camera, chooses the biggest one whose
+     * width and height are smaller or equal to {@Code maxH} and {@Code maxW}, and whose aspect
+     * ratio matches with the specified value. If aspect ratio does not match, chooses the element
+     * whose aspect ratio differs as less as possible
      *
-     * @param aspect The aspect ratio
-     * @param choices     The list of sizes that the camera supports for the intended output class
-     * @param width       The minimum desired width
-     * @param height      The minimum desired height
-     * @return The optimal {@code Size}, or an arbitrary one if none were big enough
+     * @param choices The list of sizes that the camera supports for the intended output class
+     * @return The optimal {@code Size}
      */
-    public static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int width, int height, final double aspect) {
+    public static Camera.Size chooseOptimalSize(List<Camera.Size> choices, int preferedW, int preferedH, int maxW, int maxH) {
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Camera.Size> bigEnough = new ArrayList<Camera.Size>();
 
+        double aspect = (double)maxH / maxW;
+        long area = maxH * maxW;
 
         if (Log.ENABLED)
-            Log.d(TAG, "expecting aspect: {0}, minimum: {1}x{2}; {3}", aspect, width, height, (double) height / width);
+            Log.d(TAG, "expecting aspect: {0}, maximum: {1}x{2}", aspect, maxH, maxW);
+
+        // ensure that collection is sorted in equal direction on each device
+        Collections.sort(choices, new CompareSizesByArea());
+
+        double bestAspectDiff = Double.MAX_VALUE;
+        double bestAreaDiff = Double.MAX_VALUE;
+        Camera.Size bestAspectMatch = null;
+        Camera.Size bestAreaMatch = null;
+        double bestAspectAreaDiff = Double.MAX_VALUE;
+
         for (Camera.Size option : choices) {
             if (Log.ENABLED) {
                 double d = (double) option.height / option.width;
                 Log.d(TAG, "\t{0}x{1}; {2}", option.width, option.height, d);
             }
-            if (option.height == option.width * aspect &&
-                    option.width >= width && option.height >= height) {
-                bigEnough.add(option);
+            if (option.height > maxW || option.width > maxH) {
+                break; // max size reached
+            }
+
+
+            double areaDiff = Math.abs((area(option) - area));
+            if (areaDiff < bestAreaDiff) {
+                bestAreaDiff = areaDiff;
+                bestAreaMatch = option;
+            }
+
+            double diff = Math.abs((double) option.height / option.width - aspect);
+            if (diff <= bestAspectDiff) {
+                bestAspectDiff = diff;
+                bestAspectMatch = option;
+                bestAspectAreaDiff = areaDiff;
             }
         }
 
-        // Pick the smallest of those, assuming we found any
-        if (bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizesByArea());
+        // prefer best matching aspect but only if the area difference is not too big
+        if (bestAspectMatch != null && bestAspectAreaDiff <= (300)) {
+            return bestAreaMatch;
+        } else if (bestAreaMatch != null) {
+            return bestAreaMatch;
         } else {
             Log.e("CAM", "Couldn't find any suitable size");
-            return Collections.max(choices, new CompareSizesByArea());
+            return getPictureSizeWidthSmaller(maxW, choices);
         }
     }
+
+    static long area(Camera.Size size) {
+        return (long) size.width * size.height;
+    }
+
 
     static class CompareSizesByArea implements Comparator<Camera.Size> {
 

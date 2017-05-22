@@ -38,7 +38,6 @@ public class UserInformation extends Observable {
     private ValueEventListener currentUserListener;
     private DatabaseReference currentUserRef;
 
-
     private UserInformation() {
         this.mAuth = FirebaseAuth.getInstance();
         mAuth.addAuthStateListener(new AuthStateListener());
