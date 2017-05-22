@@ -87,28 +87,36 @@ public class SubmitDialog extends DialogFragment {
     }
 
     private final DialogInterface.OnClickListener positiveAction = new DialogInterface.OnClickListener() {
+        public boolean isDisabled;
+
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            Photo photo = mPhoto;
+            if (isDisabled == false) {
+                Photo photo = mPhoto;
 
-            // read out current light-position from photoview:
-            if (photoView != null) {
-                PointF center = photoView.getCenter();
-                LightPosition pos = photo.lightPositions.getMostRelevant();
-                if (pos != null) {
-                    pos.x = center.x / photo.bitMap.getWidth();
-                    pos.y = center.y / photo.bitMap.getHeight();
+                // read out current light-position from photoview:
+                if (photoView != null) {
+                    PointF center = photoView.getCenter();
+                    LightPosition pos = photo.lightPositions.getMostRelevant();
+                    if (pos != null) {
+                        pos.x = center.x / photo.bitMap.getWidth();
+                        pos.y = center.y / photo.bitMap.getHeight();
+                    }
                 }
-            }
 
-            Context appCtx = SubmitDialog.this.getActivity().getApplicationContext();
-            TaskMonitor monitor = PersistenceManager.shared.persistDataAndUploadPicture(appCtx, photo);
+                Context appCtx = SubmitDialog.this.getActivity().getApplicationContext();
+                TaskMonitor monitor = PersistenceManager.shared.persistDataAndUploadPicture(appCtx, photo);
 
-            if (mListener != null) {
-                mListener.submitCommitted(photo, monitor);
+                if (mListener != null) {
+                    mListener.submitCommitted(photo, monitor);
+                }
+
+                isDisabled = true;
             }
         }
     };
+
+
     private final DialogInterface.OnClickListener negativeAction = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
@@ -152,7 +160,7 @@ public class SubmitDialog extends DialogFragment {
         initView(view);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
-                .setTitle("Licht Markieren:")
+                .setTitle("Licht markieren:")
                 .setNegativeButton("Verwerfen", negativeAction)
                 .setPositiveButton("Absenden", positiveAction)
                 .setView(view);
