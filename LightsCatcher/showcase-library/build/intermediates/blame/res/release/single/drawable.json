@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\res\\merged\\release\\drawable\\cling_button_bg.xml",
+        "source": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\src\\main\\res\\drawable\\cling_button_bg.xml"
+    },
+    {
+        "merged": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\res\\merged\\release\\drawable\\button_normal.xml",
+        "source": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\src\\main\\res\\drawable\\button_normal.xml"
+    },
+    {
+        "merged": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\res\\merged\\release\\drawable\\button.xml",
+        "source": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\src\\main\\res\\drawable\\button.xml"
+    }
+]

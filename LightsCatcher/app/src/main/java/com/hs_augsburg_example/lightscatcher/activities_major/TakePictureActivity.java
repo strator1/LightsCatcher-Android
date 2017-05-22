@@ -308,7 +308,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         final LightPhase phase = context.phase;
 
 
-
         Location loc = null;
         if (locationService != null && locationService.canGetLocation())
             loc = locationService.getLocation();
@@ -345,13 +344,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         LightGroup lightGroup;
         int photoNum = context.getSnapshotCount();
         if (photoNum >= lightGroups.size()) {
-            if (LOG) Log.d(TAG,"create new lightGroup");
+            if (LOG) Log.d(TAG, "create new lightGroup");
             lightGroup = LightGroup.create();
             lightGroups.add(lightGroup);
-        }
-        else
-        {
-            if (LOG) Log.d(TAG,"use existing lightGroup");
+        } else {
+            if (LOG) Log.d(TAG, "use existing lightGroup");
             lightGroup = lightGroups.get(photoNum);
         }
 
@@ -394,7 +391,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         return badgeDrawable;
     }
 
-    private class CrosshairManager {
+    public class CrosshairManager {
         public final String TAG = "CrosshairManager";
 
         // crosshair constraints (center-coordinates relative to layoutContainer)
@@ -437,8 +434,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
 
         private PointF generateRandomPos() {
-            float x = MiscUtils.randomFloat(random, CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
-            float y = MiscUtils.randomFloat(random, CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
+            float x = MiscUtils.randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
+            float y = MiscUtils.randomFloat(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
             return new PointF(x, y);
         }
 
@@ -641,7 +638,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             return;
         }
         btnCapture.setEnabled(false);
-        Log.d(TAG,"active focus-mode: " +camera.getParameters().getFocusMode());
+        Log.d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
         camera.autoFocus(new Camera.AutoFocusCallback() {
             @Override
             public void onAutoFocus(boolean success, Camera camera) {
@@ -734,7 +731,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 //
 //                LightPhase nextPhase = getNextPhase();
 //                if (nextPhase != null)
-//                    if (UserPreference.shouldShowAlert(owner.getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT)) {
+//                    if (UserPreference.shouldShowDialog(owner.getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT)) {
 //                        maximumSnapshotAlertDialog(nextPhase);
 //                        return false;
 //                    } else {
@@ -773,7 +770,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 //            if (count >= MAX_SNAPSHOTS) {
 //
 //                LightPhase nextPhase = getNextPhase();
-//                if (UserPreference.shouldShowAlert(owner.getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT)) {
+//                if (UserPreference.shouldShowDialog(owner.getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT)) {
 //                    maximumSnapshotAlertDialog(nextPhase);
 //                } else {
 //                    if (nextPhase != null)

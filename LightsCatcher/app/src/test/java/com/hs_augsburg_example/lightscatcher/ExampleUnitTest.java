@@ -1,6 +1,7 @@
 package com.hs_augsburg_example.lightscatcher;
 
 import com.hs_augsburg_example.lightscatcher.activities_major.TakePictureActivity;
+import com.hs_augsburg_example.lightscatcher.utils.MiscUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +32,7 @@ public class ExampleUnitTest {
     @Test
     public void randomFloat() throws Exception {
         for (int i = 0; i < 1000; i++) {
-            float rnd = TakePictureActivity.randomFloat(min, max);
+            float rnd = MiscUtils.randomFloat(min, max);
 
             assertEquals(true, rnd >= min);
             assertEquals(true, rnd <= max);
@@ -43,8 +44,8 @@ public class ExampleUnitTest {
     @Parameterized.Parameters
     public static Collection primeNumbers() {
         return Arrays.asList(new Object[][]{
-                {TakePictureActivity.CROSSHAIR_X_MIN, TakePictureActivity.CROSSHAIR_X_MAX},
-                {TakePictureActivity.CROSSHAIR_Y_MIN, TakePictureActivity.CROSSHAIR_Y_MAX},
+                {TakePictureActivity.CrosshairManager.CROSSHAIR_X_MIN, TakePictureActivity.CrosshairManager.CROSSHAIR_X_MAX},
+                {TakePictureActivity.CrosshairManager.CROSSHAIR_Y_MIN, TakePictureActivity.CrosshairManager.CROSSHAIR_Y_MAX},
                 {0f, 1f},
                 {0f, .7f},
                 {.3f, 1f},

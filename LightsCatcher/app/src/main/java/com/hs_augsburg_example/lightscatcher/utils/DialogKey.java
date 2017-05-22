@@ -6,7 +6,7 @@ package com.hs_augsburg_example.lightscatcher.utils;
 
 public enum DialogKey {
 
-    MAXIMUM_SNAPSHOT_ALERT("MAXIMUM_SNAPSHOT_ALERT");
+    MAXIMUM_SNAPSHOT_ALERT("MAXIMUM_SNAPSHOT_ALERT"), HELP_HOME("HELP_HOME");
 
     public final String val;
 

@@ -12,7 +12,9 @@ import java.util.Random;
  */
 
 public class MiscUtils {
-    public static float randomFloat(Random random, float min, float max) {
+    static  final Random random = new Random();
+
+    public static float randomFloat( float min, float max) {
         final double d = max - min;
         return (float) (min + d * random.nextDouble());
     }
