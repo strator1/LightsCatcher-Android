@@ -505,10 +505,20 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 case 3:
                     showcaseView.setShowcase(new ViewTarget(findViewById(fab)), false);
                     showcaseView.setContentText("Mit den Button rechts unten gelangst du zur Kamera.\n\n Such dir eine Fußgängerampel und mach die ersten Punkte :)");
-                    showcaseView.hideButton();
+                    showcaseView.setButtonText("Schließen");
+                    RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    buttonParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                    buttonParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+                    buttonParams.setMargins(10, 10, 10, 10);
+                    showcaseView.setButtonPosition(buttonParams);
+
                     UserPreference.neverShowAgain(getApplicationContext(), SETTINGS_KEY, true);
                     break;
                 case 4:
+                default:
+                    showcaseView.hide();
+                    showcaseView = null;
+                    showcaseHandler = null;
             }
 
             counter++;

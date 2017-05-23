@@ -76,16 +76,6 @@ public class UserInformation extends Observable {
         }
     }
 
-    @Deprecated
-    public Task<Void> increaseUserPoints(int points) {
-        if (this.usrSnapshot == null) {
-            return null;
-        }
-
-        this.usrSnapshot.addToPoints(points);
-        return PersistenceManager.shared.persist(usrSnapshot);
-    }
-
     public String getUserId() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         return currentUser != null ? currentUser.getUid() : null;
@@ -97,9 +87,7 @@ public class UserInformation extends Observable {
 
     public void logout() {
         this.mAuth.signOut();
-
-// the auth listener will do the rest
-
+        // the auth listener will do the rest
     }
 
     public User getUserSnapshot() {
@@ -153,11 +141,8 @@ public class UserInformation extends Observable {
     }
 
     private void startListenToUser(final String uid) {
-        //Log.d(TAG,"startListenToUser; uid=" + uid);
-
         startListenToUserData(uid);
         startListenToUserBanned(uid);
-
 
     }
 
@@ -198,7 +183,7 @@ public class UserInformation extends Observable {
                     if (LOG) Log.d(TAG, "fetch user-info from Firebase, onDataChanged");
                     User user = dataSnapshot.getValue(User.class);
                     if (user == null) {
-                        // this happens when after a new user was created, and the snapshot was not submitted to the database
+                        // this happens after a new user was created, and the snapshot was not submitted to the database
                     } else {
                         user.uid = uid;
                         UserInformation.shared.setUserSnapshot(user);
@@ -208,7 +193,6 @@ public class UserInformation extends Observable {
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                     Log.e(TAG, "Failed to fetch user-info from Firebase. " + databaseError.getMessage());
-
                     UserInformation.shared.setUserSnapshot(null); // this snapshot is no longer valid
                 }
             };
