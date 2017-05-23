@@ -1,11 +1,16 @@
 package com.hs_augsburg_example.lightscatcher;
 
 import android.app.Application;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.support.annotation.NonNull;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 /**
@@ -25,12 +30,12 @@ public class App extends Application {
     public void onCreate() {
         if (Log.ENABLED) Log.d("App", "onCreate");
 
-        current = this;
 
         //Has to be called before using Firebase
         PersistenceManager.init();
         UserInformation.init();
 
+        current = this;
         super.onCreate();
     }
 
@@ -43,5 +48,9 @@ public class App extends Application {
             }
         }
         return vCode;
+    }
+
+    public static App getCurrent() {
+        return current;
     }
 }

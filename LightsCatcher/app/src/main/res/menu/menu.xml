@@ -6,11 +6,15 @@
         android:id="@+id/datenschutz"
         android:title="Datenschutzerklärung" />
     <item
-        android:id="@+id/help"
-        android:title="Hilfe" />
-    <item
         android:id="@+id/terms_of_use"
         android:title="Nutzungsbedingungen" />
+    <item
+        android:id="@+id/help"
+        android:title="Hilfe" />
+
+    <item
+        android:id="@+id/home_action_resetIntro"
+        android:title="Einleitung wiederholen"/>
     <item
         android:id="@+id/logout"
         android:title="Logout" />

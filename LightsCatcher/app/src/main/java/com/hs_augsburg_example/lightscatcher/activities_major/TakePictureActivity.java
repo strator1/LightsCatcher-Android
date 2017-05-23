@@ -390,7 +390,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
         btnCapture.setEnabled(false);
         Log.d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
-        switch (camera.getParameters().getFocusMode()){
+        switch (camera.getParameters().getFocusMode()) {
             case Camera.Parameters.FOCUS_MODE_AUTO:
             case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
                 camera.autoFocus(new Camera.AutoFocusCallback() {
@@ -449,7 +449,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         public void dialogCompleted() {
             // prepare camera for next picture
-            camera.startPreview();
+            if (camera != null)
+                camera.startPreview();
         }
 
     };
@@ -490,11 +491,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         try {
             camera = Camera.open(); // attempt to get a Camera instance
+            camera.setDisplayOrientation(90);
         } catch (Exception e) {
             // Camera is not available (in use or does not exist)
             Log.e(TAG, e);
         }
-        camera.setDisplayOrientation(90);
         return camera; // returns null if camera is unavailable
     }
 
@@ -882,8 +883,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
     }
 
-    private class ShowcaseHandler implements View.OnClickListener {
-        private static final String SETTINGS_KEY = "HELP_TAKE_PICTURE";
+    public class ShowcaseHandler implements View.OnClickListener {
+        public static final String SETTINGS_KEY = "HELP_TAKE_PICTURE";
 
         int counter = 0;
         private ShowcaseView showcaseView;

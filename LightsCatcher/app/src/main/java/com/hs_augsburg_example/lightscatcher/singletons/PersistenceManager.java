@@ -105,7 +105,7 @@ public class PersistenceManager {
      *
      * @param ctx
      */
-    public void startAutoRetry(final Context ctx) {
+    public void startAutoRecover(final Context ctx) {
         if (autoRetryActivator != null)
             return; // already listening
 

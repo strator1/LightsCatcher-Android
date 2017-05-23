@@ -1,6 +1,8 @@
 package com.hs_augsburg_example.lightscatcher.singletons;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -10,11 +12,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.hs_augsburg_example.lightscatcher.App;
+import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
+import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Observable;
 
 /**
@@ -36,7 +39,9 @@ public class UserInformation extends Observable {
     private User usrSnapshot;
     private FirebaseUser firebaseUsr;
     private ValueEventListener currentUserListener;
+    private ValueEventListener currentUserBannedListener;
     private DatabaseReference currentUserRef;
+    private DatabaseReference currentUserBannedRef;
 
     private UserInformation() {
         this.mAuth = FirebaseAuth.getInstance();
@@ -45,16 +50,29 @@ public class UserInformation extends Observable {
     }
 
     public static void init() {
-        // just to get the static contructor called in time
+        // just to get the static constructor called in time
     }
 
     private class AuthStateListener implements FirebaseAuth.AuthStateListener {
+        private boolean calledBefore = false;
+
         @Override
         public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-            FirebaseUser fbu = firebaseAuth.getCurrentUser();
             if (LOG) Log.d(TAG, "onAuthStateChanged");
+            FirebaseUser fbu = firebaseAuth.getCurrentUser();
 
+            // skip first call because it is called right after AuthStateListener was registered
+            if (calledBefore && firebaseUsr != null && fbu == null) {
+                // user signed out
+                App app = App.getCurrent();
+                Intent intentLogout = new Intent(app, LoginActivity.class);
+                intentLogout.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                app.startActivity(intentLogout);
+                ActivityRegistry.finishAll();
+            }
+            calledBefore = true;
             switchUser(fbu);
+
         }
     }
 
@@ -112,12 +130,13 @@ public class UserInformation extends Observable {
         if (this.firebaseUsr != null && newUsr != null && this.firebaseUsr.getUid().equals(newUsr.getUid()))
             return; // user did not change
 
-        if (this.firebaseUsr != null)
-            stopListenToCurrentUser();
+        // detach listener from previous user
+        stopListenToCurrentUser();
 
-        this.firebaseUsr = newUsr;
-        if (newUsr != null)
+        if (newUsr != null) {
             this.startListenToUser(newUsr.getUid());
+        }
+        this.firebaseUsr = newUsr;
     }
 
     private void stopListenToCurrentUser() {
@@ -126,6 +145,9 @@ public class UserInformation extends Observable {
             // improves offline-mode
             this.currentUserRef.keepSynced(false);
         }
+        if (currentUserBannedRef != null && currentUserBannedListener != null) {
+            currentUserBannedRef.removeEventListener(currentUserBannedListener);
+        }
         usrSnapshot = null;
         currentUserRef = null;
     }
@@ -133,9 +155,41 @@ public class UserInformation extends Observable {
     private void startListenToUser(final String uid) {
         //Log.d(TAG,"startListenToUser; uid=" + uid);
 
-        // detach listener from previous user
-        stopListenToCurrentUser();
+        startListenToUserData(uid);
+        startListenToUserBanned(uid);
 
+
+    }
+
+    private void startListenToUserBanned(String uid) {
+        if (currentUserBannedListener == null)
+            currentUserBannedListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        // user was added to ban list
+                        mAuth.signOut();
+                        try {
+                            App app = App.getCurrent();
+
+                            Toast.makeText(app, "Dein Account wurde gesperrt!", Toast.LENGTH_LONG).show();
+                        } catch (Exception ex) {
+                            Log.e("App", ex);
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, databaseError.getMessage());
+                }
+            };
+
+        currentUserBannedRef = FirebaseDatabase.getInstance().getReference("bannedUsers").child(uid);
+        currentUserBannedRef.addValueEventListener(currentUserBannedListener);
+    }
+
+    private void startListenToUserData(final String uid) {
         // attach listener to current user
         if (this.currentUserListener == null)
             this.currentUserListener = new ValueEventListener() {
@@ -153,13 +207,11 @@ public class UserInformation extends Observable {
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    if (LOG)
-                        Log.e(TAG, "Failed to fetch user-info from Firebase. " + databaseError.getMessage());
+                    Log.e(TAG, "Failed to fetch user-info from Firebase. " + databaseError.getMessage());
 
                     UserInformation.shared.setUserSnapshot(null); // this snapshot is no longer valid
                 }
             };
-
         this.currentUserRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
         // improves offline-mode
         this.currentUserRef.keepSynced(true);

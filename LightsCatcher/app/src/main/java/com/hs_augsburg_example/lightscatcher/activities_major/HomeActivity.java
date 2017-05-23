@@ -1,5 +1,6 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -87,6 +88,16 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         if (LOG) Log.d(TAG, "onCreate");
 
         super.onCreate(savedInstanceState);
+
+
+        boolean loggedIn = UserInformation.shared.tryAuthenticate();
+        if (!loggedIn) {
+            Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         ActivityRegistry.register(this);
 
 
@@ -115,7 +126,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // start resume backup files
         try {
-            PersistenceManager.shared.startAutoRetry(this.getApplicationContext());
+            PersistenceManager.shared.startAutoRecover(this.getApplicationContext());
         } catch (Exception ex) {
             Log.e(TAG, ex);
         }
@@ -124,13 +135,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         setRefreshAnimation(true);
         swipeLayout.setOnRefreshListener(this);
 
-        boolean loggedIn = UserInformation.shared.tryAuthenticate();
-        if (!loggedIn) {
-            Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-            startActivity(intent);
-            finish();
-            return;
-        }
+
 
         // query ordered list of users from firebase
         sortedUsers = FirebaseDatabase.getInstance().getReference("users").orderByChild("points");
@@ -159,6 +164,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 setRefreshAnimation(false);
             }
         });
+
         // use reverse layout to sort users in descending order
         // firebase-queries currently do not support descending order
         final LinearLayoutManager lm = new LinearLayoutManager(this);
@@ -414,11 +420,19 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                 Intent intentTermsOfUse = new Intent(HomeActivity.this, TermsOfUseActivity.class);
                 startActivity(intentTermsOfUse);
                 return true;
+            case R.id.home_action_resetIntro:
+                Context ctx = getApplicationContext();
+                UserPreference.neverShowAgain(ctx, ShowcaseHandler.SETTINGS_KEY, false);
+                UserPreference.neverShowAgain(ctx, TakePictureActivity.ShowcaseHandler.SETTINGS_KEY, false);
+                UserPreference.neverShowAgain(ctx, SubmitDialog.ShowcaseHandler.SETTINGS_KEY, false);
+
+                Intent intent = getIntent();
+                finish();
+                startActivity(intent);
+
+                return true;
             case R.id.logout:
                 UserInformation.shared.logout();
-                Intent intentLogout = new Intent(HomeActivity.this, LoginActivity.class);
-                startActivity(intentLogout);
-                finish();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

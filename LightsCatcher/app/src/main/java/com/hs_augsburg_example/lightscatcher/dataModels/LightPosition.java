@@ -2,13 +2,8 @@ package com.hs_augsburg_example.lightscatcher.dataModels;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
-import com.hs_augsburg_example.lightscatcher.singletons.PhotoInformation;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.function.Consumer;
 
 @IgnoreExtraProperties
 public class LightPosition {
