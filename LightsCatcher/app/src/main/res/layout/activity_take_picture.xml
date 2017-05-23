@@ -26,6 +26,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
+        android:id="@+id/takePicture_layout_zoom"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:layout_above="@+id/take_picture_bottom_area"
@@ -85,6 +86,7 @@
         tools:layout_editor_absoluteX="8dp">
 
         <RadioGroup
+            android:id="@+id/takePicture_layout_selectPhase"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"

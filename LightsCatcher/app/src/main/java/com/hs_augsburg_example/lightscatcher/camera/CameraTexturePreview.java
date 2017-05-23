@@ -53,6 +53,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
 
     public void setPivotRelative(PointF pivot) {
         mPivot = pivot;
+        updateScale();
     }
 
 //
@@ -128,7 +129,6 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
             params.setFocusMode(FOCUS_MODE_CONTINUOUS_PICTURE);
 
 
-
 //        if (params.getMaxNumFocusAreas() > 0) {
 //            Camera.Area focusArea = calculateFocusArea(mPivot);
 //            params.setFocusAreas(newArrayList(focusArea));
@@ -187,7 +187,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
     }
 
     void updateScale() {
-        if (mSurfaceSize == null) return;
+        if (mSurfaceSize == null || mPivot == null) return;
 
         // calculate transformation matrix
         Matrix matrix = new Matrix();

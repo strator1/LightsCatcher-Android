@@ -1,5 +1,6 @@
 package com.hs_augsburg_example.lightscatcher.utils;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.util.DisplayMetrics;
@@ -34,7 +35,16 @@ public class MiscUtils {
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
     }
-
+    /**
+     * calculates device-independent dimensions in actual pixels
+     *
+     * @param value
+     * @return
+     */
+    public static int dp(Context ctx, int value) {
+        float density = ctx.getResources().getDisplayMetrics().density;
+        return (int) (value * density);
+    }
     /**
      * calculates device-independent dimensions in actual pixels
      *

@@ -28,6 +28,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -37,9 +38,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.camera.CameraTexturePreview;
-import com.hs_augsburg_example.lightscatcher.camera.CameraUtil;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightGroup;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
@@ -57,7 +59,6 @@ import com.hs_augsburg_example.lightscatcher.views.BadgeDrawable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
@@ -65,8 +66,8 @@ import static android.widget.RelativeLayout.*;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.GREEN;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.OFF;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.RED;
-import static com.hs_augsburg_example.lightscatcher.utils.DialogKey.*;
 import static com.hs_augsburg_example.lightscatcher.utils.MiscUtils.dp;
+import static com.hs_augsburg_example.lightscatcher.utils.UserPreference.MAXIMUM_SNAPSHOT_ALERT;
 
 /**
  * Activity to capture a traffic light. Up to 2 pictures can be taken in a row, one for each state of the traffic light.
@@ -84,15 +85,16 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private static final int STATE_OFF = OFF.value;
 
     public static final int MAX_SNAPSHOTS = 3;
+
     private Button exitButton;
     private TextView txtCaption;
     private RelativeLayout rl;
     private CameraTexturePreview camPreview;
     private CompoundButton[] phaseSelect = new CompoundButton[3];
     private BadgeDrawable[] badges = new BadgeDrawable[3];
+    private FloatingActionButton btnCapture;
+
     private Camera camera;
-
-
     private SensorManager mSensorManager;
     private Sensor accelerometer;
     private Sensor magnetometer;
@@ -103,7 +105,14 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private final CrosshairManager crosshair = new CrosshairManager();
     private List<LightGroup> lightGroups = new ArrayList<>();
     private boolean locationPermission;
-    private FloatingActionButton btnCapture;
+    private boolean cameraPermission = false;
+
+    private AlertDialog pictureHelpDialog;
+    private ShowcaseHandler showcaseHandler;
+
+    /* =======================================
+     * ACTIVITY-LIFE-CYCLE:
+     * -------------------------------------*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,6 +188,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                 stateMachine.switchPhase(RED);
             }
         });
+
+
     }
 
     @Override
@@ -214,6 +225,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             requests.toArray(arr);
             ActivityCompat.requestPermissions(TakePictureActivity.this, arr, REQUEST_ALL);
         }
+//        if (true) {
+        if (UserPreference.shouldShowDialog(getApplicationContext(), ShowcaseHandler.SETTINGS_KEY)) {
+            showcaseHandler = new ShowcaseHandler();
+            showcaseHandler.startShowcase();
+        }
     }
 
     @Override
@@ -230,14 +246,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         if (locationPermission) {
             locationService.startListening();
-        }
-        if (UserPreference.isFirstCapture(getApplicationContext())) {
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    onInfoButtonPressed(null);
-                }
-            });
         }
         mSensorManager.registerListener(motionService.getEventListener(), accelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(motionService.getEventListener(), magnetometer, SensorManager.SENSOR_DELAY_UI);
@@ -273,29 +281,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         mSensorManager.unregisterListener(motionService.getEventListener());
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        for (int i = 0; i < permissions.length; i++) {
-            if (LOG)
-                Log.d(TAG, "onRequestPermissionsResult: code: {0}, relult: {1}", permissions[i], grantResults[i]);
-
-            switch (permissions[i]) {
-                case Manifest.permission.CAMERA:
-                    cameraPermission = grantResults[i] == PackageManager.PERMISSION_GRANTED;
-                    if (!cameraPermission) {
-                        showCameraRequestDialog();
-                        Toast.makeText(this, "LightsCatcher funktioniert nicht ohne Zugriff auf die Kamera!", Toast.LENGTH_LONG).show();
-                    } else {
-                        // No need to start camera here; it is handled by onResume
-                    }
-                    break;
-                case Manifest.permission.ACCESS_FINE_LOCATION:
-                    locationPermission = grantResults[i] == PackageManager.PERMISSION_GRANTED;
-                    break;
-            }
-        }
-    }
+    /* =======================================
+     * EVENT-HANDLING:
+     * -------------------------------------*/
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
@@ -366,13 +354,27 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         TakePictureActivity.this.stateMachine.snapshotTaken(snapshotData);
     }
 
-    private float trim(float v) {
-        if (v < 0)
-            return 0;
-        else if (v > 1.0f)
-            return 1.0f;
-        else
-            return v;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        for (int i = 0; i < permissions.length; i++) {
+            if (LOG)
+                Log.d(TAG, "onRequestPermissionsResult: code: {0}, relult: {1}", permissions[i], grantResults[i]);
+
+            switch (permissions[i]) {
+                case Manifest.permission.CAMERA:
+                    cameraPermission = grantResults[i] == PackageManager.PERMISSION_GRANTED;
+                    if (!cameraPermission) {
+                        showCameraRequestDialog();
+                        Toast.makeText(this, "LightsCatcher funktioniert nicht ohne Zugriff auf die Kamera!", Toast.LENGTH_LONG).show();
+                    } else {
+                        // No need to start camera here; it is handled by onResume
+                    }
+                    break;
+                case Manifest.permission.ACCESS_FINE_LOCATION:
+                    locationPermission = grantResults[i] == PackageManager.PERMISSION_GRANTED;
+                    break;
+            }
+        }
     }
 
     @Override
@@ -381,6 +383,76 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         super.onBackPressed();
     }
 
+    public void onCaptureButtonPressed(View view) {
+        if (!cameraPermission || camPreview.getCamera() == null) {
+            Toast.makeText(this.getApplicationContext(), "Kamera nicht verfügbar :(", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        btnCapture.setEnabled(false);
+        Log.d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
+        switch (camera.getParameters().getFocusMode()){
+            case Camera.Parameters.FOCUS_MODE_AUTO:
+            case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
+                camera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean success, Camera camera) {
+                        camera.takePicture(null, null, TakePictureActivity.this);
+                        camera.cancelAutoFocus();
+                    }
+                });
+            default:
+                camera.takePicture(null, null, TakePictureActivity.this);
+        }
+    }
+
+    public void onExitButtonClick(View view) {
+        stateMachine.leave();
+    }
+
+    public void onInfoButtonPressed(View view) {
+        if (pictureHelpDialog == null) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+            dialogBuilder.setTitle(getString(R.string.take_picture_activity_title_info));
+            dialogBuilder.setMessage(getString(R.string.take_picture_activity_txt_info));
+            dialogBuilder.setPositiveButton(getString(R.string.take_picture_activity_button_info), null);
+
+            pictureHelpDialog = dialogBuilder.create();
+        }
+        pictureHelpDialog.show();
+
+    }
+
+    public void zoomIn_Click(View view) {
+        camPreview.zoomIn();
+    }
+
+    public void zoomOut_Click(View view) {
+        camPreview.zoomOut();
+    }
+
+    private final SubmitDialog.SubmitDialogListener submitListener = new SubmitDialog.SubmitDialogListener() {
+        private final static String TAG = "SubmitDialogListener";
+
+        @Override
+        public void submitCommitted(Photo snapshot, TaskMonitor monitor) {
+            if (LOG) Log.d(TAG, "submitCommitted");
+
+            stateMachine.snapshotCommitted(snapshot);
+            dialogCompleted();
+        }
+
+        @Override
+        public void submitDiscarded() {
+            if (LOG) Log.d(TAG, "submitDiscarded");
+            dialogCompleted();
+        }
+
+        public void dialogCompleted() {
+            // prepare camera for next picture
+            camera.startPreview();
+        }
+
+    };
 
     private BadgeDrawable createBadge(CompoundButton btn) {
         StateListDrawable background = (StateListDrawable) btn.getBackground();
@@ -389,6 +461,175 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         LayerDrawable localLayerDrawable = new LayerDrawable(new Drawable[]{background, badgeDrawable});
         btn.setBackgroundDrawable(localLayerDrawable);
         return badgeDrawable;
+    }
+
+    private boolean checkCameraHardware(Context context) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
+            // this device has a camera
+            return true;
+        } else {
+            // no camera on this device
+            return false;
+        }
+    }
+
+    private void setupCamera() {
+        if (checkCameraHardware(getApplicationContext())) {
+            camera = getCameraInstance();
+            camPreview.setCamera(camera);
+        }
+    }
+
+    /**
+     * A safe way to get an instance of the Camera object.
+     */
+    private Camera getCameraInstance() {
+        if (camera != null) {
+            return camera;
+        }
+
+        try {
+            camera = Camera.open(); // attempt to get a Camera instance
+        } catch (Exception e) {
+            // Camera is not available (in use or does not exist)
+            Log.e(TAG, e);
+        }
+        camera.setDisplayOrientation(90);
+        return camera; // returns null if camera is unavailable
+    }
+
+    /**
+     * Updates the UI to reflect the given lightphase
+     */
+    private void notifyNextPhase(PhaseContext newContext, PhaseContext oldContext) {
+
+
+        int phase = newContext.phase.value;
+
+        this.phaseSelect[phase].setChecked(true);
+        crosshair.internalMarker[phase].setVisibility(View.VISIBLE);
+        txtCaption.setText(getString(R.string.fotografieren, newContext.phase.getGermanText()));
+        if (oldContext != null) {
+            int oldPhase = oldContext.phase.value;
+            phaseSelect[oldPhase].setChecked(false);
+            crosshair.internalMarker[oldPhase].setVisibility(View.INVISIBLE);
+        }
+    }
+
+    /**
+     * Updates the UI to show that the snapshot was taken and committed
+     */
+    private void notifySnapshotCommitted(PhaseContext context, Photo snapshot) {
+        BadgeDrawable view = badges[context.phase.value];
+        if (view != null) {
+            view.setCount(context.getSnapshotCount());
+        }
+    }
+
+    /**
+     * Resets the UI to the default initial state
+     */
+    private void notifyReset() {
+        badges[0].setCount(0);
+        badges[1].setCount(0);
+    }
+
+    private void leave() {
+        this.finish();
+        Intent intent = new Intent(TakePictureActivity.this, FinishActivity.class);
+        startActivity(intent);
+    }
+
+    public void navigateBack(View view) {
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
+    private void showSubmitPopup(PhaseContext stateContext, Photo snapshotData) {
+        final SubmitDialog popup = new SubmitDialog.Builder(submitListener)
+                .setPhoto(snapshotData)
+                .build();
+
+
+        if (UserPreference.shouldShowDialog(getApplicationContext(), SubmitDialog.ShowcaseHandler.SETTINGS_KEY)) {
+            SubmitDialog.ShowcaseHandler submitShowCase = new SubmitDialog.ShowcaseHandler(this);
+            submitShowCase.startShowcase(new Runnable() {
+                @Override
+                public void run() {
+                    popup.show(getSupportFragmentManager(), SubmitDialog.TAG);
+                }
+            });
+        } else {
+            popup.show(getSupportFragmentManager(), SubmitDialog.TAG);
+        }
+    }
+
+    private void showCameraRequestDialog() {
+        AlertDialog dlg = new AlertDialog.Builder(this)
+                .setTitle("Kein Kamerazugriff")
+                .setMessage("LightsCatcher benötigt zwingend Zugriff auf die Kamera, um fortzufahren.")
+                .setPositiveButton("Zugriff anfordern.", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // delay so that the alert-dialog has time to close
+                        new Handler().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                ActivityCompat.requestPermissions(TakePictureActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
+                            }
+                        });
+                    }
+                })
+                .setNeutralButton("App-Einstellungen", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final Intent i = new Intent();
+                        i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        i.addCategory(Intent.CATEGORY_DEFAULT);
+                        i.setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                        i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                        startActivity(i);
+                    }
+                })
+                .create();
+        dlg.show();
+    }
+
+    private void maximumSnapshotAlertDialog(final LightPhase nextPhase) {
+        LayoutInflater adbInflater = LayoutInflater.from(this);
+        final View dlgLayout = adbInflater.inflate(R.layout.dialog_max_snapshot_alert, null);
+
+        final CheckBox neverShowAgain = (CheckBox) dlgLayout.findViewById(R.id.dialog_skip);
+        neverShowAgain.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                UserPreference.neverShowAgain(getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT, isChecked);
+            }
+        });
+
+
+        AlertDialog.Builder dlg = new AlertDialog.Builder(this);
+        if (nextPhase != null) {
+            dlg.setPositiveButton("OK, auf " + nextPhase.getGermanText() + " umschalten.", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+
+                    stateMachine.switchPhase(nextPhase);
+                }
+            });
+        }
+        dlg.setNegativeButton("Vorgang Abschließen", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                leave();
+            }
+        });
+        dlg.setView(dlgLayout);
+        dlg.create().show();
     }
 
     public class CrosshairManager {
@@ -405,10 +646,10 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         private View[] internalMarker = new View[3];
         private float crossHairCenterToLight;
         private final List<PointF> positions = new ArrayList<>();
-        private int postionCursor;
+        private int cursor;
 
         public PointF currentPos() {
-            return positions.get(postionCursor);
+            return positions.get(cursor);
         }
 
         public void setPositionContextBasesd() {
@@ -426,16 +667,19 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             } else {
                 if (LOG) Log.d(TAG, "setPositionContextBasesd: reuse position");
                 // or else re-use the same position
-                pos = positions.get(photoNum);
             }
 
+            pos = positions.get(photoNum);
             setPositionOfView(pos);
-            postionCursor = photoNum;
+            cursor = photoNum;
         }
 
         private PointF generateRandomPos() {
             float x = MiscUtils.randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
             float y = MiscUtils.randomFloat(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
+            if (showcaseHandler != null) {
+                y = CROSSHAIR_Y_MIN;
+            }
             return new PointF(x, y);
         }
 
@@ -477,202 +721,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             // distance between light-position (colored cross) and center of the crosshair-border (coordinates specified by parameters x and y)
             crossHairCenterToLight = (float) viewHeight / parentRect.height() / 4;
         }
-    }
-
-
-    private boolean checkCameraHardware(Context context) {
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            // this device has a camera
-            return true;
-        } else {
-            // no camera on this device
-            return false;
-        }
-    }
-
-    private boolean cameraPermission = false;
-
-    private void setupCamera() {
-        if (checkCameraHardware(getApplicationContext())) {
-            camera = getCameraInstance();
-            camPreview.setCamera(camera);
-        }
-    }
-
-    /**
-     * A safe way to get an instance of the Camera object.
-     */
-    private Camera getCameraInstance() {
-        if (camera != null) {
-            return camera;
-        }
-
-        try {
-            camera = Camera.open(); // attempt to get a Camera instance
-        } catch (Exception e) {
-            // Camera is not available (in use or does not exist)
-            Log.e(TAG, e);
-        }
-        camera.setDisplayOrientation(90);
-        return camera; // returns null if camera is unavailable
-    }
-
-
-    /**
-     * Updates the UI to reflect the given lightphase
-     */
-    private void notifyNextPhase(PhaseContext newContext, PhaseContext oldContext) {
-
-
-        int phase = newContext.phase.value;
-
-        this.phaseSelect[phase].setChecked(true);
-        crosshair.internalMarker[phase].setVisibility(View.VISIBLE);
-        txtCaption.setText(getString(R.string.fotografieren, newContext.phase.getGermanText()));
-        if (oldContext != null) {
-            int oldPhase = oldContext.phase.value;
-            phaseSelect[oldPhase].setChecked(false);
-            crosshair.internalMarker[oldPhase].setVisibility(View.INVISIBLE);
-        }
-    }
-
-    /**
-     * Updates the UI to show that the snapshot was taken and committed
-     */
-    private void notifySnapshotCommitted(PhaseContext context, Photo snapshot) {
-        BadgeDrawable view = badges[context.phase.value];
-        if (view != null) {
-            view.setCount(context.getSnapshotCount());
-        }
-    }
-
-    /**
-     * Resets the UI to the default initial state
-     */
-    private void notifyReset() {
-        badges[0].setCount(0);
-        badges[1].setCount(0);
-    }
-
-
-    private void leave() {
-        this.finish();
-        Intent intent = new Intent(TakePictureActivity.this, FinishActivity.class);
-        startActivity(intent);
-    }
-
-    private void showSubmitPopup(PhaseContext stateContext, Photo snapshotData) {
-        SubmitDialog popup = new SubmitDialog.Builder(submitListener)
-                .setPhoto(snapshotData)
-                .build();
-
-        popup.show(getSupportFragmentManager(), SubmitDialog.TAG);
-    }
-
-    private final SubmitDialog.SubmitDialogListener submitListener = new SubmitDialog.SubmitDialogListener() {
-        private final static String TAG = "SubmitDialogListener";
-
-        @Override
-        public void submitCommitted(Photo snapshot, TaskMonitor monitor) {
-            if (LOG) Log.d(TAG, "submitCommitted");
-
-            stateMachine.snapshotCommitted(snapshot);
-            dialogCompleted();
-        }
-
-        @Override
-        public void submitDiscarded() {
-            if (LOG) Log.d(TAG, "submitDiscarded");
-            dialogCompleted();
-        }
-
-        public void dialogCompleted() {
-            // prepare camera for next picture
-            camera.startPreview();
-        }
-
-    };
-
-    private void showCameraRequestDialog() {
-        AlertDialog dlg = new AlertDialog.Builder(this)
-                .setTitle("Kein Kamerazugriff")
-                .setMessage("LightsCatcher benötigt zwingend Zugriff auf die Kamera, um fortzufahren.")
-                .setPositiveButton("Zugriff anfordern.", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // delay so that the alert-dialog has time to close
-                        new Handler().post(new Runnable() {
-                            @Override
-                            public void run() {
-                                ActivityCompat.requestPermissions(TakePictureActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
-                            }
-                        });
-                    }
-                })
-                .setNeutralButton("Einstellungen", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        final Intent i = new Intent();
-                        i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        i.addCategory(Intent.CATEGORY_DEFAULT);
-                        i.setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
-                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                        i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                        startActivity(i);
-                    }
-                })
-                .create();
-        dlg.show();
-    }
-
-    public void navigateBack(View view) {
-        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-    }
-
-    public void onCaptureButtonPressed(View view) {
-        if (!cameraPermission || camPreview.getCamera() == null) {
-            Toast.makeText(this.getApplicationContext(), "Kamera nicht verfügbar :(", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        btnCapture.setEnabled(false);
-        Log.d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
-        camera.autoFocus(new Camera.AutoFocusCallback() {
-            @Override
-            public void onAutoFocus(boolean success, Camera camera) {
-                camera.takePicture(null, null, TakePictureActivity.this);
-                camera.cancelAutoFocus();
-            }
-        });
-    }
-
-    public void onExitButtonClick(View view) {
-        stateMachine.leave();
-    }
-
-    public void onInfoButtonPressed(View view) {
-        if (pictureHelpDialog == null) {
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-            dialogBuilder.setTitle(getString(R.string.take_picture_activity_title_info));
-            dialogBuilder.setMessage(getString(R.string.take_picture_activity_txt_info));
-            dialogBuilder.setPositiveButton(getString(R.string.take_picture_activity_button_info), null);
-
-            pictureHelpDialog = dialogBuilder.create();
-        }
-        pictureHelpDialog.show();
-
-    }
-
-    private AlertDialog pictureHelpDialog;
-
-    public void zoomIn_Click(View view) {
-        camPreview.zoomIn();
-    }
-
-    public void zoomOut_Click(View view) {
-        camPreview.zoomOut();
     }
 
     /**
@@ -834,39 +882,57 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
     }
 
-    private void maximumSnapshotAlertDialog(final LightPhase nextPhase) {
-        LayoutInflater adbInflater = LayoutInflater.from(this);
-        final View dlgLayout = adbInflater.inflate(R.layout.dialog_max_snapshot_alert, null);
+    private class ShowcaseHandler implements View.OnClickListener {
+        private static final String SETTINGS_KEY = "HELP_TAKE_PICTURE";
 
-        final CheckBox neverShowAgain = (CheckBox) dlgLayout.findViewById(R.id.dialog_skip);
-        neverShowAgain.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                UserPreference.neverShowAgain(getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT, isChecked);
-            }
-        });
+        int counter = 0;
+        private ShowcaseView showcaseView;
 
+        public void startShowcase() {
+            RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            buttonParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            buttonParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+//            buttonParams.setMargins(10, 10, 10, dp(getApplicationContext(), 100));
 
-        AlertDialog.Builder dlg = new AlertDialog.Builder(this);
-        if (nextPhase != null) {
-            dlg.setPositiveButton("OK, auf " + nextPhase.getGermanText() + " umschalten.", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-
-
-                    stateMachine.switchPhase(nextPhase);
-                }
-            });
+            showcaseView = new ShowcaseView.Builder(TakePictureActivity.this)
+                    .withHoloShowcase2()
+                    .setTarget(new ViewTarget(findViewById(R.id.takePicture_layout_selectPhase)))
+                    .setContentText("Wenn du eine Fußgängerampel gefunden hast, wähle zuerst die Phase der Ampel: Rot, Grün oder Aus.\n\nFür ein Foto gibt es je nach Phase unterschiedlich viel Punkte:\n\trot:\t 1 Punkt\n\tgrün:\t 2 Punkte\n\taus:\t1 Punkt")
+                    .setStyle(R.style.CustomShowcaseTheme)
+                    .setOnClickListener(this)
+                    .build();
+            showcaseView.setButtonText("Weiter");
+            showcaseView.setButtonPosition(buttonParams);
         }
-        dlg.setNegativeButton("Vorgang Abschließen", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                leave();
-            }
-        });
-        dlg.setView(dlgLayout);
-        dlg.create().show();
-    }
 
+        @Override
+        public void onClick(View v) {
+            switch (counter) {
+
+                case 0:
+                    showcaseView.setShowcase(new ViewTarget(crosshair.crosshairView), false);
+                    showcaseView.setContentText("Ziele mit dem farbigen Plus auf das Licht der Ampel. Wenn mehrere Ampeln im selben Bildausschnitt zu sehen sind, wähle die Vorderste.\n\nDas Fadenkreuz wird nach jedem Foto zufällig plaziert, damit die Fotos unterschiedlicher werden.");
+                    break;
+                case 1:
+                    showcaseView.setShowcase(new ViewTarget(findViewById(R.id.takePicture_layout_zoom)), false);
+                    showcaseView.setContentText("Du kannst auch zoomen.\n\nIdealerweise stellst du so ein, dass das schwarze Ampelgehäuse mit dem hellblauen Rahmen übereinstimmt.\n\n(Die Pinch-Zoom-Geste funktioniert auch).");
+
+                    break;
+                case 2:
+                    showcaseView.setShowcase(new ViewTarget(btnCapture), false);
+                    showcaseView.setContentText("Wenn alles passt, dann drücke den Auslöser.");
+                    showcaseView.setButtonText("Schließen");
+                    break;
+                case 3:
+                default:
+                    showcaseView.hide();
+                    TakePictureActivity.this.showcaseHandler = null;
+                    UserPreference.neverShowAgain(getApplicationContext(), SETTINGS_KEY, true);
+                    break;
+            }
+
+            counter++;
+        }
+    }
 
 }

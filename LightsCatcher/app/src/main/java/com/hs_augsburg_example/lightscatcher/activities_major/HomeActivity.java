@@ -37,7 +37,6 @@ import com.hs_augsburg_example.lightscatcher.dataModels.User;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.ActivityRegistry;
-import com.hs_augsburg_example.lightscatcher.utils.DialogKey;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 
@@ -66,7 +65,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private TextView btnUploadStatus;
     private TextView txtConnection;
     private ImageView imgConnection;
-    private ShowcaseView showcaseView;
     private RecyclerView recyclerView;
 
     // PRIVATE:
@@ -78,6 +76,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     private Observer connectionObserver;
     private Observer backupListener;
     private Observer uploadListener;
+    private ShowcaseHandler showcaseHandler;
 
     /* =======================================
      * ACTIVITY-LIFE-CYCLE:
@@ -169,21 +168,10 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         recyclerView.setAdapter(adapter);
 
 //        if (true) {
-        if (UserPreference.shouldShowDialog(getApplicationContext(),DialogKey.HELP_HOME)) {
-            RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            buttonParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-            buttonParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            buttonParams.setMargins(10,10,10,10);
+        if (UserPreference.shouldShowDialog(getApplicationContext(), ShowcaseHandler.SETTINGS_KEY)) {
 
-            showcaseView = new ShowcaseView.Builder(this)
-                    .withHoloShowcase2()
-                    .setContentTitle("Willkommen bei LightsCatcher")
-                    .setContentText("\nDanke, dass du das Projekt unterstützt :)\n\nLass dir jetzt kurz zeigen, wie die App funktioniert.")
-                    .setStyle(R.style.CustomShowcaseTheme)
-                    .setOnClickListener(new ShowcaseHandler())
-                    .build();
-            showcaseView.setButtonText("Weiter");
-            showcaseView.setButtonPosition(buttonParams);
+            showcaseHandler = new ShowcaseHandler();
+            showcaseHandler.startShowcase();
         }
     }
 
@@ -404,40 +392,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
      * EVENT-HANDLERS:
      * -------------------------------------*/
 
-    private class ShowcaseHandler implements View.OnClickListener {
-        int counter = 0;
-
-        @Override
-        public void onClick(View v) {
-            switch (counter) {
-                case 0:
-                    showcaseView.setShowcase(new ViewTarget(findViewById(home_txt_score)),false);
-                    showcaseView.setContentTitle("");
-                    showcaseView.setContentText("Deine aktuelle Platzierung wird hier angezeigt.");
-                    break;
-                case 1:
-                    showcaseView.setShowcase(new ViewTarget(findViewById(home_layout_connection)),false);
-                    showcaseView.setContentText("Hier siehst du den Verbindungsstatus zu unserem Server. Du kannst übrigens auch offline Ampeln fotografieren. Die Fotos werden hochgeladen, sobald die App wieder im Online-Modus läuft.");
-
-                    break;
-                case 2:
-                    showcaseView.setShowcase(new ViewTarget(recyclerView),false);
-                    showcaseView.setScaleMultiplier(2.3f);
-                    showcaseView.setContentText("Hier werden die 50 besten Ampeljäger angezeigt.");
-                    break;
-                case 3:
-                    showcaseView.setScaleMultiplier(1);
-                    showcaseView.setShowcase(new ViewTarget(findViewById(fab)),false);
-                    showcaseView.setContentText("So, jetzt wird es Zeit, Ampeln zu jagen.\n\nÜber den Button rechts unten gelangst du zur Kamera.\n\n Such dir eine Fußgängerampel und mach die ersten Punkte :)");
-                    showcaseView.hideButton();
-                    UserPreference.neverShowAgain(getApplicationContext(), DialogKey.HELP_HOME, true);
-                    break;
-            }
-
-            counter++;
-        }
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -482,8 +436,69 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void navigateToCamera() {
+        if (showcaseHandler != null) {
+            showcaseHandler.showcaseView.hide();
+        }
         Intent intent = new Intent(HomeActivity.this, TakePictureActivity.class);
         startActivity(intent);
+    }
+
+    /* =======================================
+     * INNER CLASSES:
+     * -------------------------------------*/
+
+    private class ShowcaseHandler implements View.OnClickListener {
+        private static final String SETTINGS_KEY = "HELP_HOME";
+
+        int counter = 0;
+        private ShowcaseView showcaseView;
+
+        public void startShowcase() {
+            RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            buttonParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            buttonParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            buttonParams.setMargins(10, 10, 10, 10);
+
+            showcaseView = new ShowcaseView.Builder(HomeActivity.this)
+                    .withHoloShowcase2()
+                    .setContentTitle("Willkommen bei LightsCatcher")
+                    .setContentText("\nDanke, dass du das Projekt unterstützt :)\n\nLass dir jetzt kurz zeigen, wie die App funktioniert.")
+                    .setStyle(R.style.CustomShowcaseTheme)
+                    .setOnClickListener(this)
+                    .build();
+            showcaseView.setButtonText("Weiter");
+            showcaseView.setButtonPosition(buttonParams);
+        }
+
+        @Override
+        public void onClick(View v) {
+            switch (counter) {
+                case 0:
+                    showcaseView.setShowcase(new ViewTarget(recyclerView), false);
+                    showcaseView.setScaleMultiplier(2.3f);
+                    showcaseView.setContentTitle("");
+                    showcaseView.setContentText("Hier werden die 50 besten Ampeljäger angezeigt.");
+                    break;
+                case 1:
+                    showcaseView.setScaleMultiplier(1);
+                    showcaseView.setShowcase(new ViewTarget(findViewById(home_txt_score)), false);
+                    showcaseView.setContentText("Deine aktuelle Platzierung wird hier angezeigt.");
+                    break;
+                case 2:
+                    showcaseView.setShowcase(new ViewTarget(findViewById(home_layout_connection)), false);
+                    showcaseView.setContentText("Hier siehst du den Verbindungsstatus zu unserem Server. Du kannst übrigens auch offline Ampeln fotografieren. Die Fotos werden hochgeladen, sobald die App wieder im Online-Modus läuft.");
+                    break;
+                case 3:
+                    showcaseView.setShowcase(new ViewTarget(findViewById(fab)), false);
+                    showcaseView.setContentText("Mit den Button rechts unten gelangst du zur Kamera.\n\n Such dir eine Fußgängerampel und mach die ersten Punkte :)");
+                    showcaseView.hideButton();
+                    UserPreference.neverShowAgain(getApplicationContext(), SETTINGS_KEY, true);
+                    break;
+                case 4:
+            }
+
+            counter++;
+        }
     }
 
     /**

@@ -14,7 +14,7 @@ public class UserPreference {
     public final static String IS_FIRST_CAPTURE_KEY = "firstPic";
     public final static String IS_FIRST_TAGGIN_KEY = "firstTag";
     public final static String IS_USER_BANNED = "isUserBanned";
-
+    public final static String MAXIMUM_SNAPSHOT_ALERT = "MAXIMUM_SNAPSHOT_ALERT";
 
     public static boolean isFirstCapture(Context ctx) {
         SharedPreferences preferences = ctx.getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
@@ -56,14 +56,14 @@ public class UserPreference {
         return true;
     }
 
-    public static boolean shouldShowDialog(Context ctx, DialogKey key) {
+    public static boolean shouldShowDialog(Context ctx, String key) {
         SharedPreferences preferences = ctx.getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
-        return preferences.getBoolean(key.val, true);
+        return preferences.getBoolean(key, true);
     }
 
-    public static void neverShowAgain(Context ctx, DialogKey key, boolean neverShowAgain) {
+    public static void neverShowAgain(Context ctx, String key, boolean neverShowAgain) {
         SharedPreferences preferences = ctx.getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean(key.val, !neverShowAgain).apply();
+        editor.putBoolean(key, !neverShowAgain).apply();
     }
 }

@@ -1,5 +1,6 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -15,10 +16,13 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
@@ -26,6 +30,7 @@ import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
+import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 import com.hs_augsburg_example.lightscatcher.views.Crosshair;
 
 import java.text.DecimalFormat;
@@ -46,6 +51,7 @@ public class SubmitDialog extends DialogFragment {
     private SubsamplingScaleImageView photoView;
     private LightPosition mCurrentPos;
     private Crosshair centerCross;
+    private View contentView;
 
     public interface SubmitDialogListener {
 
@@ -166,12 +172,13 @@ public class SubmitDialog extends DialogFragment {
                 .setView(view);
 
         AlertDialog alertDialog = builder.create();
+
         return alertDialog;
     }
 
     void initView(View root) {
         final Photo photo = mPhoto;
-
+        this.contentView = root;
         if (photo != null) {
             final SubsamplingScaleImageView photoView = (SubsamplingScaleImageView) root.findViewById(R.id.submit_photoView);
             if (photoView == null) {
@@ -252,6 +259,52 @@ public class SubmitDialog extends DialogFragment {
                 color = 0x88000000;
         }
         centerCross.setCrossColor(color);
+    }
+
+    public static class ShowcaseHandler implements View.OnClickListener {
+        public static final String SETTINGS_KEY = "HELP_SUBMIT";
+
+        final Activity activity;
+        int counter = 0;
+        private ShowcaseView showcaseView;
+        private Runnable listener;
+
+        public ShowcaseHandler(Activity activity) {
+            this.activity = activity;
+        }
+
+        public void startShowcase(Runnable listener) {
+            this.listener = listener;
+            RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            buttonParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            buttonParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            buttonParams.setMargins(10, 10, 10, 10);
+
+            showcaseView = new ShowcaseView.Builder(activity)
+                    .withHoloShowcase2()
+                    .setContentText("Bevor das Bild hochgeladen wird, kannst du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst du das Foto verschieben.\n\nBitte achte auf gute Bildqualität. Schlechte Fotos werden wir löschen und die zugehörigen Punkte werden dir wieder abgezogen.")
+                    .setStyle(R.style.CustomShowcaseTheme)
+                    .setOnClickListener(this)
+                    .build();
+
+            showcaseView.setButtonText("Weiter");
+            showcaseView.setButtonPosition(buttonParams);
+        }
+
+        @Override
+        public void onClick(View v) {
+            switch (counter) {
+
+                case 0:
+                default:
+                    showcaseView.hide();
+                    listener.run();
+                    UserPreference.neverShowAgain(activity,SETTINGS_KEY,true);
+                    break;
+            }
+
+            counter++;
+        }
     }
 
 }
