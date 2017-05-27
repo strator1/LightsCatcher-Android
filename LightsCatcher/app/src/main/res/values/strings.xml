@@ -150,6 +150,6 @@
         <item quantity="other">%d ausstehende Uploads</item>
     </plurals>
     <string name="home_txt_uploading">Upload läuft...</string>
-    <string name="home_txt_clickForUpload">Hier tippen, wenn\nDu wieder online bist.</string>
+    <string name="home_txt_clickForUpload">Hier tippen, wenn\nDu wieder online bist</string>
 
 </resources>

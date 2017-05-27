@@ -898,7 +898,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             showcaseView = new ShowcaseView.Builder(TakePictureActivity.this)
                     .withHoloShowcase2()
                     .setTarget(new ViewTarget(findViewById(R.id.takePicture_layout_selectPhase)))
-                    .setContentText("Wenn du eine Fußgängerampel gefunden hast, wähle zuerst die Phase der Ampel: Rot, Grün oder Aus.\n\nFür ein Foto gibt es je nach Phase unterschiedlich viel Punkte:\n\trot:\t 1 Punkt\n\tgrün:\t 2 Punkte\n\taus:\t1 Punkt")
+                    .setContentText("Wenn Du eine Fußgängerampel gefunden hast, wähle zuerst die Phase der Fußgängerampel: Rot, grün oder ausgeschaltet.\n\nFür ein Foto gibt es je nach Phase unterschiedlich viele Punkte:\n\trot:\t 1 Punkt\n\tgrün:\t 2 Punkte\n\tausgeschaltet:\t1 Punkt")
                     .setStyle(R.style.CustomShowcaseTheme)
                     .setOnClickListener(this)
                     .build();
@@ -912,12 +912,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
                 case 0:
                     showcaseView.setShowcase(new ViewTarget(crosshair.crosshairView), false);
-                    showcaseView.setContentText("Ziele mit dem farbigen Plus auf das Licht der Ampel. Wenn mehrere Ampeln im selben Bildausschnitt zu sehen sind, wähle die Vorderste.\n\nDas Fadenkreuz wird nach jedem Foto zufällig plaziert, damit die Fotos unterschiedlicher werden.");
+                    showcaseView.setContentText("Ziele mit dem farbigen Plus auf das Licht der Fußgängerampel. Wenn mehrere Ampeln im selben Bildausschnitt zu sehen sind, wähle die vorderste Fußgängerampel.\n\nDas Fadenkreuz wird nach jedem Foto zufällig plaziert, damit Fotos aus unterschiedlichen Perspektiven entstehen.");
                     break;
                 case 1:
                     showcaseView.setShowcase(new ViewTarget(findViewById(R.id.takePicture_layout_zoom)), false);
-                    showcaseView.setContentText("Du kannst auch zoomen.\n\nIdealerweise stellst du so ein, dass das schwarze Ampelgehäuse mit dem hellblauen Rahmen übereinstimmt.\n\n(Die Pinch-Zoom-Geste funktioniert auch).");
-
+                    showcaseView.setContentText("Du kannst auch zoomen.\n\nIdealerweise stellst Du den Zoom so ein, dass das schwarze Ampelgehäuse mit dem hellblauen Rahmen übereinstimmt.\n\n(Die Pinch-Zoom-Geste funktioniert auch: Du kannst heran- oder herauszoomen, wenn Du mit zwei Fingern das Bild auseinanderschiebst oder zusammenziehst.)");
                     break;
                 case 2:
                     showcaseView.setShowcase(new ViewTarget(btnCapture), false);

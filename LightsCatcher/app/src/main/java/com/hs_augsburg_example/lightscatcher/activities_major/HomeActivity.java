@@ -476,7 +476,7 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             showcaseView = new ShowcaseView.Builder(HomeActivity.this)
                     .withHoloShowcase2()
                     .setContentTitle("Willkommen bei LightsCatcher")
-                    .setContentText("\nDanke, dass du das Projekt unterstützt :)\n\nLass dir jetzt kurz zeigen, wie die App funktioniert.")
+                    .setContentText("\nDanke, dass Du das Projekt unterstützt. :)\n\nLass Dir kurz zeigen, wie die App funktioniert.")
                     .setStyle(R.style.CustomShowcaseTheme)
                     .setOnClickListener(this)
                     .build();
@@ -500,11 +500,11 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
                     break;
                 case 2:
                     showcaseView.setShowcase(new ViewTarget(findViewById(home_layout_connection)), false);
-                    showcaseView.setContentText("Hier siehst du den Verbindungsstatus zu unserem Server. Du kannst übrigens auch offline Ampeln fotografieren. Die Fotos werden hochgeladen, sobald die App wieder im Online-Modus läuft.");
+                    showcaseView.setContentText("Hier siehst Du den Verbindungsstatus zu unserem Server. Du kannst übrigens auch offline Fußgängerampeln fotografieren. Die Fotos werden hochgeladen, sobald die App wieder im Online-Modus läuft.");
                     break;
                 case 3:
                     showcaseView.setShowcase(new ViewTarget(findViewById(fab)), false);
-                    showcaseView.setContentText("Mit den Button rechts unten gelangst du zur Kamera.\n\n Such dir eine Fußgängerampel und mach die ersten Punkte :)");
+                    showcaseView.setContentText("Mit dem Button rechts unten gelangst Du zur Kamera.\n\n Suche Dir eine Fußgängerampel und mach die ersten Punkte. :)");
                     showcaseView.setButtonText("Schließen");
                     RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     buttonParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);

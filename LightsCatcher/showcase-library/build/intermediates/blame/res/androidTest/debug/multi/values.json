@@ -1,6 +1,6 @@
 [
     {
-        "outputFile": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
+        "outputFile": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
         "map": [
             {
                 "to": {
@@ -11,7 +11,7 @@
                     "endOffset": 861
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 4,
                         "startColumn": 4,
@@ -30,7 +30,7 @@
                     "endOffset": 906
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 5,
                         "startColumn": 4,
@@ -49,7 +49,7 @@
                     "endOffset": 953
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 6,
                         "startColumn": 4,
@@ -68,7 +68,7 @@
                     "endOffset": 1006
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 7,
                         "startColumn": 4,
@@ -87,7 +87,7 @@
                     "endOffset": 1063
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 8,
                         "startColumn": 4,
@@ -106,7 +106,7 @@
                     "endOffset": 1117
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 9,
                         "startColumn": 4,
@@ -125,7 +125,7 @@
                     "endOffset": 1161
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 10,
                         "startColumn": 4,
@@ -144,7 +144,7 @@
                     "endOffset": 1206
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 11,
                         "startColumn": 4,
@@ -163,7 +163,7 @@
                     "endOffset": 1253
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 12,
                         "startColumn": 4,
@@ -182,7 +182,7 @@
                     "endOffset": 1302
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 13,
                         "startColumn": 4,
@@ -201,7 +201,7 @@
                     "endOffset": 1336
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 14,
                         "startColumn": 4,
@@ -221,7 +221,7 @@
                     "endOffset": 1778
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 15,
                         "startColumn": 4,
@@ -242,7 +242,7 @@
                     "endOffset": 2127
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 24,
                         "startColumn": 4,
@@ -263,7 +263,7 @@
                     "endOffset": 2488
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 30,
                         "startColumn": 4,
@@ -284,7 +284,7 @@
                     "endOffset": 2647
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 36,
                         "startColumn": 4,
@@ -305,7 +305,7 @@
                     "endOffset": 2881
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 39,
                         "startColumn": 4,
@@ -326,7 +326,7 @@
                     "endOffset": 3045
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 44,
                         "startColumn": 4,
@@ -347,7 +347,7 @@
                     "endOffset": 3168
                 },
                 "from": {
-                    "file": "D:\\Projects\\Ampel-Assistenzsystem.lightsCatcher\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
+                    "file": "D:\\Daten\\Git\\Ampel-Assistenzsystem.app\\LightsCatcher\\showcase-library\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "position": {
                         "startLine": 47,
                         "startColumn": 4,

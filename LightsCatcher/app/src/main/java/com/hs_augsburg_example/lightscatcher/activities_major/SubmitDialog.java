@@ -166,7 +166,7 @@ public class SubmitDialog extends DialogFragment {
         initView(view);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
-                .setTitle("Licht markieren:")
+                .setTitle("Licht markieren")
                 .setNegativeButton("Verwerfen", negativeAction)
                 .setPositiveButton("Absenden", positiveAction)
                 .setView(view);
@@ -282,7 +282,7 @@ public class SubmitDialog extends DialogFragment {
 
             showcaseView = new ShowcaseView.Builder(activity)
                     .withHoloShowcase2()
-                    .setContentText("Bevor das Bild hochgeladen wird, kannst du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst du das Foto verschieben.\n\nBitte achte auf gute Bildqualität. Schlechte Fotos werden wir löschen und die zugehörigen Punkte werden dir wieder abgezogen.")
+                    .setContentText("Bevor das Bild hochgeladen wird, kannst Du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst du das Foto verschieben.\n\nBitte achte auf gute Bildqualität. Schlechte Fotos, die z.B. zu unscharf sind, werden wir löschen und dementsprechend Deine Punktzahl anpassen.")
                     .setStyle(R.style.CustomShowcaseTheme)
                     .setOnClickListener(this)
                     .build();
