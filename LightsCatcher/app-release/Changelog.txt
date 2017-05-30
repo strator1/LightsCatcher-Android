@@ -1,5 +1,10 @@
-___________________________________
-== v1.1 === 08.05.2017
- * Offline-Unterstützung
- * Doppelte Passwortabfrage bei Registrierung
- * viele viele kleine Bugfixes
+___________________________________  
+== v1.2 === 30.05.2017  
+ * Gesamter Ablauf wurde überarbeitet. Du kannst jetzt mehr Fotos in kürzerer Zeit machen.  
+ * Für grüne Ampeln erhältst du doppelt so viele Punkte, vorrausgesetzt die Bilder sind nicht verwackelt  
+
+___________________________________  
+== v1.1 === 08.05.2017  
+ * Offline-Unterstützung  
+ * Doppelte Passwortabfrage bei Registrierung  
+ * viele viele kleine Bugfixes  

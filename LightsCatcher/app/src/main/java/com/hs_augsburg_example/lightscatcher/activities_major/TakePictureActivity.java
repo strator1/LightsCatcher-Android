@@ -695,6 +695,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             float x = MiscUtils.randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
             float y = MiscUtils.randomFloat(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
 
+            if (showcaseHandler != null) {
+                y = CROSSHAIR_Y_MIN;
+            }
             return new PointF(x, y);
         }
 
@@ -910,7 +913,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             showcaseView = new ShowcaseView.Builder(TakePictureActivity.this)
                     .withHoloShowcase2()
                     .setTarget(new ViewTarget(findViewById(R.id.takePicture_layout_selectPhase)))
-                    .setContentText("Wenn Du eine Fußgängerampel gefunden hast, wähle zuerst die Phase der Fußgängerampel: Rot, grün oder ausgeschaltet.\n\nFür ein Foto gibt es je nach Phase unterschiedlich viele Punkte:\n\trot:\t 1 Punkt\n\tgrün:\t 2 Punkte\n\tausgeschaltet:\t1 Punkt")
+                    .setContentText("Wenn Du eine Fußgängerampel gefunden hast, wähle zuerst die Phase der Fußgängerampel: Rot, grün oder ausgeschaltet.\n\nFür ein Foto gibt es je nach Phase unterschiedlich viele Punkte:\n\trot:\t 1 Punkt\n\tgrün:\t 2 Punkte\n\tausgeschaltet:\t1 Punkt\n\nHINWEIS: Bitte lauf noch nicht nicht los, während du die Grünphase fotografierst, wir bekommen sonst nur verwackelte Bilder. Für gute \"grüne\" Bilder gibt es doppelte Punkte.")
                     .setStyle(R.style.CustomShowcaseTheme)
                     .setOnClickListener(this)
                     .build();

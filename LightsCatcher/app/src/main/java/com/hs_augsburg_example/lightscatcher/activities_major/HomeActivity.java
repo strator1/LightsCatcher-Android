@@ -1,10 +1,12 @@
 package com.hs_augsburg_example.lightscatcher.activities_major;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -136,7 +138,6 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
         swipeLayout.setOnRefreshListener(this);
 
 
-
         // query ordered list of users from firebase
         sortedUsers = FirebaseDatabase.getInstance().getReference("users").orderByChild("points");
         // top 50 users:
@@ -225,6 +226,28 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
         };
         PersistenceManager.shared.uploadMonitor.addObserver(uploadListener);
+
+        synchronized (PersistenceManager.shared.backupStorage) {
+            final Context ctx = getApplicationContext();
+            final String DIALOG_KEY = "OfflineWarning";
+            final int count = PersistenceManager.shared.backupStorage.list(ctx).length;
+
+            if (count >= 50) {
+                if (UserPreference.shouldShowDialog(ctx, DIALOG_KEY)) {
+                    AlertDialog dlg = new AlertDialog.Builder(this)
+                            .setTitle("")
+                            .setMessage("Du hast jetzt schon " + count + " Fotos im Offline-Modus gemacht. Denk bitte daran, dass du die App demnächst online eine Zeit lang laufen lässt, damit die Bilder auch wirklich hochgeladen werden.")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    UserPreference.neverShowAgain(ctx, DIALOG_KEY, true);
+                                }
+                            })
+                            .create();
+                    dlg.show();
+                }
+            }
+        }
 
         // Listen to the whole userslist to calculate the rank of the current user
         // this might cause a lot of network-traffic when there are many users.

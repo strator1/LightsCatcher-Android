@@ -61,6 +61,12 @@ public class UserPreference {
         return preferences.getBoolean(key, true);
     }
 
+    /**
+     *
+     * @param ctx
+     * @param key
+     * @param neverShowAgain true if dialog should not be shown again
+     */
     public static void neverShowAgain(Context ctx, String key, boolean neverShowAgain) {
         SharedPreferences preferences = ctx.getSharedPreferences(MY_PREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();

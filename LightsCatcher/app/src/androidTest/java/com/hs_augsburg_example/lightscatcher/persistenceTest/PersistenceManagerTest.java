@@ -57,7 +57,7 @@ class PersistenceManagerTest {
         Thread.sleep(500);
 
         int i = 0;
-        while (i < 10) {
+        while (i < 20) {
             if (UserInformation.shared.isLoggedIn() && PersistenceManager.shared.connectedMonitor.isConnected())
                 return;
             else {
@@ -73,6 +73,7 @@ class PersistenceManagerTest {
     }
 
     public void registerFirebaseTask(Task<?>[] result) {
+        if (result != null)
         tasks.addAll(Arrays.asList(result));
     }
 

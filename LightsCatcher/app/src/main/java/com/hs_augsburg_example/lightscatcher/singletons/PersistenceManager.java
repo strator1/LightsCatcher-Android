@@ -46,13 +46,13 @@ public class PersistenceManager {
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
-    public static final boolean DATABASE = false;
-    public static final boolean STORAGE = false;
+    public static final boolean DATABASE = true;
+    public static final boolean STORAGE = true;
 
 
     public static final PersistenceManager shared = new PersistenceManager();
 
-    static final String DATA_MODEL_VERSION = "v1_2";
+    static final String DATA_MODEL_VERSION = "v1_0";
 
     //destination folder of lights database-entries
     private final String LIGHTS_DATA_PATH = "lights/" + DATA_MODEL_VERSION;
@@ -142,14 +142,13 @@ public class PersistenceManager {
             } catch (Exception ex) {
                 Log.e(TAG, ex);
             }
-            else
-                if (LOG) Log.d(TAG,"skipping group with size <= 1");
+        else if (LOG) Log.d(TAG, "skipping group with size <= 1");
 
         return lights.child(photo.id).setValue(photo);
     }
 
     private Task persist(LightGroup group) {
-        if (LOG) Log.d(TAG,"persist LightGroup: size:" + group.size());
+        if (LOG) Log.d(TAG, "persist LightGroup: size:" + group.size());
 
         return lights_groups.child(group.id).setValue(group).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
@@ -227,31 +226,38 @@ public class PersistenceManager {
     public UploadTask[] retryPendingUploads(Context ctx) {
         if (LOG) Log.d(TAG, "retryPendingUploads");
         if (!STORAGE) return null;
-        List<UploadTask> result = new ArrayList<>(1);
 
         if (!connectedMonitor.isConnected) {
             if (LOG) Log.d(TAG, "skipping retry because offline");
             return new UploadTask[0];
         }
 
-        synchronized (this.backupStorage) {
-            // HOW IT WORKS IN GENERAL:
-            // every time an upload is initiated the image-data is not just uploaded
-            // but also stored in the internal app storage on the device.
+        List<UploadTask> result = new ArrayList<>(1);
+        try {
 
-            File[] files = backupStorage.list(ctx);
-            for (File file : files) {
-                if (LOG) Log.d(TAG, "found backup image: " + file.toString());
-                String imageId = file.getName();
-                StorageReference ref = lights_images.child(imageId);
+            synchronized (this.backupStorage) {
+                // HOW IT WORKS IN GENERAL:
+                // every time an upload is initiated the image-data is not just uploaded
+                // but also stored in the internal app storage on the device.
 
-                if (shouldStartNewUpload(ref)) {
-                    result.add(uploadImageInternal(ctx, ref, file));
+                File[] files = backupStorage.list(ctx);
+                for (File file : files) {
+                    if (LOG) Log.d(TAG, "found backup image: " + file.toString());
+                    String imageId = file.getName();
+                    StorageReference ref = lights_images.child(imageId);
+
+                    if (shouldStartNewUpload(ref)) {
+                        result.add(uploadImageInternal(ctx, ref, file));
+                    }
                 }
+                UploadTask[] array = new UploadTask[result.size()];
+                result.toArray(array);
+                return array;
             }
-            UploadTask[] array = new UploadTask[result.size()];
-            result.toArray(array);
-            return array;
+
+        } catch (Exception e) {
+            Log.e(TAG,e);
+            return new UploadTask[]{};
         }
     }
 

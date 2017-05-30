@@ -7,8 +7,8 @@ android {
         applicationId "com.hs_augsburg_example.lightscatcher"
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 20
-        versionName "1.2"
+        versionCode 21
+        versionName "1.2.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
