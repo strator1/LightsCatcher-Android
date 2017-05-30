@@ -43,6 +43,7 @@ class PersistenceManagerTest {
         Log.d(TAG, "setup");
         appContext = InstrumentationRegistry.getTargetContext();
         PersistenceManager.init();
+        UserInformation.init();
         PersistenceManager.shared.backupStorage.clean(appContext);
         FirebaseAuth.getInstance().signInWithEmailAndPassword(TEST_USER_MAIL, TEST_PWD).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override

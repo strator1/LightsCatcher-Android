@@ -46,7 +46,8 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
     }
 
     void onSuccessAll() {
-        Toast.makeText(ctx, "Upload erfolgreich :)", Toast.LENGTH_LONG).show();
+        if (LOG) Log.e(TAG, "onSuccessAll");
+        // Toast.makeText(ctx, "Upload erfolgreich :)", Toast.LENGTH_LONG).show();
     }
 
     public Tuple<String, Task<?>>[] list() {

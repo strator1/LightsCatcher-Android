@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -340,13 +339,25 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             lightGroup = lightGroups.get(photoNum);
         }
 
+        int credits;
+        switch (phase) {
+            case GREEN:
+                credits = 2;
+                break;
+            case RED:
+            case OFF:
+            default:
+                credits = 1;
+                break;
+        }
+
         Photo snapshotData = Photo.buildNew()
                 .setUser(uid)
                 .setBitmap(bmp)
                 .addLightPos(pos)
                 .setLocation(loc)
                 .setGyro(gyro)
-                .setCredits(1)
+                .setCredits(credits)
                 .commit();
 
         lightGroup.put(snapshotData);
@@ -389,13 +400,18 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             return;
         }
         btnCapture.setEnabled(false);
+//        camera.takePicture(null, null, TakePictureActivity.this);
         Log.d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
         switch (camera.getParameters().getFocusMode()) {
             case Camera.Parameters.FOCUS_MODE_AUTO:
             case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
+            case Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO:
+
                 camera.autoFocus(new Camera.AutoFocusCallback() {
                     @Override
                     public void onAutoFocus(boolean success, Camera camera) {
+                        if (!success)
+                            Log.e(TAG, "no autofocus");
                         camera.takePicture(null, null, TakePictureActivity.this);
                         camera.cancelAutoFocus();
                     }
@@ -547,7 +563,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         startActivity(intent);
     }
 
-    private void showSubmitPopup(PhaseContext stateContext, Photo snapshotData) {
+    private void showSubmitPopup(Photo snapshotData) {
         final SubmitDialog popup = new SubmitDialog.Builder(submitListener)
                 .setPhoto(snapshotData)
                 .build();
@@ -678,9 +694,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         private PointF generateRandomPos() {
             float x = MiscUtils.randomFloat(CROSSHAIR_X_MIN, CROSSHAIR_X_MAX);
             float y = MiscUtils.randomFloat(CROSSHAIR_Y_MIN, CROSSHAIR_Y_MAX);
-            if (showcaseHandler != null) {
-                y = CROSSHAIR_Y_MIN;
-            }
+
             return new PointF(x, y);
         }
 
@@ -689,10 +703,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             float y = pnt.y;
             if (LOG) Log.d(TAG, "setPositionOfView: " + x + "; " + y);
 
-            Rect parentRect = new Rect();
-            parentRect.set(0, 0, camPreview.getWidth(), camPreview.getHeight());
-
-            if (LOG) Log.d(TAG, "preview rect: " + parentRect.toShortString());
+            int parentW = camPreview.getWidth();
+            int parentH = camPreview.getHeight();
 
             float density = getApplicationContext().getResources().getDisplayMetrics().density;
 
@@ -700,8 +712,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             int viewWidth = dp(50, density);
 
             RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(viewWidth, viewHeight);
-            params.leftMargin = (int) (parentRect.width() * x - (float) viewWidth / 2);
-            params.topMargin = (int) (parentRect.height() * y - (float) viewHeight / 2);
+            params.leftMargin = (int) (parentW * x - (float) viewWidth / 2);
+            params.topMargin = (int) (parentH * y - (float) viewHeight / 2);
 
             if (crosshairView == null) {
                 LayoutInflater inflater = getLayoutInflater();
@@ -715,12 +727,12 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                 crosshairView.setLayoutParams(params);
             }
 
-            // set pivoting, important for zoom and camera-focus
-            camPreview.setPivotRelative(new PointF(x, y));
+            // set pivot point, important for zoom and camera-focus
+            camPreview.setPivot(new PointF(x, y));
 
 
             // distance between light-position (colored cross) and center of the crosshair-border (coordinates specified by parameters x and y)
-            crossHairCenterToLight = (float) viewHeight / parentRect.height() / 4;
+            crossHairCenterToLight = (float) viewHeight / parentH / 4;
         }
     }
 
@@ -801,7 +813,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
 
         void snapshotTaken(Photo snapshot) {
-            owner.showSubmitPopup(currentContext(), snapshot);
+            owner.showSubmitPopup(snapshot);
         }
 
         void snapshotCommitted(Photo snapshot) {
@@ -916,7 +928,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                     break;
                 case 1:
                     showcaseView.setShowcase(new ViewTarget(findViewById(R.id.takePicture_layout_zoom)), false);
-                    showcaseView.setContentText("Du kannst auch zoomen.\n\nIdealerweise stellst Du den Zoom so ein, dass das schwarze Ampelgehäuse mit dem hellblauen Rahmen übereinstimmt.\n\n(Die Pinch-Zoom-Geste funktioniert auch: Du kannst heran- oder herauszoomen, wenn Du mit zwei Fingern das Bild auseinanderschiebst oder zusammenziehst.)");
+                    showcaseView.setContentText("Du kannst auch zoomen.\n\nIdealerweise stellst du den Zoom so ein, dass das schwarze Ampelgehäuse mit dem hellblauen Rahmen übereinstimmt.\n\nDie Zoom-Geste mit 2 Fingern (Pinch Zoom) funktioniert auch.");
+
                     break;
                 case 2:
                     showcaseView.setShowcase(new ViewTarget(btnCapture), false);

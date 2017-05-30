@@ -9,6 +9,7 @@ import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
+import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
 import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
 
 import org.junit.After;
@@ -51,7 +52,7 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
                 .setBitmap(randomBitmap(32, 32))
                 .setGyro(3.2f)
                 .setLocation(10.4, 8.7)
-                .addLightPos(new LightPosition(.5, .5, LightPhase.GREEN, true))
+                .addLightPos(new LightPosition(.4, .7, LightPhase.GREEN, true))
                 .setCredits(3)
                 .commit();
     }
@@ -72,6 +73,7 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
         Log.d(TAG, "persistDataAndUploadPicture");
         assertTrue(PersistenceManager.shared.backupStorage.list(appContext).length == 0);
 
+        int scoreBefore = UserInformation.shared.getUserSnapshot().points;
         final int[] backupFiles = new int[]{-1};
         PersistenceManager.shared.backupStorage.addObserver(new Observer() {
             @Override
@@ -85,12 +87,16 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
         PersistenceManager.shared.uploadMonitor.addObserver(new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                if (uploadCount [0] == -1)// set only once at the start
+                if (uploadCount[0] == -1)// set only once at the start
                     uploadCount[0] = PersistenceManager.shared.uploadMonitor.countActiveTasks();
             }
         });
 
         TaskMonitor tasks = PersistenceManager.shared.persistDataAndUploadPicture(appContext, data);
+
+        for (TaskMonitor.Tuple task : tasks.list()) {
+            super.registerFirebaseTask((Task<?>) task.v2);
+        }
 
         // see if backup file was created
         assertEquals(1, backupFiles[0]);
@@ -98,12 +104,11 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
         // see if upload count was updated
         assertEquals(1, uploadCount[0]);
 
-        for (TaskMonitor.Tuple task : tasks.list()) {
-            super.registerFirebaseTask((Task<?>) task.v2);
-        }
 
         Thread.sleep(2000);
 
+        // check if user's score was updated
+        assertEquals(scoreBefore + data.credits, UserInformation.shared.getUserSnapshot().points);
     }
 
     @After

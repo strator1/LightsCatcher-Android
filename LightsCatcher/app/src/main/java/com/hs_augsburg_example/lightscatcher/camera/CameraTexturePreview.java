@@ -16,10 +16,12 @@ import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import static android.hardware.Camera.Parameters.FOCUS_MODE_AUTO;
 import static android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE;
+import static android.hardware.Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO;
 import static com.hs_augsburg_example.lightscatcher.utils.MiscUtils.newArrayList;
 
 /**
@@ -51,7 +53,7 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
         mScaleDetector = new ScaleGestureDetector(context, this);
     }
 
-    public void setPivotRelative(PointF pivot) {
+    public void setPivot(PointF pivot) {
         mPivot = pivot;
         updateScale();
     }
@@ -123,23 +125,25 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
                 if (LOG) Log.d(TAG, '\t' + mode);
             }
         }
-        if (supportedFocusModes.contains(FOCUS_MODE_AUTO))
-            params.setFocusMode(FOCUS_MODE_AUTO);
-        if (supportedFocusModes.contains(FOCUS_MODE_CONTINUOUS_PICTURE))
+        if (supportedFocusModes.contains(FOCUS_MODE_CONTINUOUS_VIDEO))
+            params.setFocusMode(FOCUS_MODE_CONTINUOUS_VIDEO);
+        else if (supportedFocusModes.contains(FOCUS_MODE_CONTINUOUS_PICTURE))
             params.setFocusMode(FOCUS_MODE_CONTINUOUS_PICTURE);
+        else if (supportedFocusModes.contains(FOCUS_MODE_AUTO))
+            params.setFocusMode(FOCUS_MODE_AUTO);
 
+//        List<Camera.Area> list = new ArrayList<>();
+//        list.add(calculateFocusArea(mPivot));
+//        params.setFocusAreas(list);
 
-//        if (params.getMaxNumFocusAreas() > 0) {
-//            Camera.Area focusArea = calculateFocusArea(mPivot);
-//            params.setFocusAreas(newArrayList(focusArea));
-//        }
+        cam.setParameters(params);
 
         try {
             camera.setPreviewTexture(surfaceTexture);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        cam.setParameters(params);
+
         this.invalidate();
     }
 

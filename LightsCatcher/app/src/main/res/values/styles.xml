@@ -29,13 +29,13 @@
     <style name="CustomTitle2">
         <item name="android:textColor">#eeffffff</item>
         <item name="android:background">#000</item>
-        <item name="android:textSize">21sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="CustomText2">
         <item name="android:textColor">#ccffffff</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">17sp</item>
     </style>
 
 </resources>

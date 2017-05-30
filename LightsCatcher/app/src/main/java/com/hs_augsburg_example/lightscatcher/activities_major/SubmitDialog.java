@@ -17,12 +17,10 @@ import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.amlcurran.showcaseview.ShowcaseView;
-import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.hs_augsburg_example.lightscatcher.R;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPhase;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightPosition;
@@ -32,8 +30,6 @@ import com.hs_augsburg_example.lightscatcher.utils.Log;
 import com.hs_augsburg_example.lightscatcher.utils.TaskMonitor;
 import com.hs_augsburg_example.lightscatcher.utils.UserPreference;
 import com.hs_augsburg_example.lightscatcher.views.Crosshair;
-
-import java.text.DecimalFormat;
 
 import static com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.PAN_LIMIT_CENTER;
 
@@ -267,14 +263,14 @@ public class SubmitDialog extends DialogFragment {
         final Activity activity;
         int counter = 0;
         private ShowcaseView showcaseView;
-        private Runnable listener;
+        private Runnable callback;
 
         public ShowcaseHandler(Activity activity) {
             this.activity = activity;
         }
 
-        public void startShowcase(Runnable listener) {
-            this.listener = listener;
+        public void startShowcase(Runnable callback) {
+            this.callback = callback;
             RelativeLayout.LayoutParams buttonParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             buttonParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             buttonParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
@@ -282,7 +278,7 @@ public class SubmitDialog extends DialogFragment {
 
             showcaseView = new ShowcaseView.Builder(activity)
                     .withHoloShowcase2()
-                    .setContentText("Bevor das Bild hochgeladen wird, kannst Du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst du das Foto verschieben.\n\nBitte achte auf gute Bildqualität. Schlechte Fotos, die z.B. zu unscharf sind, werden wir löschen und dementsprechend Deine Punktzahl anpassen.")
+                    .setContentText("Bevor das Bild hochgeladen wird, kannst du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst du auf das Foto tippen und es verschieben (tippen und halten, dann den Finger bewegen).\n\nBitte achte auf gute Bildqualität. Schlechte Fotos werden wir löschen und die zugehörigen Punkte werden dir wieder abgezogen.")
                     .setStyle(R.style.CustomShowcaseTheme)
                     .setOnClickListener(this)
                     .build();
@@ -298,7 +294,7 @@ public class SubmitDialog extends DialogFragment {
                 case 0:
                 default:
                     showcaseView.hide();
-                    listener.run();
+                    callback.run();
                     UserPreference.neverShowAgain(activity,SETTINGS_KEY,true);
                     break;
             }
