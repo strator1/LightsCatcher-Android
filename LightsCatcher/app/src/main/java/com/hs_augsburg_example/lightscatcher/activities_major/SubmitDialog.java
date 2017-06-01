@@ -293,7 +293,7 @@ public class SubmitDialog extends DialogFragment {
 
             showcaseView = new ShowcaseView.Builder(activity)
                     .withHoloShowcase2()
-                    .setContentText("Bevor das Bild hochgeladen wird, kannst du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst du auf das Foto tippen und es verschieben (tippen und halten, dann den Finger bewegen).\n\nBitte achte auf gute Bildqualität. Schlechte Fotos werden wir löschen und die zugehörigen Punkte werden dir wieder abgezogen.")
+                    .setContentText("Bevor das Bild hochgeladen wird, kannst Du es nochmal anschauen und die Position des Lichts korrigieren.\n\nDazu musst Du auf das Foto tippen und es verschieben (tippen und halten, dann den Finger bewegen).\n\nBitte achte auf gute Bildqualität. Schlechte Fotos werden wir löschen und die zugehörigen Punkte abziehen.")
                     .setStyle(R.style.CustomShowcaseTheme)
                     .setOnClickListener(this)
                     .build();
