@@ -52,7 +52,7 @@ public class PersistenceManager {
 
     public static final PersistenceManager shared = new PersistenceManager();
 
-    static final String DATA_MODEL_VERSION = "v1_0";
+    static final String DATA_MODEL_VERSION = "v1_3_testing";
 
     //destination folder of lights database-entries
     private final String LIGHTS_DATA_PATH = "lights/" + DATA_MODEL_VERSION;
@@ -60,8 +60,8 @@ public class PersistenceManager {
     private final String USERS_DATA_PATH = "users";
 
     //destination for lights images
-    private final String LIGTS_STORAGE_PATH = "lights_images";
-//    private final String LIGTS_STORAGE_PATH = DATA_MODEL_VERSION;
+//    private final String LIGTS_STORAGE_PATH = "lights_images";
+    private final String LIGTS_STORAGE_PATH = DATA_MODEL_VERSION;
 
     // path where the images are stored temporarily on the device
     @VisibleForTesting

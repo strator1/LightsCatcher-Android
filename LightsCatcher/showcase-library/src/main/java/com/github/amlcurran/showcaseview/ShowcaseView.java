@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Modified by quirin on 23.05.2017:
+ * + added public void setScaleMultiplier(...)
+ * + added public Builder Builder.withHoloShowcase2()
+ */
+
 package com.github.amlcurran.showcaseview;
 
 import android.app.Activity;

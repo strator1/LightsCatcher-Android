@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/**
+ * Modified by quirin on 23.05.2017:
+ * * made field 'showcaseRadius' protected;
+ */
 package com.github.amlcurran.showcaseview;
 
 import android.content.res.Resources;
