@@ -99,26 +99,20 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
 
     }
 
-    void initCamera(Camera cam, SurfaceTexture surfaceTexture) {
-
-
-        this.camera = cam;
-        this.mSurface = surfaceTexture;
-
+    private void initCamera(Camera cam, SurfaceTexture surfaceTexture) {
         Camera.Parameters params = cam.getParameters();
-
+        Camera.Size ps = params.getPreviewSize();
+        if (LOG) Log.d(TAG, "psize: {0} x {1}", ps.width, ps.height);
 
         mPictureSize = CameraUtil.chooseOptimalSize(params.getSupportedPictureSizes(), 2048, 1152, 2048, 2048);
         if (LOG) Log.d(TAG, "choose pictureSize: {0}x{1}", mPictureSize.width, mPictureSize.height);
-
-        mPreviewSize = CameraUtil.chooseOptimalSize(params.getSupportedPreviewSizes(), mSurfaceSize.x, mSurfaceSize.y, mSurfaceSize.x, mSurfaceSize.y);
-        if (LOG) Log.d(TAG, "choose previewSize: {0}x{1}", mPreviewSize.width, mPreviewSize.height);
-
-        params.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
         params.setPictureSize(mPictureSize.width, mPictureSize.height);
 
-        List<String> supportedFocusModes = params.getSupportedFocusModes();
+//        mPreviewSize = CameraUtil.chooseOptimalSize(params.getSupportedPreviewSizes(), mSurfaceSize.y, mSurfaceSize.x, mSurfaceSize.y, mSurfaceSize.x);
+//        if (LOG) Log.d(TAG, "choose previewSize: {0}x{1}", mPreviewSize.width, mPreviewSize.height);
+//        params.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
 
+        List<String> supportedFocusModes = params.getSupportedFocusModes();
         if (LOG) {
             Log.d(TAG, "supported focusmodes:");
             for (String mode : supportedFocusModes) {
@@ -132,17 +126,18 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
         else if (supportedFocusModes.contains(FOCUS_MODE_AUTO))
             params.setFocusMode(FOCUS_MODE_AUTO);
 
-//        List<Camera.Area> list = new ArrayList<>();
-//        list.add(calculateFocusArea(mPivot));
-//        params.setFocusAreas(list);
-
-        cam.setParameters(params);
-
         try {
             camera.setPreviewTexture(surfaceTexture);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, e);
         }
+
+        try {
+            cam.setParameters(params);
+        } catch (Exception ex) {
+            Log.e(TAG, ex);
+        }
+
 
         this.invalidate();
     }
@@ -159,9 +154,11 @@ public class CameraTexturePreview extends TextureView implements TextureView.Sur
         return new Camera.Area(new Rect(left, top, right, bottom), 1000);
     }
 
-    public void setCamera(Camera camera) {
+    public void attachCamera(Camera camera) {
+        if (camera == null) throw new IllegalArgumentException();
+
         this.camera = camera;
-        if (camera != null && mSurface != null) {
+        if (mSurface != null) {
             initCamera(camera, mSurface);
         }
     }

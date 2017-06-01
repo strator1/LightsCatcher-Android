@@ -7,6 +7,7 @@ import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.hs_augsburg_example.lightscatcher.App;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import java.util.Date;
 import java.util.UUID;
@@ -168,6 +169,15 @@ public class Photo {
             return this;
         }
 
+        public Builder setGroup(LightGroup lightGroup) {
+            if (p.groupRef != null) {
+                Log.e("Photo","group already assigned");
+            }
+            p.group = lightGroup.id;
+            p.groupRef = lightGroup;
+            lightGroup.put(p);
+            return this;
+        }
     }
 
 }

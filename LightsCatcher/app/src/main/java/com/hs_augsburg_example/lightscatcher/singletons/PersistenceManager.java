@@ -46,8 +46,8 @@ public class PersistenceManager {
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
-    public static final boolean DATABASE = true;
-    public static final boolean STORAGE = true;
+    public static final boolean DATABASE = false;
+    public static final boolean STORAGE = false;
 
 
     public static final PersistenceManager shared = new PersistenceManager();

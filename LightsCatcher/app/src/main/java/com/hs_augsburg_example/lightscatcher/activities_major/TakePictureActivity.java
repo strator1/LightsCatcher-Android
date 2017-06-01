@@ -65,6 +65,7 @@ import static android.widget.RelativeLayout.*;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.GREEN;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.OFF;
 import static com.hs_augsburg_example.lightscatcher.dataModels.LightPhase.RED;
+import static com.hs_augsburg_example.lightscatcher.utils.Log.d;
 import static com.hs_augsburg_example.lightscatcher.utils.MiscUtils.dp;
 import static com.hs_augsburg_example.lightscatcher.utils.UserPreference.MAXIMUM_SNAPSHOT_ALERT;
 
@@ -89,9 +90,8 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private TextView txtCaption;
     private RelativeLayout rl;
     private CameraTexturePreview camPreview;
-    private CompoundButton[] phaseSelect = new CompoundButton[3];
-    private BadgeDrawable[] badges = new BadgeDrawable[3];
     private FloatingActionButton btnCapture;
+    private final PhaseContext[] stateContext = new PhaseContext[]{new PhaseContext(RED), new PhaseContext(GREEN), new PhaseContext(OFF)};
 
     private Camera camera;
     private SensorManager mSensorManager;
@@ -134,8 +134,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                 R.id.takePicture_offSelect,
         };
         for (int phase = 0; phase < 3; phase++) {
+            PhaseContext context = this.stateContext[phase];
 
-            // state-button animation:
+            // radiobutton animation:
             final Animation shrink = AnimationUtils.loadAnimation(this, R.anim.phaseselect_shrink);
             final Animation grow = AnimationUtils.loadAnimation(this, R.anim.phaseselect_grow);
 
@@ -159,13 +160,13 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                     }
                 }
             });
+            context.selectButton = b;
+
             try {
-                this.badges[phase] = createBadge(b);
+                context.badge = createBadge(b);
             } catch (Exception ex) {
                 Log.e(TAG, ex);
             }
-
-            this.phaseSelect[phase] = b;
         }
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -193,7 +194,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onStart() {
-        if (LOG) Log.d(TAG, "onStart");
+        if (LOG) d(TAG, "onStart");
         super.onStart();
         cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         locationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -202,13 +203,13 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         if (cameraPermission) {
             // fine
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-            if (LOG) Log.d(TAG, "shouldShowRequestPermissionRationale: true");
+            if (LOG) d(TAG, "shouldShowRequestPermissionRationale: true");
 
             // the app has requested this permission previously and the user denied the request.
             // show a dialog and explain that we really need the permission
             showCameraRequestDialog();
         } else {
-            if (LOG) Log.d(TAG, "shouldShowRequestPermissionRationale: false");
+            if (LOG) d(TAG, "shouldShowRequestPermissionRationale: false");
             //First request at all, Never ask again selected, or device policy prohibits the app from having that permission.
             requests.add(Manifest.permission.CAMERA);
         }
@@ -219,7 +220,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                 requests.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
         if (requests.size() > 0) {
-            if (LOG) Log.d(TAG, "calling requestPermissions ...");
+            if (LOG) d(TAG, "calling requestPermissions ...");
             String[] arr = new String[requests.size()];
             requests.toArray(arr);
             ActivityCompat.requestPermissions(TakePictureActivity.this, arr, REQUEST_ALL);
@@ -233,9 +234,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onResume() {
-        if (LOG) Log.d(TAG, "onResume");
+        if (LOG) d(TAG, "onResume");
         super.onResume();
-        if (LOG) Log.d(TAG, "cameraPermission: " + cameraPermission);
+        if (LOG) d(TAG, "cameraPermission: " + cameraPermission);
         if (cameraPermission) {
             if (camera == null) {
                 setupCamera();
@@ -252,7 +253,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onPause() {
-        if (LOG) Log.d(TAG, "onPause");
+        if (LOG) d(TAG, "onPause");
         super.onPause();
 
         locationService.stopListening();
@@ -261,7 +262,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onStop() {
-        if (LOG) Log.d(TAG, "onStop");
+        if (LOG) d(TAG, "onStop");
         super.onStop();
 
         if (camPreview != null) {
@@ -273,7 +274,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
     @Override
     protected void onDestroy() {
-        if (LOG) Log.d(TAG, "onDestroy");
+        if (LOG) d(TAG, "onDestroy");
         super.onDestroy();
 
         locationService.stopListening();
@@ -322,7 +323,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
         crossLight.y += shiftY / camPreview.getZoom();
 
-        Log.d(TAG, "===> set Position: {0} , {1}", crossLight.x, crossLight.y);
+        d(TAG, "===> set Position: {0} , {1}", crossLight.x, crossLight.y);
 
         LightPosition pos = new LightPosition(crossLight.x, crossLight.y, phase, true);
 
@@ -331,11 +332,11 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         LightGroup lightGroup;
         int photoNum = context.getSnapshotCount();
         if (photoNum >= lightGroups.size()) {
-            if (LOG) Log.d(TAG, "create new lightGroup");
+            if (LOG) d(TAG, "create new lightGroup");
             lightGroup = LightGroup.create();
             lightGroups.add(lightGroup);
         } else {
-            if (LOG) Log.d(TAG, "use existing lightGroup");
+            if (LOG) d(TAG, "use existing lightGroup");
             lightGroup = lightGroups.get(photoNum);
         }
 
@@ -358,9 +359,9 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
                 .setLocation(loc)
                 .setGyro(gyro)
                 .setCredits(credits)
+                .setGroup(lightGroup)
                 .commit();
 
-        lightGroup.put(snapshotData);
 
         TakePictureActivity.this.stateMachine.snapshotTaken(snapshotData);
     }
@@ -369,7 +370,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         for (int i = 0; i < permissions.length; i++) {
             if (LOG)
-                Log.d(TAG, "onRequestPermissionsResult: code: {0}, relult: {1}", permissions[i], grantResults[i]);
+                d(TAG, "onRequestPermissionsResult: code: {0}, relult: {1}", permissions[i], grantResults[i]);
 
             switch (permissions[i]) {
                 case Manifest.permission.CAMERA:
@@ -401,24 +402,26 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         }
         btnCapture.setEnabled(false);
 //        camera.takePicture(null, null, TakePictureActivity.this);
-        Log.d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
-        switch (camera.getParameters().getFocusMode()) {
-            case Camera.Parameters.FOCUS_MODE_AUTO:
-            case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
-            case Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO:
-
-                camera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean success, Camera camera) {
-                        if (!success)
-                            Log.e(TAG, "no autofocus");
-                        camera.takePicture(null, null, TakePictureActivity.this);
-                        camera.cancelAutoFocus();
-                    }
-                });
-            default:
-                camera.takePicture(null, null, TakePictureActivity.this);
-        }
+        d(TAG, "active focus-mode: " + camera.getParameters().getFocusMode());
+//        switch (camera.getParameters().getFocusMode()) {
+//            case Camera.Parameters.FOCUS_MODE_AUTO:
+//            case Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE:
+//            case Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO:
+//
+//                camera.autoFocus(new Camera.AutoFocusCallback() {
+//                    @Override
+//                    public void onAutoFocus(boolean success, Camera camera) {
+//                        if (!success) {
+//                            Log.e(TAG, "no autofocus");
+//                            Toast.makeText(getApplicationContext(), "autofocus failed",Toast.LENGTH_LONG).show();
+//                        }
+//
+//                        camera.takePicture(null, null, TakePictureActivity.this);
+//
+//                break;
+//            default:
+        camera.takePicture(null, null, TakePictureActivity.this);
+//        }
     }
 
     public void onExitButtonClick(View view) {
@@ -451,7 +454,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         @Override
         public void submitCommitted(Photo snapshot, TaskMonitor monitor) {
-            if (LOG) Log.d(TAG, "submitCommitted");
+            if (LOG) d(TAG, "submitCommitted");
 
             stateMachine.snapshotCommitted(snapshot);
             dialogCompleted();
@@ -459,7 +462,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 
         @Override
         public void submitDiscarded() {
-            if (LOG) Log.d(TAG, "submitDiscarded");
+            if (LOG) d(TAG, "submitDiscarded");
             dialogCompleted();
         }
 
@@ -493,7 +496,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private void setupCamera() {
         if (checkCameraHardware(getApplicationContext())) {
             camera = getCameraInstance();
-            camPreview.setCamera(camera);
+            camPreview.attachCamera(camera);
         }
     }
 
@@ -521,14 +524,14 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private void notifyNextPhase(PhaseContext newContext, PhaseContext oldContext) {
 
 
-        int phase = newContext.phase.value;
-
-        this.phaseSelect[phase].setChecked(true);
-        crosshair.internalMarker[phase].setVisibility(View.VISIBLE);
+        int newPhase = newContext.phase.value;
+        newContext.selectButton.setChecked(true);
+        crosshair.internalMarker[newPhase].setVisibility(View.VISIBLE);
         txtCaption.setText(getString(R.string.fotografieren, newContext.phase.getGermanText()));
+
         if (oldContext != null) {
             int oldPhase = oldContext.phase.value;
-            phaseSelect[oldPhase].setChecked(false);
+            oldContext.selectButton.setChecked(false);
             crosshair.internalMarker[oldPhase].setVisibility(View.INVISIBLE);
         }
     }
@@ -537,18 +540,10 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
      * Updates the UI to show that the snapshot was taken and committed
      */
     private void notifySnapshotCommitted(PhaseContext context, Photo snapshot) {
-        BadgeDrawable view = badges[context.phase.value];
+        BadgeDrawable view = context.badge;
         if (view != null) {
             view.setCount(context.getSnapshotCount());
         }
-    }
-
-    /**
-     * Resets the UI to the default initial state
-     */
-    private void notifyReset() {
-        badges[0].setCount(0);
-        badges[1].setCount(0);
     }
 
     private void leave() {
@@ -676,13 +671,13 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             PointF pos;
             if (photoNum == positions.size()) {
                 // if position is not defined already, ...
-                if (LOG) Log.d(TAG, "setPositionContextBasesd: generate new position");
+                if (LOG) d(TAG, "setPositionContextBasesd: generate new position");
                 // ... take random values
                 pos = generateRandomPos();
                 // remember this position
                 positions.add(pos);
             } else {
-                if (LOG) Log.d(TAG, "setPositionContextBasesd: reuse position");
+                if (LOG) d(TAG, "setPositionContextBasesd: reuse position");
                 // or else re-use the same position
             }
 
@@ -704,7 +699,7 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
         private void setPositionOfView(PointF pnt) {
             float x = pnt.x;
             float y = pnt.y;
-            if (LOG) Log.d(TAG, "setPositionOfView: " + x + "; " + y);
+            if (LOG) d(TAG, "setPositionOfView: " + x + "; " + y);
 
             int parentW = camPreview.getWidth();
             int parentH = camPreview.getHeight();
@@ -745,7 +740,6 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
     private class TakePictureStateMachine {
 
         private final TakePictureActivity owner;
-        private final PhaseContext[] stateContext = new PhaseContext[]{new PhaseContext(RED), new PhaseContext(GREEN), new PhaseContext(OFF)};
         private LightPhase current;
 
         public PhaseContext currentContext() {
@@ -788,27 +782,14 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             PhaseContext oldCtx = currentContext();
             PhaseContext newCtx = getContext(newPhase);
 
-
-//            // allow maximal 3 pictures per phase per traffic-light
-//            int count = newCtx.snapshots.size();
-//            if (count >= MAX_SNAPSHOTS) {
-//
-//                LightPhase nextPhase = getNextPhase();
-//                if (nextPhase != null)
-//                    if (UserPreference.shouldShowDialog(owner.getApplicationContext(), MAXIMUM_SNAPSHOT_ALERT)) {
-//                        maximumSnapshotAlertDialog(nextPhase);
-//                        return false;
-//                    } else {
-//                        return switchPhase(nextPhase);
-//                    }
-//                else
-//                    return false;
-//            }
-
             current = newPhase;
 
             // reposition the crosshair
-            crosshair.setPositionContextBasesd();
+            try {
+                crosshair.setPositionContextBasesd();
+            } catch (Exception ex) {
+                Log.e(TAG, ex);
+            }
 
             // update UI
             owner.notifyNextPhase(newCtx, oldCtx);
@@ -827,7 +808,12 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             context.addSnapshot(snapshot);
 
             // show visual feedback, that the snapshot was taken
-            owner.notifySnapshotCommitted(context, snapshot);
+
+            try {
+                owner.notifySnapshotCommitted(context, snapshot);
+            } catch (Exception ex) {
+                Log.e(TAG, ex);
+            }
 
 //            // allow maximal 3 pictures per phase per traffic-light
 //            int count = context.snapshots.size();
@@ -845,7 +831,12 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
 //
 //            } else {
 //                // change the position of the crosshair
-            crosshair.setPositionContextBasesd();
+            try {
+                crosshair.setPositionContextBasesd();
+            } catch (Exception e) {
+                Log.e(TAG, e);
+            }
+
 //            }
 
 
@@ -867,18 +858,13 @@ public class TakePictureActivity extends FragmentActivity implements Camera.Pict
             this.owner.leave();
         }
 
-        void reset() {
-            // update UI
-            owner.notifyReset();
-
-            // switch to default state
-            this.switchPhase(RED);
-        }
     }
 
     private class PhaseContext {
         public final LightPhase phase;
         private final List<Photo> snapshots = new ArrayList<>();
+        public CompoundButton selectButton;
+        public BadgeDrawable badge;
 
 
         private PhaseContext(LightPhase phase) {

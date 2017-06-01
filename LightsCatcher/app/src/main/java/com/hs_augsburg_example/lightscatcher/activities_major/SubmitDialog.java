@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.PointF;
+import android.icu.text.MessageFormat;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
@@ -17,6 +18,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
@@ -172,7 +175,7 @@ public class SubmitDialog extends DialogFragment {
         return alertDialog;
     }
 
-    void initView(View root) {
+    void initView(final View root) {
         final Photo photo = mPhoto;
         this.contentView = root;
         if (photo != null) {
@@ -186,6 +189,18 @@ public class SubmitDialog extends DialogFragment {
             photoView.setMaxScale(3f);
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
             this.photoView = photoView;
+
+            photoView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
+                @Override
+                public void onScaleChanged(float v, int i) {
+
+                }
+
+                @Override
+                public void onCenterChanged(PointF pointF, int i) {
+                    ((TextView) root.findViewById(R.id.submit_txt_center)).setText(String.format("%s x %s", ((int) pointF.x), ((int) pointF.y)));
+                }
+            });
 
             LightPosition pos = photo.lightPositions.getMostRelevant();
             // photoView eats absolute positions

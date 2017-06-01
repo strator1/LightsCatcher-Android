@@ -158,11 +158,11 @@ public class CameraUtil {
         // Collect the supported resolutions that are at least as big as the preview Surface
         List<Camera.Size> bigEnough = new ArrayList<Camera.Size>();
 
-        double aspect = (double)maxH / maxW;
-        long area = maxH * maxW;
+        double preferredAspect = (double) preferedH / preferedW;
+        long preferredArea = preferedH * preferedW;
 
         if (Log.ENABLED)
-            Log.d(TAG, "expecting aspect: {0}, maximum: {1}x{2}", aspect, maxH, maxW);
+            Log.d(TAG, "expecting aspect: {0}, pref: {3} x {4}, maximum: {1} x {2}", preferredAspect, maxW, maxH, preferedW, preferedH);
 
         // ensure that collection is sorted in equal direction on each device
         Collections.sort(choices, new CompareSizesByArea());
@@ -171,35 +171,33 @@ public class CameraUtil {
         double bestAreaDiff = Double.MAX_VALUE;
         Camera.Size bestAspectMatch = null;
         Camera.Size bestAreaMatch = null;
-        double bestAspectAreaDiff = Double.MAX_VALUE;
 
         for (Camera.Size option : choices) {
-            if (Log.ENABLED) {
-                double d = (double) option.height / option.width;
-                Log.d(TAG, "\t{0}x{1}; {2}", option.width, option.height, d);
-            }
-            if (option.height > maxW || option.width > maxH) {
+            if (option.height > maxH || option.width > maxW) {
                 break; // max size reached
             }
 
-
-            double areaDiff = Math.abs((area(option) - area));
+            double areaDiff = Math.abs((area(option) - preferredArea));
             if (areaDiff < bestAreaDiff) {
                 bestAreaDiff = areaDiff;
                 bestAreaMatch = option;
             }
 
-            double diff = Math.abs((double) option.height / option.width - aspect);
+            double diff = Math.abs(aspect(option) - preferredAspect);
             if (diff <= bestAspectDiff) {
                 bestAspectDiff = diff;
                 bestAspectMatch = option;
-                bestAspectAreaDiff = areaDiff;
+            }
+            if (Log.ENABLED) {
+                double d = aspect(option);
+                Log.d(TAG, "\t{0} x {1}; {2}; diff: {3} / {4}", option.width, option.height, d, diff, areaDiff);
             }
         }
-
+        Log.d(TAG, "bestAspectDiff: " + bestAspectDiff);
+        Log.d(TAG, "bestAreaDiff: " + bestAreaDiff);
         // prefer best matching aspect but only if the area difference is not too big
-        if (bestAspectMatch != null && bestAspectAreaDiff <= (300)) {
-            return bestAreaMatch;
+        if (bestAspectMatch != null && (double) area(bestAspectMatch) / preferredArea >= (.1)) {
+            return bestAspectMatch;
         } else if (bestAreaMatch != null) {
             return bestAreaMatch;
         } else {
@@ -210,6 +208,14 @@ public class CameraUtil {
 
     static long area(Camera.Size size) {
         return (long) size.width * size.height;
+    }
+
+    static double aspect(Camera.Size size) {
+        return (double) size.height / size.width;
+    }
+
+    static double aspect(int h, int w) {
+        return (double) h / w;
     }
 
 
