@@ -31,6 +31,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.hs_augsburg_example.lightscatcher.BuildConfig;
 import com.hs_augsburg_example.lightscatcher.activities_minor.DatenschutzActivity;
 import com.hs_augsburg_example.lightscatcher.activities_minor.HelpActivity;
 import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
@@ -102,6 +103,8 @@ public class HomeActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         ActivityRegistry.register(this);
 
+        if (BuildConfig.DEBUG)
+            Toast.makeText(getApplicationContext(), "DEBUG: " + BuildConfig.DEBUG, Toast.LENGTH_SHORT).show();
 
         // GUI-stuff
         setContentView(R.layout.activity_home);

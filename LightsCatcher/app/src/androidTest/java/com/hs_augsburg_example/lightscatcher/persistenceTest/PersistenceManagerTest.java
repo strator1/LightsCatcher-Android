@@ -3,9 +3,9 @@ package com.hs_augsburg_example.lightscatcher.persistenceTest;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
-import android.util.Log;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -13,15 +13,13 @@ import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
 import com.hs_augsburg_example.lightscatcher.singletons.PersistenceManager;
 import com.hs_augsburg_example.lightscatcher.singletons.UserInformation;
-
-import junit.framework.Assert;
+import com.hs_augsburg_example.lightscatcher.utils.Log;
 
 import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.Assert.fail;
@@ -68,20 +66,37 @@ class PersistenceManagerTest {
         fail("failed to login or connect to firebase");
     }
 
-    protected void registerFirebaseTask(Task<?> task) {
+    protected void registerFirebaseTask(Task task) {
         tasks.add(task);
     }
 
     public void registerFirebaseTask(Task<?>[] result) {
         if (result != null)
-        tasks.addAll(Arrays.asList(result));
+            for (Task t : result) {
+                registerFirebaseTask(t);
+            }
     }
 
+    void assertAllTasksSucceed() throws InterruptedException {
+        final boolean[] failure = {false};
+        for (Task t : tasks) {
+            t.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.e(TAG, e);
+                    failure[0] = true;
+                }
+            });
+        }
+        Thread.sleep(3000);
+        if (failure[0]) fail();
+    }
     @After
     public void teardown() throws InterruptedException {
         Log.d(TAG, "teardown");
         PersistenceManager.shared.backupStorage.clean(appContext);
         for (Task<?> task : tasks) {
+
             if (task instanceof StorageTask<?>) {
                 ((StorageTask<UploadTask.TaskSnapshot>) task).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                     @Override

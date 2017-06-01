@@ -190,17 +190,17 @@ public class SubmitDialog extends DialogFragment {
             photoView.setImage(ImageSource.bitmap(photo.bitMap));
             this.photoView = photoView;
 
-            photoView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
-                @Override
-                public void onScaleChanged(float v, int i) {
-
-                }
-
-                @Override
-                public void onCenterChanged(PointF pointF, int i) {
-                    ((TextView) root.findViewById(R.id.submit_txt_center)).setText(String.format("%s x %s", ((int) pointF.x), ((int) pointF.y)));
-                }
-            });
+//            photoView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
+//                @Override
+//                public void onScaleChanged(float v, int i) {
+//
+//                }
+//
+//                @Override
+//                public void onCenterChanged(PointF pointF, int i) {
+//                    ((TextView) root.findViewById(R.id.submit_txt_center)).setText(String.format("%s x %s", ((int) pointF.x), ((int) pointF.y)));
+//                }
+//            });
 
             LightPosition pos = photo.lightPositions.getMostRelevant();
             // photoView eats absolute positions

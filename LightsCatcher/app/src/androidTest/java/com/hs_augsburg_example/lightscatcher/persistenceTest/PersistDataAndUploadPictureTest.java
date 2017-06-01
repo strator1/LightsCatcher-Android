@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
-import java.util.UUID;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -84,6 +83,7 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
         });
 
         final int[] uploadCount = new int[]{-1};
+
         PersistenceManager.shared.uploadMonitor.addObserver(new Observer() {
             @Override
             public void update(Observable o, Object arg) {
@@ -93,22 +93,22 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
         });
 
         TaskMonitor tasks = PersistenceManager.shared.persistDataAndUploadPicture(appContext, data);
-
         for (TaskMonitor.Tuple task : tasks.list()) {
             super.registerFirebaseTask((Task<?>) task.v2);
         }
 
+
         // see if backup file was created
-        assertEquals(1, backupFiles[0]);
+        assertEquals("unexpected count of backup files!", 1, backupFiles[0]);
 
         // see if upload count was updated
-        assertEquals(1, uploadCount[0]);
+        assertEquals("unexpected count of uploads!", 1, uploadCount[0]);
 
-
-        Thread.sleep(2000);
+        // all tasks should succeed
+        assertAllTasksSucceed();
 
         // check if user's score was updated
-        assertEquals(scoreBefore + data.credits, UserInformation.shared.getUserSnapshot().points);
+        assertEquals("unexpected points of user!", scoreBefore + data.credits, UserInformation.shared.getUserSnapshot().points);
     }
 
     @After
@@ -116,5 +116,4 @@ public class PersistDataAndUploadPictureTest extends PersistenceManagerTest {
     public void teardown() throws InterruptedException {
         super.teardown();
     }
-
 }

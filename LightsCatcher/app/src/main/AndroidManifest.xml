@@ -52,14 +52,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.hs_augsburg_example.lightscatcher.activities_major.HomeActivity" />
         </activity>
-        <activity
-            android:name=".activities_major.SubmitActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.hs_augsburg_example.lightscatcher.activities_major.TakePictureActivity" />
-        </activity>
         <activity android:name=".activities_major.FinishActivity" />
         <activity
             android:name=".activities_minor.DatenschutzActivity"

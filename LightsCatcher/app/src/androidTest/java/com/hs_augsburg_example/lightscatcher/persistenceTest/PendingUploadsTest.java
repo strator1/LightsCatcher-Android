@@ -56,10 +56,10 @@ public class PendingUploadsTest extends PersistenceManagerTest {
         UploadTask[] result = PersistenceManager.shared.retryPendingUploads(appContext);
         super.registerFirebaseTask(result);
 
-        // upload running now
+        // wait until upload finished
         Thread.sleep(5000);
 
-        assertEquals(1, result.length);
+        assertEquals("no tasks have been started!",1, result.length);
     }
 
     @Test
@@ -72,14 +72,14 @@ public class PendingUploadsTest extends PersistenceManagerTest {
         result = PersistenceManager.shared.retryPendingUploads(appContext);
         super.registerFirebaseTask(result);
 
-        assertTrue(result.length == 0);
+        assertEquals(0,result.length);
 
-        // test thread safety
+        //call many many times
         for (int i = 0; i < 500; i++) {
             Thread.sleep(10);
             result = PersistenceManager.shared.retryPendingUploads(appContext);
             super.registerFirebaseTask(result);
-            assertTrue(result.length == 0);
+            assertEquals(0,result.length);
         }
     }
 

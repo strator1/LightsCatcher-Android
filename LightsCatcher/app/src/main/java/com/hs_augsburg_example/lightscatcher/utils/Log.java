@@ -1,5 +1,7 @@
 package com.hs_augsburg_example.lightscatcher.utils;
 
+import com.hs_augsburg_example.lightscatcher.BuildConfig;
+
 import java.text.MessageFormat;
 
 /**
@@ -11,7 +13,7 @@ import java.text.MessageFormat;
  */
 public class Log {
     // flag to disable logging application-wide
-    public static final boolean ENABLED = true;
+    public static final boolean ENABLED = BuildConfig.DEBUG;
 
     public static void d(String tag, String format) {
         android.util.Log.d(tag, format);

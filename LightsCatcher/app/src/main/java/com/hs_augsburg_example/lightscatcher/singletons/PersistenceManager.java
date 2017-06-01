@@ -20,6 +20,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.hs_augsburg_example.lightscatcher.BuildConfig;
 import com.hs_augsburg_example.lightscatcher.dataModels.LightGroup;
 import com.hs_augsburg_example.lightscatcher.dataModels.Photo;
 import com.hs_augsburg_example.lightscatcher.dataModels.User;
@@ -42,30 +43,62 @@ import static java.lang.String.format;
  */
 
 @SuppressWarnings("VisibleForTests")
-public class PersistenceManager {
+public final class PersistenceManager {
+
     private static final String TAG = "PersistenceManager";
     private static final boolean LOG = Log.ENABLED && true;
 
-    public static final boolean DATABASE = false;
-    public static final boolean STORAGE = false;
+    static final String DATA_MODEL_VERSION = "v1_0";
+
+    public static final PathConfig config = BuildConfig.DEBUG ? PathConfig.TEST : PathConfig.RELEASE;
 
 
-    public static final PersistenceManager shared = new PersistenceManager();
+    abstract static class PathConfig {
+        String USERS_DATA_PATH;
+        String LIGHTS_DATA_PATH;
+        String LIGHTS_GROUP_PATH;
+        String LIGHTS_STORAGE_PATH;
+        boolean TRANSFER_DATABASE;
+        boolean TRANSFER_STORAGE;
 
-    static final String DATA_MODEL_VERSION = "v1_3_testing";
+        @Override
+        public String toString() {
+            return new StringBuilder()
+                    .append("\tUSERS_DATA_PATH=" + USERS_DATA_PATH + '\n')
+                    .append("\tLIGHTS_DATA_PATH=" + LIGHTS_DATA_PATH + '\n')
+                    .append("\tLIGHTS_GROUP_PATH=" + LIGHTS_GROUP_PATH + '\n')
+                    .append("\tLIGHTS_STORAGE_PATH=" + LIGHTS_STORAGE_PATH + '\n')
+                    .append("\tTRANSFER_DATABASE=" + TRANSFER_DATABASE + '\n')
+                    .append("\tTRANSFER_STORAGE=" + TRANSFER_STORAGE + '\n').toString();
+        }
 
-    //destination folder of lights database-entries
-    private final String LIGHTS_DATA_PATH = "lights/" + DATA_MODEL_VERSION;
-    private final String LIGHTS_GROUP_PATH = "lightgroups";
-    private final String USERS_DATA_PATH = "users";
+        public final static PathConfig TEST = new PathConfig() {
+            {
+                USERS_DATA_PATH = "users";
+                LIGHTS_DATA_PATH = "_test/lights/" + DATA_MODEL_VERSION;
+                LIGHTS_GROUP_PATH = "_test/lightgroups";
+                LIGHTS_STORAGE_PATH = "_test/" + DATA_MODEL_VERSION;
+                TRANSFER_DATABASE = true;
+                TRANSFER_STORAGE = true;
+            }
+        };
+        public static final PathConfig RELEASE = new PathConfig() {
+            {
+                USERS_DATA_PATH = "users";
+                LIGHTS_DATA_PATH = "lights/v1_0";
+                LIGHTS_GROUP_PATH = "lightgroups";
+                LIGHTS_STORAGE_PATH = "lights_images";
+                TRANSFER_DATABASE = true;
+                TRANSFER_STORAGE = true;
+            }
+        };
 
-    //destination for lights images
-//    private final String LIGTS_STORAGE_PATH = "lights_images";
-    private final String LIGTS_STORAGE_PATH = DATA_MODEL_VERSION;
+    }
 
     // path where the images are stored temporarily on the device
     @VisibleForTesting
     public static final String INTERNAL_IMG_PATH = "lights_images";
+    public static final PersistenceManager shared = new PersistenceManager();
 
     //Supervises the state of the connection to the Firebase-database
     public final ConnectedMonitor connectedMonitor;
@@ -89,10 +122,13 @@ public class PersistenceManager {
         db = FirebaseDatabase.getInstance();
         db.setPersistenceEnabled(true);
         root = db.getReference();
-        users = root.child(USERS_DATA_PATH);
-        lights = root.child(LIGHTS_DATA_PATH);
-        lights_groups = root.child(LIGHTS_GROUP_PATH);
-        lights_images = FirebaseStorage.getInstance().getReference(LIGTS_STORAGE_PATH);
+        users = root.child(config.USERS_DATA_PATH);
+        lights = root.child(config.LIGHTS_DATA_PATH);
+        lights_groups = root.child(config.LIGHTS_GROUP_PATH);
+        lights_images = FirebaseStorage.getInstance().getReference(config.LIGHTS_STORAGE_PATH);
+
+        if (LOG) Log.d(TAG, "PATH-CONFIG:\n");
+        if (LOG) Log.d(TAG, config.toString());
 
         uploadMonitor = new UploadMonitor();
         connectedMonitor = new ConnectedMonitor();
@@ -128,14 +164,14 @@ public class PersistenceManager {
 
     public Task persist(User usr) {
         if (usr.uid == null) throw new IllegalArgumentException("User.uid was null.");
-        if (!DATABASE) return null;
+        if (!config.TRANSFER_DATABASE) return null;
         return users.child(usr.uid).setValue(usr);
     }
 
     public Task persist(Photo photo) {
         if (photo.id == null)
             throw new IllegalArgumentException("Photo.id was null but is required.");
-        if (!DATABASE) return null;
+        if (!config.TRANSFER_DATABASE) return null;
         if (photo.groupRef != null && photo.groupRef.size() > 1)
             try {
                 persist(photo.groupRef);
@@ -163,7 +199,7 @@ public class PersistenceManager {
 
     public TaskMonitor persistDataAndUploadPicture(Context ctx, Photo photo) {
         photo.validate();
-        if (!DATABASE) return null;
+        if (!config.TRANSFER_DATABASE) return TaskMonitor.newInstance(ctx);
         // utility to track progress and status
         final TaskMonitor monitor = TaskMonitor.newInstance(ctx);
 
@@ -186,7 +222,7 @@ public class PersistenceManager {
     }
 
     public UploadTask uploadPicture(Context ctx, final String imgId, Bitmap bmp) {
-        if (!STORAGE) return null;
+        if (!config.TRANSFER_STORAGE) return null;
         // this is the destination
         StorageReference ref = lights_images.child(imgId);
 
@@ -225,7 +261,8 @@ public class PersistenceManager {
      */
     public UploadTask[] retryPendingUploads(Context ctx) {
         if (LOG) Log.d(TAG, "retryPendingUploads");
-        if (!STORAGE) return null;
+        if (!config.TRANSFER_STORAGE) return new UploadTask[0];
+
 
         if (!connectedMonitor.isConnected) {
             if (LOG) Log.d(TAG, "skipping retry because offline");
@@ -256,7 +293,7 @@ public class PersistenceManager {
             }
 
         } catch (Exception e) {
-            Log.e(TAG,e);
+            Log.e(TAG, e);
             return new UploadTask[]{};
         }
     }

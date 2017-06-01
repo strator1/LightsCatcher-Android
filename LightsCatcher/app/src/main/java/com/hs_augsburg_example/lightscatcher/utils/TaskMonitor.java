@@ -46,8 +46,7 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
     }
 
     void onSuccessAll() {
-        if (LOG) Log.e(TAG, "onSuccessAll");
-        // Toast.makeText(ctx, "Upload erfolgreich :)", Toast.LENGTH_LONG).show();
+        if (LOG) Log.d(TAG, "onSuccessAll");
     }
 
     public Tuple<String, Task<?>>[] list() {
@@ -56,6 +55,13 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
         return array;
     }
 
+    public Iterable<Task> listTasks() {
+        List<Task> result = new ArrayList<>();
+        for (Tuple<String, Task<?>> t : pendingTasks) {
+            result.add(t.v2);
+        }
+        return result;
+    }
     @Override
     public void onSuccess(Object o) {
         synchronized (this) {
@@ -73,7 +79,6 @@ public class TaskMonitor implements OnSuccessListener, OnFailureListener {
 
     @Override
     public void onFailure(@NonNull Exception e) {
-        Toast.makeText(ctx, "Beim Upload ist leider ein Fehler aufgetreten :(", Toast.LENGTH_LONG).show();
         if (LOG) Log.e(TAG, e.getMessage(), e);
     }
 

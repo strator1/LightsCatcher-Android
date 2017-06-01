@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.hs_augsburg_example.lightscatcher.activities_minor.LoginActivity;
